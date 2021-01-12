@@ -71,11 +71,13 @@ for file in files:
 
     contents.drop_duplicates(inplace=True, subset=["old_checksum"])
 
+    total: int = len(contents.index)
+    count: int = 1
     for row in contents.itertuples():
         r = requests.get(row.raw_url, allow_redirects=True)
         a = requests.get(row.archive_url, allow_redirects=True)
 
-        print(f"Saving {row.date} From {download_folder_stripped}")
+        print(f"Page {count}/{total} - Saving {row.date} From {download_folder_stripped}")
         r_page = open(mode="w", file=os.path.join(download_folder, str(row.date) + "-raw.html"))
         r_page.writelines(r.text)
         r_page.close()
@@ -83,3 +85,4 @@ for file in files:
         a_page = open(mode="w", file=os.path.join(download_folder, str(row.date) + "-archive.html"))
         a_page.writelines(a.text)
         a_page.close()
+        count += 1

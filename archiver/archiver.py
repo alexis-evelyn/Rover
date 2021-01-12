@@ -173,7 +173,7 @@ class Archiver(threading.Thread):
         # return
 
         for twitter_account in active_accounts:
-            self.logger.log(self.INFO_QUIET, "Checking For Tweets From {twitter_account} @{twitter_handle}".format(
+            self.logger.log(self.INFO_QUIET, "Checking For Tweets From {twitter_account} - @{twitter_handle}".format(
                 twitter_account="{first_name} {last_name}".format(first_name=twitter_account["first_name"],
                                                                   last_name=twitter_account["last_name"]),
                 twitter_handle=twitter_account["twitter_handle"]))

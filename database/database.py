@@ -112,7 +112,7 @@ def count_tweets(search_phrase: str, repo: Dolt, table: str, account_id: Optiona
 def lookupActiveAccounts(repo: Dolt) -> dict:
     government: Table = Table("government")
     query: QueryBuilder = Query.from_(government) \
-        .select(government.twitter_user_id, government.first_name, government.last_name) \
+        .select(government.twitter_user_id, government.twitter_handle, government.first_name, government.last_name) \
         .where(government.archived == 0)
 
     return repo.sql(query=query.get_sql(quote_char=None), result_format='json')["rows"]

@@ -1,6 +1,7 @@
 #!/usr/bin/python
 
 from datetime import datetime
+from json.decoder import JSONDecodeError
 from pathlib import Path
 
 import pytz
@@ -126,8 +127,12 @@ def load_tweet(self):
         return load_404_page(self=self)
 
     table: str = config.ARCHIVE_TWEETS_TABLE
-    tweet: dict = database.retrieveTweet(repo=self.repo, table=table, tweet_id=tweet_id, hide_deleted_tweets=False,
-                                         only_deleted_tweets=False)
+    try:
+        tweet: dict = database.retrieveTweet(repo=self.repo, table=table, tweet_id=tweet_id, hide_deleted_tweets=False,
+                                             only_deleted_tweets=False)
+    except JSONDecodeError as e:
+        print(f"JSON Decode Error While Retrieving Tweet: {tweet_id} - Error: {e.msg}")
+        tweet: dict = {}
 
     # If Tweet Not In Database - Return A 404
     if len(tweet) < 1:

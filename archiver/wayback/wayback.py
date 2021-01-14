@@ -74,8 +74,12 @@ for file in files:
     total: int = len(contents.index)
     count: int = 1
     for row in contents.itertuples():
-        r = requests.get(row.raw_url, allow_redirects=True)
-        a = requests.get(row.archive_url, allow_redirects=True)
+        try:
+            r = requests.get(row.raw_url, allow_redirects=True)
+            a = requests.get(row.archive_url, allow_redirects=True)
+        except:
+            print(f"Failed Connection!!! Page: {download_folder_stripped}/{row.date}")
+            exit(1)
 
         print(f"Page {count}/{total} - Saving {row.date} From {download_folder_stripped}")
         r_page = open(mode="w", file=os.path.join(download_folder, str(row.date) + "-raw.html"))

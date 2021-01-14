@@ -9,6 +9,7 @@ from json.decoder import JSONDecodeError
 from os import path
 
 import twitter
+from doltpy.core import DoltException
 from doltpy.core.system_helpers import get_logger
 from twitter import TwitterError
 
@@ -122,6 +123,10 @@ class Rover(threading.Thread):
                                                                                                 "message"]))
                 else:
                     self.logger.error("Twitter Error: {error_message}".format(error_message=e.message))
+            except DoltException as e:
+                api.PostUpdate(in_reply_to_status_id=mention.id,
+                               auto_populate_reply_metadata=True,
+                               status=f"Sorry, I cannot process that request at the moment. Please try again later after {config.AUTHOR_TWITTER_HANDLE} fixes the issue.")
 
             latest_status = mention.id
 

@@ -148,7 +148,8 @@ def retrieveTweet(repo: Dolt, table: str, tweet_id: str,
         # Only Show Deleted Tweets
         query: QueryBuilder = query.where(tweets.isDeleted == 1)
 
-    return repo.sql(query=query.get_sql(quote_char=None), result_format='json')["rows"]
+    # TODO: Create Demo Repo For Format 'json' With Tweet ID '346074299167277056' For Bug Report
+    return repo.sql(query=query.get_sql(quote_char=None), result_format='csv')
 
 
 def isAlreadyArchived(repo: Dolt, table: str, tweet_id: str,
@@ -265,7 +266,7 @@ def pickRandomOfficials(repo: Dolt, max_results: int = 3) -> dict:
         .orderby(randFunc.name) \
         .limit(max_results)
 
-    print(query.get_sql(quote_char=None))
+    # print(query.get_sql(quote_char=None))
     return repo.sql(query=query.get_sql(quote_char=None), result_format='json')["rows"]
 
 

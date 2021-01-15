@@ -147,7 +147,7 @@ class Archiver(threading.Thread):
                     database.setStreamJSON(repo=self.repo, table=config.ARCHIVE_TWEETS_TABLE,
                                            tweet_id=broadcast["id"], data=media_json)
             except Exception as e:
-                print(f"STREAM ERROR: {e}")
+                self.logger.error(f"STREAM ERROR: {e}")
                 continue
 
     def download_tweets(self):

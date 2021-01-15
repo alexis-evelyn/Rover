@@ -59,7 +59,7 @@ class VideoDownloader(threading.Thread):
             self.logger.info(f'Done Downloading "{self.video_url}", Now Converting...')
 
     def download_video(self):
-        print(self.output_directory)
+        self.logger.debug(self.output_directory)
 
         ydl_opts = {
             'logger': DownloadLogger(),

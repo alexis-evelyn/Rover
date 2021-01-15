@@ -11,6 +11,7 @@ def convert_search_to_query(phrase: str) -> str:
     phrase = sql_converter.escape(value=phrase)
 
     phrase = phrase.replace(' ', '%')
+    phrase = phrase.replace(r"\'", r"'")  # This gets fixed later by PyPika
     phrase = '%' + phrase + '%'
 
     return phrase

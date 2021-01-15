@@ -67,8 +67,10 @@ def search_text(api: twitter.Api, status: twitter.models.Status,
     search_post_response = search_results[0]
     failed_account_lookup: bool = False
     try:
+        # Attempt To Get Latest Account Handle
         author = get_username_by_id(api=api, author_id=search_post_response["twitter_user_id"])
     except TwitterError:
+        # If Failed (e.g. suspended account), Then Retrieve Stored Handle From Database
         author = database.retrieveAccountInfo(repo=repo, account_id=search_post_response["twitter_user_id"])[0]["twitter_handle"]
         failed_account_lookup: bool = True
 

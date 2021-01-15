@@ -73,7 +73,6 @@ def search_tweets(search_phrase: str, repo: Dolt, table: str, max_responses: int
         query: QueryBuilder = query.where(tweets.isDeleted == 1)
 
     # Perform Search Query
-    # Use Commit https://github.com/dolthub/dolt/commit/6089d7e15d5fe4b02a4dc13630289baee7f937b0 Until JSON Escaping Bug Is Fixed
     return repo.sql(query=query.get_sql(quote_char=None), result_format="json")["rows"]
 
 

@@ -116,21 +116,29 @@ class Rover(threading.Thread):
                                                 info_level=self.INFO_QUIET,
                                                 verbose_level=self.VERBOSE)
             except TwitterError as e:
-                # To Deal With That Duplicate Status Error - [{'code': 187, 'message': 'Status is a duplicate.'}]
-                if type(e.message) is dict:
-                    self.logger.error("Twitter Error (Code {code}): {error_message}".format(code=e.message[0]["code"],
-                                                                                            error_message=e.message[0][
-                                                                                                "message"]))
-                else:
-                    self.logger.error("Twitter Error: {error_message}".format(error_message=e.message))
+                self.log_twitter_error(error=e)
             except DoltException as e:
-                api.PostUpdate(in_reply_to_status_id=mention.id,
-                               auto_populate_reply_metadata=True,
-                               status=f"Sorry, I cannot process that request at the moment. Please try again later after {config.AUTHOR_TWITTER_HANDLE} fixes the issue.")
+                self.logger.error(f"Failed To Process SQL Request: '{mention.text}' - Error: '{e.stderr.decode('utf-8')}'")
+                if config.REPLY:
+                    try:
+                        api.PostUpdate(in_reply_to_status_id=mention.id,
+                                       auto_populate_reply_metadata=True,
+                                       status=f"Sorry, I cannot process that request at the moment. Please try again later after {config.AUTHOR_TWITTER_HANDLE} fixes the issue.")
+                    except TwitterError as e:
+                        self.log_twitter_error(error=e)
 
             latest_status = mention.id
 
         return latest_status
+
+    def log_twitter_error(self, error: TwitterError):
+        # To Deal With That Duplicate Status Error - [{'code': 187, 'message': 'Status is a duplicate.'}]
+        if type(error.message) is dict:
+            self.logger.error("Twitter Error (Code {code}): {error_message}".format(code=error.message[0]["code"],
+                                                                                    error_message=error.message[0][
+                                                                                        "message"]))
+        else:
+            self.logger.error("Twitter Error: {error_message}".format(error_message=error.message))
 
     def is_explicitly_mentioned(self, mention: json) -> bool:
         # If the mention shows up more than once, return true. Twitter adds one implicit reply when replying to a user,

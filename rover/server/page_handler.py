@@ -150,8 +150,8 @@ def load_tweet(self):
     site_title: str = "Rover"
 
     # Twitter Metadata
-    twitter_title: str = f"Tweet By {account_name}"
-    twitter_description: str = f"{tweet_text}"
+    twitter_title: str = "Tweet By {account_name}".format(account_name=account_name.replace('\"', '\\"'))
+    twitter_description: str = "{tweet_text}".format(tweet_text=tweet_text.replace('\"', '\\"'))
 
     # HTTP Headers
     self.send_response(200)

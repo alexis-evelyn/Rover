@@ -414,6 +414,36 @@ class Archiver(threading.Thread):
         tweet = data['data']
         metadata = data['includes']
 
+        # QUOTE TWEET SECTION ----------------------------------------------------------------------
+
+        # Detect if Quote Tweet
+        isQuote = False
+        quotedTweetId = None
+        iteration = -1
+
+        # If Has Referenced Tweets Key
+        if 'referenced_tweets' in tweet:
+            for refTweets in tweet['referenced_tweets']:
+                iteration = iteration + 1
+
+                if refTweets['type'] == 'quoted':
+                    isQuote = True
+                    quotedTweetId = refTweets['id']
+                    break
+
+        # Get Retweeted User's ID and Tweet Date
+        quotedUserId = None
+        quotedTweetDate = None
+
+        # Pull From Same Iteration
+        if 'tweets' in metadata and isQuote and iteration < len(metadata['tweets']):
+            quotedUserId = metadata['tweets'][iteration]['author_id']
+            quotedTweetDate = metadata['tweets'][iteration]['created_at']
+
+        self.logger.debug("Quoted User ID: " + ("Not Set" if quotedUserId is None else quotedUserId))
+        self.logger.debug("Quoted Tweet ID: " + ("Not Set" if quotedTweetId is None else quotedTweetId))
+        self.logger.debug("Quoted Tweet Date: " + ("Not Set" if quotedTweetDate is None else quotedTweetDate))
+
         # RETWEET SECTION ----------------------------------------------------------------------
 
         # Detect if Retweet
@@ -514,6 +544,7 @@ class Archiver(threading.Thread):
 
             # This Tweet's Booleans
             'isRetweet': int(isRetweet),
+            'isQuote': int(isQuote),
             'isDeleted': 0,  # Currently hardcoded
 
             # Replied Tweet Info
@@ -525,6 +556,11 @@ class Archiver(threading.Thread):
             'retweetedTweetId': retweetedTweetId,
             'retweetedUserId': retweetedUserId,
             'retweetedTweetDate': retweetedTweetDate,
+
+            # Quote Info
+            'quotedTweetId': quotedTweetId,
+            'quotedUserId': quotedUserId,
+            'quotedTweetDate': quotedTweetDate,
 
             # Expanded Urls
             'expandedUrls': expandedUrls,

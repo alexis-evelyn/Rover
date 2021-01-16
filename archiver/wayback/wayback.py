@@ -74,6 +74,12 @@ for file in files:
     total: int = len(contents.index)
     count: int = 1
     for row in contents.itertuples():
+        # TODO: Means To Skip Already Downloaded Files (Doesn't Handle Multiple Different Files On Same Date)
+        if os.path.exists(os.path.join(download_folder, str(row.date) + "-archive.html")):
+            print(f"Page {count}/{total} - Skipping {row.date} From {download_folder_stripped}")
+            count += 1
+            continue
+
         try:
             r = requests.get(row.raw_url, allow_redirects=True)
             a = requests.get(row.archive_url, allow_redirects=True)

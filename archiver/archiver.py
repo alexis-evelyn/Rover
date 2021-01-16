@@ -167,10 +167,10 @@ class Archiver(threading.Thread):
         # Create Table If Not Exists
         # database.createTableIfNotExists(repo=self.repo, table=config.ARCHIVE_TWEETS_TABLE)
 
-        self.downloadTweetsFromFile(path=os.path.join(config.ARCHIVE_TWEETS_REPO_PATH, 'download-ids.csv'), update_tweets=False, media_api=False)
+        # self.downloadTweetsFromFile(path=os.path.join(config.ARCHIVE_TWEETS_REPO_PATH, 'download-ids.csv'), update_tweets=False, media_api=False)
         # self.updateTweetsIfDeleted(path=os.path.join(config.ARCHIVE_TWEETS_REPO_PATH, 'download-ids.csv'))
         # os.system(f'cd {config.ARCHIVE_TWEETS_REPO_PATH} && dolt sql -q "select id from tweets where json like \\"%media_key%\\" and json_v1 is null order by id desc;" -r csv > download-ids.csv')
-        return
+        # return
 
         for twitter_account in active_accounts:
             self.logger.log(self.INFO_QUIET, "Checking For Tweets From {twitter_account} - @{twitter_handle}".format(

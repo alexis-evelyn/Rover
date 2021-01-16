@@ -96,9 +96,9 @@ for file in files:
                 r_page = open(mode="w", file=os.path.join(download_folder, str(row.date) + "-raw.html"))
                 r_page.writelines(r.text)
                 r_page.close()
+                print(f"Raw Page {count}/{total} - Saved {row.date} From {download_folder_stripped}")
             else:
                 print(f"Raw Page {count}/{total} - Skipping {row.date} From {download_folder_stripped}")
-                count += 1
         except:
             print(f"Failed To Download Raw Page!!! Logging!!! Page: {download_folder_stripped}/{row.date}")
             failed_log = open(mode="a", file='working/wayback/failed-download.txt')
@@ -114,9 +114,9 @@ for file in files:
                 a_page = open(mode="w", file=os.path.join(download_folder, str(row.date) + "-archive.html"))
                 a_page.writelines(a.text)
                 a_page.close()
+                print(f"Archive Page {count}/{total} - Saved {row.date} From {download_folder_stripped}")
             else:
                 print(f"Archive Page {count}/{total} - Skipping {row.date} From {download_folder_stripped}")
-                count += 1
         except:
             print(f"Failed Connection!!! Page: {download_folder_stripped}/{row.date}")
             failed_log = open(mode="a", file='working/wayback/failed-download.txt')
@@ -125,5 +125,5 @@ for file in files:
 
             # exit(1)
 
-        print(f"Page {count}/{total} - Saved {row.date} From {download_folder_stripped}")
+        # print(f"Page {count}/{total} - Saved {row.date} From {download_folder_stripped}")
         count += 1

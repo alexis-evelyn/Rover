@@ -101,7 +101,7 @@ for file in files:
             failed_log.writelines("Raw - {download_folder_stripped}/{row.date}\n")
             failed_log.close()
 
-            exit(1)
+            # exit(1)
 
         try:
             a = requests.get(row.archive_url, allow_redirects=True, headers=headers)
@@ -115,7 +115,7 @@ for file in files:
             failed_log.writelines("Archive - {download_folder_stripped}/{row.date}\n")
             failed_log.close()
 
-            exit(1)
+            # exit(1)
 
         print(f"Page {count}/{total} - Saved {row.date} From {download_folder_stripped}")
         count += 1

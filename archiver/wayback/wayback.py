@@ -83,18 +83,22 @@ for file in files:
     count: int = 1
     for row in contents.itertuples():
         # TODO: Means To Skip Already Downloaded Files (Doesn't Handle Multiple Different Files On Same Date)
-        if os.path.exists(os.path.join(download_folder, str(row.date) + "-archive.html")):
-            print(f"Page {count}/{total} - Skipping {row.date} From {download_folder_stripped}")
-            count += 1
-            continue
+        # if os.path.exists(os.path.join(download_folder, str(row.date) + "-archive.html")):
+        #     print(f"Page {count}/{total} - Skipping {row.date} From {download_folder_stripped}")
+        #     count += 1
+        #     continue
 
         try:
-            # https://twitter.com/AlexisEvelyn42/status/1350405163048169475
-            r = requests.get(row.raw_url, allow_redirects=True, headers=headers)
+            if not os.path.exists(os.path.join(download_folder, str(row.date) + "-raw.html")):
+                # https://twitter.com/AlexisEvelyn42/status/1350405163048169475
+                r = requests.get(row.raw_url, allow_redirects=True, headers=headers)
 
-            r_page = open(mode="w", file=os.path.join(download_folder, str(row.date) + "-raw.html"))
-            r_page.writelines(r.text)
-            r_page.close()
+                r_page = open(mode="w", file=os.path.join(download_folder, str(row.date) + "-raw.html"))
+                r_page.writelines(r.text)
+                r_page.close()
+            else:
+                print(f"Raw Page {count}/{total} - Skipping {row.date} From {download_folder_stripped}")
+                count += 1
         except:
             print(f"Failed To Download Raw Page!!! Logging!!! Page: {download_folder_stripped}/{row.date}")
             failed_log = open(mode="a", file='working/wayback/failed-download.txt')
@@ -104,11 +108,15 @@ for file in files:
             # exit(1)
 
         try:
-            a = requests.get(row.archive_url, allow_redirects=True, headers=headers)
+            if not os.path.exists(os.path.join(download_folder, str(row.date) + "-archive.html")):
+                a = requests.get(row.archive_url, allow_redirects=True, headers=headers)
 
-            a_page = open(mode="w", file=os.path.join(download_folder, str(row.date) + "-archive.html"))
-            a_page.writelines(a.text)
-            a_page.close()
+                a_page = open(mode="w", file=os.path.join(download_folder, str(row.date) + "-archive.html"))
+                a_page.writelines(a.text)
+                a_page.close()
+            else:
+                print(f"Archive Page {count}/{total} - Skipping {row.date} From {download_folder_stripped}")
+                count += 1
         except:
             print(f"Failed Connection!!! Page: {download_folder_stripped}/{row.date}")
             failed_log = open(mode="a", file='working/wayback/failed-download.txt')

@@ -98,11 +98,12 @@ class TweetAPI2:
             raise ValueError('You need to set either a user_id or screen_name. Not both, not neither')
 
         # TODO: Remove - Temporary Means To Get Rid Of Bot Spam From @BidenInaugural
-        filter_text: str = "We'll make sure you don't miss #Inauguration2021"
-        params['query'] = params['query'] + f'-"{filter_text}"'
+        if user_id == "1333168873860984832":
+            filter_text: str = "We'll make sure you don't miss #Inauguration2021"
+            params['query'] = params['query'] + f'-"{filter_text}"'
 
-        filter_text: str = "We'll miss you!"
-        params['query'] = params['query'] + f'-"{filter_text}"'
+            filter_text: str = "We'll miss you!"
+            params['query'] = params['query'] + f'-"{filter_text}"'
 
         api_url: str = 'https://api.twitter.com/2/tweets/search/recent'
         return requests.get(url=api_url, params=params, auth=self.auth)

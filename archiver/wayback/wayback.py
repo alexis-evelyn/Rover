@@ -71,6 +71,14 @@ for file in files:
 
     contents.drop_duplicates(inplace=True, subset=["old_checksum"])
 
+    # Headers
+    headers: dict = {
+        'User-Agent': 'Chrome/90',
+        'Accept-Encoding': 'gzip, deflate',
+        'Accept': '*/*',
+        'Connection': 'keep-alive'
+    }
+
     total: int = len(contents.index)
     count: int = 1
     for row in contents.itertuples():
@@ -81,8 +89,9 @@ for file in files:
             continue
 
         try:
-            r = requests.get(row.raw_url, allow_redirects=True)
-            a = requests.get(row.archive_url, allow_redirects=True)
+            # {'User-Agent': 'python-requests/2.25.1', 'Accept-Encoding': 'gzip, deflate', 'Accept': '*/*', 'Connection': 'keep-alive'}
+            r = requests.get(row.raw_url, allow_redirects=True, headers=headers)
+            a = requests.get(row.archive_url, allow_redirects=True, headers=headers)
         except:
             print(f"Failed Connection!!! Page: {download_folder_stripped}/{row.date}")
             exit(1)

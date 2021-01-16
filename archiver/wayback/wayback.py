@@ -98,7 +98,7 @@ for file in files:
         except:
             print(f"Failed To Download Raw Page!!! Logging!!! Page: {download_folder_stripped}/{row.date}")
             failed_log = open(mode="a", file='working/wayback/failed-download.txt')
-            failed_log.writelines("Raw - {download_folder_stripped}/{row.date}\n")
+            failed_log.writelines(f"Raw - {download_folder_stripped}/{row.date}\n")
             failed_log.close()
 
             # exit(1)
@@ -112,7 +112,7 @@ for file in files:
         except:
             print(f"Failed Connection!!! Page: {download_folder_stripped}/{row.date}")
             failed_log = open(mode="a", file='working/wayback/failed-download.txt')
-            failed_log.writelines("Archive - {download_folder_stripped}/{row.date}\n")
+            failed_log.writelines(f"Archive - {download_folder_stripped}/{row.date}\n")
             failed_log.close()
 
             # exit(1)

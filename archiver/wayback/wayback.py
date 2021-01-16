@@ -98,18 +98,24 @@ for file in files:
         except:
             print(f"Failed To Download Raw Page!!! Logging!!! Page: {download_folder_stripped}/{row.date}")
             failed_log = open(mode="a", file='working/wayback/failed-download.txt')
-            failed_log.writelines("{download_folder_stripped}/{row.date}\n")
+            failed_log.writelines("Raw - {download_folder_stripped}/{row.date}\n")
             failed_log.close()
+
+            exit(1)
 
         try:
             a = requests.get(row.archive_url, allow_redirects=True, headers=headers)
+
+            a_page = open(mode="w", file=os.path.join(download_folder, str(row.date) + "-archive.html"))
+            a_page.writelines(a.text)
+            a_page.close()
         except:
             print(f"Failed Connection!!! Page: {download_folder_stripped}/{row.date}")
-            exit(1)
+            failed_log = open(mode="a", file='working/wayback/failed-download.txt')
+            failed_log.writelines("Archive - {download_folder_stripped}/{row.date}\n")
+            failed_log.close()
 
-        a_page = open(mode="w", file=os.path.join(download_folder, str(row.date) + "-archive.html"))
-        a_page.writelines(a.text)
-        a_page.close()
+            exit(1)
 
         print(f"Page {count}/{total} - Saved {row.date} From {download_folder_stripped}")
         count += 1

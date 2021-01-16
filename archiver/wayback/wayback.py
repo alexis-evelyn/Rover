@@ -73,7 +73,7 @@ for file in files:
 
     # Headers
     headers: dict = {
-        'User-Agent': 'Chrome/90',
+        'User-Agent': 'Chrome/90',  # python-requests/2.25.1
         'Accept-Encoding': 'gzip, deflate',
         'Accept': '*/*',
         'Connection': 'keep-alive'
@@ -89,19 +89,27 @@ for file in files:
             continue
 
         try:
-            # {'User-Agent': 'python-requests/2.25.1', 'Accept-Encoding': 'gzip, deflate', 'Accept': '*/*', 'Connection': 'keep-alive'}
+            # https://twitter.com/AlexisEvelyn42/status/1350405163048169475
             r = requests.get(row.raw_url, allow_redirects=True, headers=headers)
+
+            r_page = open(mode="w", file=os.path.join(download_folder, str(row.date) + "-raw.html"))
+            r_page.writelines(r.text)
+            r_page.close()
+        except:
+            print(f"Failed To Download Raw Page!!! Logging!!! Page: {download_folder_stripped}/{row.date}")
+            failed_log = open(mode="a", file='working/wayback/failed-download.txt')
+            failed_log.writelines("{download_folder_stripped}/{row.date}\n")
+            failed_log.close()
+
+        try:
             a = requests.get(row.archive_url, allow_redirects=True, headers=headers)
         except:
             print(f"Failed Connection!!! Page: {download_folder_stripped}/{row.date}")
             exit(1)
 
-        print(f"Page {count}/{total} - Saving {row.date} From {download_folder_stripped}")
-        r_page = open(mode="w", file=os.path.join(download_folder, str(row.date) + "-raw.html"))
-        r_page.writelines(r.text)
-        r_page.close()
-
         a_page = open(mode="w", file=os.path.join(download_folder, str(row.date) + "-archive.html"))
         a_page.writelines(a.text)
         a_page.close()
+
+        print(f"Page {count}/{total} - Saved {row.date} From {download_folder_stripped}")
         count += 1

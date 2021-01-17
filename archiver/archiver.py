@@ -434,15 +434,18 @@ class Archiver(threading.Thread):
         # Get Retweeted User's ID and Tweet Date
         quotedUserId = None
         quotedTweetDate = None
+        quotedTweetText = None
 
         # Pull From Same Iteration
         if 'tweets' in metadata and isQuote and iteration < len(metadata['tweets']):
             quotedUserId = metadata['tweets'][iteration]['author_id']
             quotedTweetDate = metadata['tweets'][iteration]['created_at']
+            quotedTweetText = metadata['tweets'][iteration]['text']
 
         self.logger.debug("Quoted User ID: " + ("Not Set" if quotedUserId is None else quotedUserId))
         self.logger.debug("Quoted Tweet ID: " + ("Not Set" if quotedTweetId is None else quotedTweetId))
         self.logger.debug("Quoted Tweet Date: " + ("Not Set" if quotedTweetDate is None else quotedTweetDate))
+        self.logger.debug("Quoted Tweet Text: " + ("Not Set" if quotedTweetText is None else quotedTweetText))
 
         # RETWEET SECTION ----------------------------------------------------------------------
 
@@ -464,15 +467,18 @@ class Archiver(threading.Thread):
         # Get Retweeted User's ID and Tweet Date
         retweetedUserId = None
         retweetedTweetDate = None
+        retweetedTweetText = None
 
         # Pull From Same Iteration
         if 'tweets' in metadata and isRetweet and iteration < len(metadata['tweets']):
             retweetedUserId = metadata['tweets'][iteration]['author_id']
             retweetedTweetDate = metadata['tweets'][iteration]['created_at']
+            retweetedTweetText = metadata['tweets'][iteration]['text']
 
         self.logger.debug("Retweeted User ID: " + ("Not Set" if retweetedUserId is None else retweetedUserId))
         self.logger.debug("Retweeted Tweet ID: " + ("Not Set" if retweetedTweetId is None else retweetedTweetId))
         self.logger.debug("Retweeted Tweet Date: " + ("Not Set" if retweetedTweetDate is None else retweetedTweetDate))
+        self.logger.debug("Retweeted Tweet Text: " + ("Not Set" if retweetedTweetText is None else retweetedTweetText))
 
         # REPLY SECTION ----------------------------------------------------------------------
 
@@ -533,7 +539,7 @@ class Archiver(threading.Thread):
 
             # This Tweet's Metadata
             'date': tweet['created_at'],
-            'text': tweet['text'],
+            'text': tweet['text'] if retweetedTweetText is None else retweetedTweetText,
             'device': tweet['source'],
 
             # Engagement Statistics
@@ -561,6 +567,7 @@ class Archiver(threading.Thread):
             'quotedTweetId': quotedTweetId,
             'quotedUserId': quotedUserId,
             'quotedTweetDate': quotedTweetDate,
+            'quotedTweetText': quotedTweetText,
 
             # Expanded Urls
             'expandedUrls': expandedUrls,

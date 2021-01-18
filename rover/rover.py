@@ -133,10 +133,10 @@ class Rover(threading.Thread):
 
     def log_twitter_error(self, error: TwitterError):
         # To Deal With That Duplicate Status Error - [{'code': 187, 'message': 'Status is a duplicate.'}]
+        # [{'message': 'Over capacity', 'code': 130}]
         if type(error.message) is dict:
-            self.logger.error("Twitter Error (Code {code}): {error_message}".format(code=error.message[0]["code"],
-                                                                                    error_message=error.message[0][
-                                                                                        "message"]))
+            self.logger.error("Twitter Error (Code {code}): {error_message}".format(code=error.message["code"],
+                                                                                    error_message=error.message["message"]))
         else:
             self.logger.error("Twitter Error: {error_message}".format(error_message=error.message))
 

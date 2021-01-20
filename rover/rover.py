@@ -58,7 +58,10 @@ class Rover(threading.Thread):
             self.threadLock.acquire()
 
             # Look For Tweets To Respond To
-            self.look_for_tweets()
+            try:
+                self.look_for_tweets()
+            except TwitterError as e:
+                self.log_twitter_error(error=e)
 
             # Release Lock
             self.threadLock.release()

@@ -348,6 +348,9 @@ class Archiver(threading.Thread):
         if not isArchived:
             self.logger.warning("Cannot Insert Tweet {id} Because Of Missing Twitter Account ID Information!!!".format(
                 id=errorMessage['id']))
+            tweets_file: TextIO = open(config.FAILED_TWEETS_FILE_PATH, "a+")
+            tweets_file.writelines(json.dumps(errorMessage) + os.linesep)
+            tweets_file.close()
             return
 
         # TODO: Decide How To Handle New Tweets That Are Deleted

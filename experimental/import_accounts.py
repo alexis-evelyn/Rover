@@ -158,7 +158,7 @@ def add_account_creation_dates():
 
     merged: pd.DataFrame = existing_accounts.merge(all_accounts, on="twitter_user_id", how="outer")
     merged['account_creation'] = merged['account_creation_y'].where(merged['account_creation_y'].notnull(),
-                                                                   merged['account_creation_x'])
+                                                                    merged['account_creation_x'])
     merged.drop(['account_creation_x', 'account_creation_y'], axis=1, inplace=True)
 
     # merged.drop(columns=["notes", "pronouns", "party", "first_name", "last_name", "end_term", "start_term", "suffix",

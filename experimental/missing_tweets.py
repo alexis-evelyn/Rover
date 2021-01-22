@@ -62,14 +62,15 @@ def get_tweet_file(twitter_csv: str) -> pd.DataFrame:
     return twitter_csv_frame
 
 
-failed_tweets: pd.DataFrame = missing_tweets_json()
-flotus_tweets: pd.DataFrame = get_tweet_file("./working/presidential-tweets/tweet_csv/flotus.csv")
-wh_tweets: pd.DataFrame = get_tweet_file("./working/presidential-tweets/tweet_csv/wh.csv")
+if __name__ == "__main__":
+    failed_tweets: pd.DataFrame = missing_tweets_json()
+    flotus_tweets: pd.DataFrame = get_tweet_file("./working/presidential-tweets/tweet_csv/flotus.csv")
+    wh_tweets: pd.DataFrame = get_tweet_file("./working/presidential-tweets/tweet_csv/wh.csv")
 
-# 798232312697720832
-flotus_tweets["id"] = flotus_tweets[~flotus_tweets["id"].isin(failed_tweets["id"])]
-print(flotus_tweets["id"].unique())
+    # 798232312697720832
+    flotus_tweets["id"] = flotus_tweets[~flotus_tweets["id"].isin(failed_tweets["id"])]
+    print(flotus_tweets["id"].unique())
 
-for id in flotus_tweets["id"].unique():
-    if float.is_integer(id):
-        print(f"ID: {int(id)}")
+    for id in flotus_tweets["id"].unique():
+        if float.is_integer(id):
+            print(f"ID: {int(id)}")

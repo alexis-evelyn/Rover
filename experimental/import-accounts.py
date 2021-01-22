@@ -3,7 +3,7 @@ import json
 import logging
 import pandas as pd
 
-from typing import List
+from typing import List, TextIO
 from doltpy.core import Dolt, DoltException, system_helpers
 from doltpy.etl import get_df_table_writer
 
@@ -31,13 +31,33 @@ def read_total_tweets(public_metrics: pd.Series) -> pd.Series:
     return pd.Series(name="total_tweets", data=tweet_count)
 
 
+def save_accounts_to_file(accounts: pd.DataFrame):
+    # Drop Blank Columns
+    accounts.drop(columns=["president_number", "notes", "end_term"], inplace=True)
+
+    # Drop Non-44 Accounts
+    # all_accounts = all_accounts[(all_accounts["twitter_handle"].str.contains("44"))]
+
+    # Drop 44 Accounts
+    # all_accounts = all_accounts[~(all_accounts["twitter_handle"].str.contains("44"))]
+
+    # Drop Accounts With 0 Tweets
+    # all_accounts = all_accounts[~(all_accounts["total_tweets"] == 0)]
+
+    accounts.to_csv("working/presidential-tweets/import-all.csv", index=False)
+
+
 def load_accounts_json(file_path: str, president_number: int, notes: str, end_term: str) -> pd.DataFrame:
-    accounts: pd.DataFrame = pd.read_json(file_path)
+    records_data: str = "".join(open(file=file_path, mode="r").readlines())
+    records: dict = json.loads(records_data)["data"]
+
+    accounts: pd.DataFrame = pd.DataFrame(records)
 
     rename_columns: dict = {
         "username": "twitter_handle",
         "id": "twitter_user_id",
-        "public_metrics": "total_tweets"
+        "public_metrics": "total_tweets",
+        "created_at": "account_creation"
     }
 
     # Rename Columns From JSON
@@ -63,7 +83,7 @@ def load_accounts_json(file_path: str, president_number: int, notes: str, end_te
 
     keep_columns: List[str] = [
         "twitter_handle", "twitter_user_id", "total_tweets", "president_number",
-        "archived", "suspended", "notes", "first_name", "last_name", "end_term", "party"
+        "archived", "suspended", "notes", "first_name", "last_name", "end_term", "party", "account_creation"
     ]
 
     # Drop Non-Important Columns
@@ -76,61 +96,76 @@ def load_accounts_json(file_path: str, president_number: int, notes: str, end_te
     return accounts
 
 
-trump_accounts: pd.DataFrame = load_accounts_json(file_path="working/presidential-tweets/trump-accounts.json",
-                                                  president_number=45,
-                                                  notes="Automatically Added - Trump Presidency",
-                                                  end_term="2021-01-20 00:00:00")
+def load_existing_entries(file_path: str) -> pd.DataFrame:
+    e_dtype: dict = {
+        "twitter_user_id": "string"
+    }
+    accounts: pd.DataFrame = pd.read_csv(filepath_or_buffer=file_path, dtype=e_dtype, keep_default_na=False,
+                                         na_values=[' '])
+    return accounts
 
-all_accounts: pd.DataFrame = load_accounts_json(file_path="working/presidential-tweets/all-accounts.json",
-                                                president_number=44,
-                                                notes="Automatically Added - Obama Presidency",
-                                                end_term="2017-01-20 00:00:00")
 
-# Drop Non-45 Accounts
-# trump_accounts = trump_accounts[(trump_accounts["twitter_handle"].str.contains("45"))]
+# TODO: Manually Ensure ONDCP45 Is Fixed From ONDCP
+def find_wrong_entries(twitter_df: pd.DataFrame, repo_df: pd.DataFrame):
+    repo_ids: list[str] = repo_df["twitter_user_id"].to_list()
 
-# Drop 45 Accounts
-trump_accounts = trump_accounts[~(trump_accounts["twitter_handle"].str.contains("45"))]
+    # 826093318878670848 Should Be Excluded Since It's Correct
+    # 1214584249690607616 Should Be Included Since It's Wrong (Instead Opting For 1214584249690607618 As Its Replacement)
+    temp: pd.DataFrame = twitter_df.loc[~(twitter_df["twitter_user_id"].isin(repo_ids))]
+    # temp = repo_df.loc[repo_df["twitter_user_id"] == 818925774493405184]
 
-# Drop Accounts With 0 Tweets
-trump_accounts = trump_accounts[~(trump_accounts["total_tweets"] == 0)]
+    temp = temp.reindex(["twitter_handle", "twitter_user_id"], axis=1)
 
-# Drop Non-44 Accounts
-# all_accounts = all_accounts[(all_accounts["twitter_handle"].str.contains("44"))]
+    temp.reset_index(inplace=True, drop=True)
+    print(temp)
+    return temp
 
-# Drop 44 Accounts
-all_accounts = all_accounts[~(all_accounts["twitter_handle"].str.contains("44"))]
 
-# Drop Accounts With 0 Tweets
-all_accounts = all_accounts[~(all_accounts["total_tweets"] == 0)]
+def fix_accounts_ids():
+    all_accounts: pd.DataFrame = load_accounts_json(file_path="working/presidential-tweets/all-auto-accounts.json",
+                                                    president_number=0,
+                                                    notes="",
+                                                    end_term="")
 
-trump_accounts.to_csv("working/presidential-tweets/import-trump.csv", index=False)
-all_accounts.to_csv("working/presidential-tweets/import-all.csv", index=False)
+    existing_accounts: pd.DataFrame = load_existing_entries("working/presidential-tweets/all-accounts-exported.csv")
 
-# insert_sql_file = open("working/presidential-tweets/insert-trump.sql", mode="w")
-# columns: str = ",".join(trump_accounts.columns)
-# for row in trump_accounts.itertuples():
-#     cell_data: str = ""
-#     for cell in range(1, len(trump_accounts.columns) + 1):
-#         cell_data += "'" + str(row[cell]) + "',"
-#
-#     cell_data = cell_data[:-1]
-#
-#     insert_query = f'''
-#         insert into government ({columns}) values ({cell_data});
-#     '''
-#
-#     insert_sql_file.writelines(insert_query)
-#     print(insert_query)
-# insert_sql_file.close()
+    fixed_entries: pd.DataFrame = find_wrong_entries(twitter_df=all_accounts, repo_df=existing_accounts)
 
-# repo: Dolt = Dolt("working/presidential-tweets")
-#
-# # Prepare Data Writer
-# raw_data_writer = get_df_table_writer("government", lambda: trump_accounts, [])
-#
-# # Write Data To Repo
-# raw_data_writer(repo)
+    merged: pd.DataFrame = existing_accounts.merge(fixed_entries, on="twitter_handle", how="outer")
+    merged['twitter_user_id'] = merged['twitter_user_id_y'].where(merged['twitter_user_id_y'].notnull(),
+                                                                  merged['twitter_user_id_x'])
+    merged.drop(['twitter_user_id_x', 'twitter_user_id_y'], axis=1, inplace=True)
 
-print(trump_accounts)
-print(all_accounts)
+    # merged.drop(columns=["notes", "pronouns", "party", "first_name", "last_name", "end_term", "start_term", "suffix", "middle_name"], inplace=True)
+    merged.to_csv("working/presidential-tweets/merged.csv", index=False)
+
+    print(merged)
+
+
+def add_account_creation_dates():
+    all_accounts: pd.DataFrame = load_accounts_json(file_path="working/presidential-tweets/all-accounts.json",
+                                                    president_number=0,
+                                                    notes="",
+                                                    end_term="")
+    all_accounts = all_accounts.reindex({"twitter_user_id", "account_creation"}, axis=1)
+
+    # 2017-03-10T16:22:22.000Z ->
+    # print("Fixing Dates")  # mm/dd/yyyy -> yyyy-mm-dd
+    all_accounts['account_creation'] = all_accounts['account_creation'].str.replace(
+        r'(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2}):(\d{2}).(\d{3})Z', r'\1-\2-\3 \4:\5:\6', regex=True)
+
+    existing_accounts: pd.DataFrame = load_existing_entries("working/presidential-tweets/all-accounts-exported.csv")
+
+    merged: pd.DataFrame = existing_accounts.merge(all_accounts, on="twitter_user_id", how="outer")
+    merged['account_creation'] = merged['account_creation_y'].where(merged['account_creation_y'].notnull(),
+                                                                   merged['account_creation_x'])
+    merged.drop(['account_creation_x', 'account_creation_y'], axis=1, inplace=True)
+
+    # merged.drop(columns=["notes", "pronouns", "party", "first_name", "last_name", "end_term", "start_term", "suffix",
+    #                      "middle_name"], inplace=True)
+    merged.to_csv("working/presidential-tweets/account_creation.csv", index=False)
+
+    print(merged)
+
+
+add_account_creation_dates()

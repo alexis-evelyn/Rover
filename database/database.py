@@ -187,20 +187,66 @@ def setDeletedStatus(repo: Dolt, table: str, tweet_id: str, deleted: bool):
 
     repo.sql(query=query.get_sql(quote_char=None), result_format='csv')
 
+# ------------------------------------------------------------------------------------------------------------
+# TODO: Genericize These Functions Into One Function
+
 
 def updateTweetWithAPIV1(repo: Dolt, table: str, tweet_id: str, data: dict):
     sql_converter: conversion.MySQLConverter = conversion.MySQLConverter()
     escaped_json: str = sql_converter.escape(value=json.dumps(data))
 
-    tweets: Table = Table(table)
-    query: QueryBuilder = Query.update(tweets) \
-        .set(tweets.json_v1, escaped_json) \
-        .where(tweets.id == tweet_id)
+    # TODO: Add In Ability For Proper Insert If Not Exists
+    media: Table = Table(table)
+    query_update: QueryBuilder = Query.update(media) \
+        .set(media.v1_json, escaped_json) \
+        .where(media.id == tweet_id)
 
-    repo.sql(query=query.get_sql(quote_char=None), result_format="csv")
+    query_insert: QueryBuilder = Query.into(media) \
+        .insert(media.v1_json, escaped_json) \
+        .insert(media.id == tweet_id)
+
+    repo.sql(query=query_update.get_sql(quote_char=None), result_format="csv")
+    repo.sql(query=query_insert.get_sql(quote_char=None), result_format="csv")
+
+
+def setBroadcastJSON(repo: Dolt, table: str, tweet_id: str, data: dict):
+    sql_converter: conversion.MySQLConverter = conversion.MySQLConverter()
+    escaped_json: str = sql_converter.escape(value=json.dumps(data))
+
+    media: Table = Table(table)
+    query_update: QueryBuilder = Query.update(media) \
+        .set(media.broadcast_json, escaped_json) \
+        .where(media.id == tweet_id)
+
+    query_insert: QueryBuilder = Query.into(media) \
+        .insert(media.broadcast_json, escaped_json) \
+        .insert(media.id == tweet_id)
+
+    repo.sql(query=query_update.get_sql(quote_char=None), result_format="csv")
+    repo.sql(query=query_insert.get_sql(quote_char=None), result_format="csv")
+
+
+def setStreamJSON(repo: Dolt, table: str, tweet_id: str, data: dict):
+    sql_converter: conversion.MySQLConverter = conversion.MySQLConverter()
+    escaped_json: str = sql_converter.escape(value=json.dumps(data))
+
+    media: Table = Table(table)
+    query_update: QueryBuilder = Query.update(media) \
+        .set(media.stream_json, escaped_json) \
+        .where(media.id == tweet_id)
+
+    query_insert: QueryBuilder = Query.into(media) \
+        .insert(media.stream_json, escaped_json) \
+        .insert(media.id == tweet_id)
+
+    repo.sql(query=query_update.get_sql(quote_char=None), result_format="csv")
+    repo.sql(query=query_insert.get_sql(quote_char=None), result_format="csv")
+
+# ------------------------------------------------------------------------------------------------------------
 
 
 def createTableIfNotExists(repo: Dolt, table: str):
+    # TODO: Make Sure To Update To Reflect Current Tables
     query: CreateQueryBuilder = Query.create_table(table=table) \
         .columns(
         Column("id", "bigint unsigned", nullable=False),
@@ -229,7 +275,6 @@ def createTableIfNotExists(repo: Dolt, table: str):
         Column("expandedUrls", "longtext"),
 
         Column("json", "longtext"),
-        Column("json_v1", "longtext"),
         Column("notes", "longtext")
     ).primary_key("id")
 
@@ -270,38 +315,16 @@ def pickRandomOfficials(repo: Dolt, max_results: int = 3) -> dict:
     return repo.sql(query=query.get_sql(quote_char=None), result_format='json')["rows"]
 
 
-def retrieveMissingBroadcastInfo(repo: Dolt, table: str) -> dict:
-    tweets: Table = Table(table)
-    query: QueryBuilder = Query.from_(tweets) \
+def retrieveMissingBroadcastInfo(repo: Dolt, tweets_table: str, media_table: str) -> dict:
+    tweets: Table = Table(tweets_table)
+    media: Table = Table(media_table)
+
+    query: QueryBuilder = Query.from_(tweets).from_(media) \
         .select(tweets.id, tweets.expandedUrls) \
         .where(tweets.expandedUrls.like("https://twitter.com/i/broadcasts/%")) \
-        .where(tweets.broadcast_json.isnull())
+        .where(media.broadcast_json.isnull())
 
     return repo.sql(query=query.get_sql(quote_char=None), result_format='json')["rows"]
-
-
-def setBroadcastJSON(repo: Dolt, table: str, tweet_id: str, data: dict):
-    sql_converter: conversion.MySQLConverter = conversion.MySQLConverter()
-    escaped_json: str = sql_converter.escape(value=json.dumps(data))
-
-    tweets: Table = Table(table)
-    query: QueryBuilder = Query.update(tweets) \
-        .set(tweets.broadcast_json, escaped_json) \
-        .where(tweets.id == tweet_id)
-
-    repo.sql(query=query.get_sql(quote_char=None), result_format="csv")
-
-
-def setStreamJSON(repo: Dolt, table: str, tweet_id: str, data: dict):
-    sql_converter: conversion.MySQLConverter = conversion.MySQLConverter()
-    escaped_json: str = sql_converter.escape(value=json.dumps(data))
-
-    tweets: Table = Table(table)
-    query: QueryBuilder = Query.update(tweets) \
-        .set(tweets.stream_json, escaped_json) \
-        .where(tweets.id == tweet_id)
-
-    repo.sql(query=query.get_sql(quote_char=None), result_format="csv")
 
 
 def addMediaFiles(repo: Dolt, table: str, tweet_id: str, data: List[str]):
@@ -309,26 +332,26 @@ def addMediaFiles(repo: Dolt, table: str, tweet_id: str, data: List[str]):
     escaped_json: str = sql_converter.escape(value=json.dumps(data))
 
     media: Table = Table(table)
-    query: QueryBuilder = Query.into(media) \
+    query_update: QueryBuilder = Query.update(media) \
+        .set(media.file == escaped_json)
+
+    query_insert: QueryBuilder = Query.into(media) \
         .insert(tweet_id, escaped_json)
 
     # query: QueryBuilder = Query.update(media) \
     #     .set(media.file, escaped_json) \
     #     .where(media.id == tweet_id)
 
-    repo.sql(query=query.get_sql(quote_char=None), result_format="csv")
+    repo.sql(query=query_update.get_sql(quote_char=None), result_format="csv")
+    repo.sql(query=query_insert.get_sql(quote_char=None), result_format="csv")
 
 
 def retrieveMissingBroadcastFiles(repo: Dolt, tweets_table: str, media_table: str) -> dict:
-    # select id from tweets where stream_json is not null and id not in (select id from media);
+    # Old: select id from tweets where stream_json is not null and id not in (select id from media);
+    # select id, stream_json from media where stream_json is null
     media: Table = Table(media_table)
-    sub_query: QueryBuilder = Query.from_(media) \
-        .select(media.id)
-
-    tweets: Table = Table(tweets_table)
-    query: QueryBuilder = Query.from_(tweets) \
-        .select(tweets.id, tweets.stream_json) \
-        .where(tweets.stream_json.notnull()) \
-        .where(tweets.id.notin(sub_query))
+    query: QueryBuilder = Query.from_(media) \
+        .select(media.id, media.stream_json) \
+        .where(media.stream_json.null())
 
     return repo.sql(query=query.get_sql(quote_char=None), result_format='json')["rows"]

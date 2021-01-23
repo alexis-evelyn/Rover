@@ -123,7 +123,9 @@ class Archiver(threading.Thread):
     def get_broadcast_urls(self, guest_token: str):
         # TODO: Add Proper Error Checking
 
-        broadcasts: dict = database.retrieveMissingBroadcastInfo(repo=self.repo, table=config.ARCHIVE_TWEETS_TABLE)
+        broadcasts: dict = database.retrieveMissingBroadcastInfo(repo=self.repo,
+                                                                 tweets_table=config.ARCHIVE_TWEETS_TABLE,
+                                                                 media_table=config.MEDIA_TWEETS_TABLE)
 
         for broadcast in broadcasts:
             try:
@@ -131,7 +133,7 @@ class Archiver(threading.Thread):
                 broadcast_json: dict = json.loads(
                     self.twitter_api.get_broadcast_json(stream_id=broadcast_id, guest_token=guest_token).text)
 
-                database.setBroadcastJSON(repo=self.repo, table=config.ARCHIVE_TWEETS_TABLE,
+                database.setBroadcastJSON(repo=self.repo, table=config.MEDIA_TWEETS_TABLE,
                                           tweet_id=broadcast["id"], data=broadcast_json)
 
                 broadcast_meta_json: Optional[dict] = None
@@ -169,7 +171,7 @@ class Archiver(threading.Thread):
 
         # self.downloadTweetsFromFile(path=os.path.join(config.ARCHIVE_TWEETS_REPO_PATH, 'download-ids.csv'), update_tweets=False, media_api=False)
         # self.updateTweetsIfDeleted(path=os.path.join(config.ARCHIVE_TWEETS_REPO_PATH, 'download-ids.csv'))
-        # os.system(f'cd {config.ARCHIVE_TWEETS_REPO_PATH} && dolt sql -q "select id from tweets where json like \\"%media_key%\\" and json_v1 is null order by id desc;" -r csv > download-ids.csv')
+        # os.system(f'cd {config.ARCHIVE_TWEETS_REPO_PATH} && dolt sql -q "select id from tweets, media where tweets.json like \\"%media_key%\\" and media.v1_json is null order by id desc;" -r csv > download-ids.csv')
         # return
 
         for twitter_account in active_accounts:
@@ -289,7 +291,7 @@ class Archiver(threading.Thread):
 
                     try:
                         if media_api:
-                            database.updateTweetWithAPIV1(repo=self.repo, table=config.ARCHIVE_TWEETS_TABLE,
+                            database.updateTweetWithAPIV1(repo=self.repo, table=config.MEDIA_TWEETS_TABLE,
                                                           tweet_id=row[0], data=tweet)
                         else:
                             self.addTweetToDatabase(data=tweet, twitter_user_id=author_id)

@@ -123,8 +123,6 @@ class RequestHandler(BaseHTTPRequestHandler):
                 handler.load_file(self=self, path="rover/server/web/scripts/helper.js", mime_type="application/javascript")
             elif url == "/service-worker.js":
                 handler.load_file(self=self, path="rover/server/web/scripts/service-worker.js", mime_type="application/javascript")
-            elif url == "/testwayback":
-                handler.load_404_page(self=self, error_code=200)
             elif url == "/404":
                 handler.load_404_page(self=self, error_code=200)
             elif url == "/offline":

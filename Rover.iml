@@ -16,5 +16,6 @@
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="library" name="material-components-web" level="application" />
     <orderEntry type="library" name="jquery-3.5.1" level="application" />
+    <orderEntry type="library" name="wb404" level="application" />
   </component>
 </module>

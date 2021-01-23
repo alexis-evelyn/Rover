@@ -1,3 +1,13 @@
-user-agent: *
-disallow: /api
-allow: /
+User-Agent: *
+Allow: /
+Disallow: /api
+
+User-Agent: ia_archiver
+Allow: /api
+
+User-Agent: archive.org_bot
+Allow: /api
+
+# Generated With `dolt sql -q "select concat('https://alexisevelyn.me/tweet/',id) from tweets order by id desc limit 50000" -r csv > ../../rover/server/web/other/sitemap.txt`
+# Then Header Edited Out With Nano
+Sitemap: https://alexisevelyn.me/sitemap.txt

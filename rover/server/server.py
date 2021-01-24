@@ -5,6 +5,7 @@ import logging
 import socketserver
 import string
 import threading
+from datetime import datetime, timezone
 from http.server import BaseHTTPRequestHandler, HTTPServer
 from typing import Tuple, Optional, List
 from urllib.parse import urlparse, parse_qs
@@ -114,9 +115,7 @@ class RequestHandler(BaseHTTPRequestHandler):
                 self.logger.debug(f"UTM Path: {urlparse(self.path).path}")
 
             # Store Valid UTM In Dict For Logging
-            utm_parameters: dict = {
-                "path": urlparse(self.path).path
-            }
+            utm_parameters: dict = {}
 
             # Print UTM Queries
             for track in tracking_parameters:
@@ -129,6 +128,14 @@ class RequestHandler(BaseHTTPRequestHandler):
                 utm_value: list = tracking_parameters[track]
                 utm_parameters[param_name.lower()] = ", ".join(utm_value)
                 self.logger.debug(f"UTM {param_name}: {', '.join(utm_value)}")
+
+            # Add In Hardcoded Cells
+            current_time: datetime = datetime.now(timezone.utc)
+            utm_parameters["path"]: str = urlparse(self.path).path
+            utm_parameters["date"]: str = "{year}-{month}-{day} {hour}:{minute}:{second}".format(
+                year=current_time.year, month=current_time.month, day=current_time.day,
+                hour=current_time.hour, minute=current_time.minute, second=current_time.second
+            )
 
             if len(tracking_parameters) > 0:
                 # Use MySQL Library For Escaping Search Text

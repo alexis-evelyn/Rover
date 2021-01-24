@@ -35,24 +35,38 @@ self.addEventListener('fetch', event => {
     console.debug('Fetch Event For ', event.request.url);
     event.respondWith(
         caches.match(event.request)
-        .then(response => {
+        .then(cache_response => {
             // Load Page From Cache If Cached
-            if (response) {
+            if (cache_response) {
                 console.debug('Found, ', event.request.url, ', In Cache');
-                return response;
+                return cache_response;
             }
+
+            console.debug("Could Not Find, ", event.request.url, ', In Cache')
+
+            // TODO: DEBUG - Attempt Preload Request
+            // if (self.registration.navigationPreload) {
+            //     console.debug('Preload Request For ', event.request.url);
+            //     return event.preloadResponse.then(preload_response => {
+            //         return preload_response;
+            //     });
+            // }
 
             // Attempt To Retrieve Page Via Network
             console.debug('Network Request For ', event.request.url);
-            return fetch(event.request).then(response => {
+            return fetch(event.request).then(fetch_response => {
                 return caches.open(staticCacheName).then(() => {
                     // Return Fresh Page (200 Status Code)
-                    return response;
+
+                    if (fetch_response) {
+                        return fetch_response;
+                    }
+                    console.error("Could Not Fetch, ", event.request.url, '!!!')
                 }).catch(() => {
                     // Return Cached 404 Page When Receiving 404 Status Code (And Associate URL With 404 Page)
-                    if (response.status === 404) {
-                        caches.put('/404', response.clone());
-                        return response;
+                    if (fetch_response.status === 404) {
+                        caches.put('/404', fetch_response.clone());
+                        return fetch_response;
                     }
                 });
             });
@@ -81,6 +95,17 @@ self.addEventListener('activate', event => {
 
     const cacheAllowList = [staticCacheName];
 
+    // Activate Navigation Preload Support
+    event.waitUntil(async function() {
+        if (self.registration.navigationPreload) {
+            // Enable navigation preloads!
+            console.debug("Navigation Preload Supported!!!")
+            // TODO: DEBUG - Enable To Make Browser Preload
+            // await self.registration.navigationPreload.enable();
+        }
+    }());
+
+    // Replace Caches
     event.waitUntil(
         caches.keys().then(cacheNames => {
             return Promise.all(

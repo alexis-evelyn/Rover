@@ -34,6 +34,10 @@ TWITTER_USER_HANDLE: str = "@DigitalRoverDog"
 ALLOW_CORS: bool = True
 CORS_SITES: str = "*"
 
+# HSTS Preload
+ENABLE_HSTS: bool = True
+HSTS_SETTINGS: str = "max-age=63072000; includeSubDomains; preload"
+
 # Website URL
 WEBSITE_ROOT: str = "https://alexisevelyn.me"
 

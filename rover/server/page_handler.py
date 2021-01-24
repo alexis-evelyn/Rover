@@ -31,6 +31,13 @@ def load_page(self, page: str):
     # HTTP Headers
     self.send_response(200)
     self.send_header("Content-type", "text/html")
+
+    if "Service-Worker-Navigation-Preload" in self.headers:
+        self.send_header("Vary", "Service-Worker-Navigation-Preload")
+
+    if config.ENABLE_HSTS:
+        self.send_header("Strict-Transport-Security", config.HSTS_SETTINGS)
+
     self.end_headers()
 
     # Header
@@ -47,6 +54,13 @@ def load_file(self, path: str, mime_type: str):
     # HTTP Headers
     self.send_response(200)
     self.send_header("Content-type", mime_type)
+
+    if "Service-Worker-Navigation-Preload" in self.headers:
+        self.send_header("Vary", "Service-Worker-Navigation-Preload")
+
+    if config.ENABLE_HSTS:
+        self.send_header("Strict-Transport-Security", config.HSTS_SETTINGS)
+
     self.end_headers()
 
     # Load File
@@ -68,6 +82,13 @@ def load_binary_file(path: str) -> bytes:
 def load_404_page(self, error_code: int = 404):
     self.send_response(error_code)
     self.send_header("Content-type", "text/html")
+
+    if "Service-Worker-Navigation-Preload" in self.headers:
+        self.send_header("Vary", "Service-Worker-Navigation-Preload")
+
+    if config.ENABLE_HSTS:
+        self.send_header("Strict-Transport-Security", config.HSTS_SETTINGS)
+
     self.end_headers()
 
     # Header
@@ -83,6 +104,13 @@ def load_404_page(self, error_code: int = 404):
 def load_offline_page(self):
     self.send_response(200)
     self.send_header("Content-type", "text/html")
+
+    if "Service-Worker-Navigation-Preload" in self.headers:
+        self.send_header("Vary", "Service-Worker-Navigation-Preload")
+
+    if config.ENABLE_HSTS:
+        self.send_header("Strict-Transport-Security", config.HSTS_SETTINGS)
+
     self.end_headers()
 
     title = "Currently Offline"
@@ -158,6 +186,13 @@ def load_tweet(self):
     # HTTP Headers
     self.send_response(200)
     self.send_header("Content-type", "text/html")
+
+    if "Service-Worker-Navigation-Preload" in self.headers:
+        self.send_header("Vary", "Service-Worker-Navigation-Preload")
+
+    if config.ENABLE_HSTS:
+        self.send_header("Strict-Transport-Security", config.HSTS_SETTINGS)
+
     self.end_headers()
 
     # Header

@@ -1,13 +1,20 @@
 #!/usr/bin/python
-import traceback
-from datetime import datetime
-from json.decoder import JSONDecodeError
-from pathlib import Path
-
-import pytz
+import re
+from re import Pattern, Match
+from typing import List, Optional
 
 from database import database
 from rover import config
+
+from datetime import datetime
+from json.decoder import JSONDecodeError
+from pathlib import Path
+from xml.etree.ElementTree import Element, tostring
+
+import json
+import traceback
+import pytz
+import pandas as pd
 
 
 def load_page(self, page: str):
@@ -207,3 +214,66 @@ def load_tweet(self):
 
     # Footer
     write_footer(self=self)
+
+
+def dict_to_xml(root_tag: str, iter_tag: str, urls: List[dict]):
+    # xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"
+    root: Element = Element(root_tag)
+    root.set("xmlns", "http://www.sitemaps.org/schemas/sitemap/0.9")
+
+    for url in urls:
+        iter_xml: Element = Element(iter_tag)
+
+        for key in url:
+            child: Element = Element(key)
+            child.text = str(url[key])
+            iter_xml.append(child)
+
+        root.append(iter_xml)
+
+    return root
+
+
+def load_sitemap(self):
+    # HTTP Headers
+    self.send_response(200)
+    self.send_header("Content-type", "application/xml")
+
+    if "Service-Worker-Navigation-Preload" in self.headers:
+        self.send_header("Vary", "Service-Worker-Navigation-Preload")
+
+    if config.ENABLE_HSTS:
+        self.send_header("Strict-Transport-Security", config.HSTS_SETTINGS)
+
+    self.end_headers()
+
+    tracking_parameters: str = ""
+    validate_url: Pattern[str] = re.compile(r'/sitemap-(\w+)-(\w+).xml')
+    tracking_match: Optional[Match[str]] = re.match(validate_url, self.path)
+
+    if tracking_match:
+        tracking_parameters: str = "/?utm_source={utm_source}&utm_medium={utm_medium}&utm_campaign=sitemap"\
+            .format(utm_source=tracking_match.groups()[0], utm_medium=tracking_match.groups()[1])  # source example (google), medium example (search)
+
+    load_tweets_query: str = '''
+        -- 50000
+        select id from tweets order by id desc limit 1000
+    '''
+
+    urls_dict: dict = self.repo.sql(query=load_tweets_query, result_format="csv")
+    urls: pd.DataFrame = pd.DataFrame(urls_dict)
+
+    # Rename ID Column To Loc For XML
+    urls.rename(columns={"id": "loc"}, inplace=True)
+
+    # Modify Data For XML
+    urls["changefreq"] = "monthly"
+    urls["loc"] = config.SITEMAP_PREFIX + urls["loc"] + tracking_parameters
+
+    # Convert DataFrame Back To Dictionary For Conversion To XML
+    sitemap_dict: List[dict] = urls.to_dict(orient="records")
+
+    # XML Elements
+    urls_xml: Element = dict_to_xml(root_tag='urlset', iter_tag='url', urls=sitemap_dict)
+
+    self.wfile.write(tostring(urls_xml, encoding='utf8', method='xml'))

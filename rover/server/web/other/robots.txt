@@ -1,13 +1,27 @@
 User-Agent: *
 Allow: /
 Disallow: /api
+Sitemap: https://alexisevelyn.me/sitemap.xml
 
 User-Agent: ia_archiver
 Allow: /api
+Sitemap: https://alexisevelyn.me/sitemap-alexa-archive.xml
 
 User-Agent: archive.org_bot
 Allow: /api
+Sitemap: https://alexisevelyn.me/sitemap-archive-archive.xml
 
-# Generated With `dolt sql -q "select concat('https://alexisevelyn.me/tweet/',id) from tweets order by id desc limit 50000" -r csv > ../../rover/server/web/other/sitemap.txt`
-# Then Header Edited Out With Nano
-Sitemap: https://alexisevelyn.me/sitemap.txt
+User-Agent: Googlebot
+Sitemap: https://alexisevelyn.me/sitemap-google-search.xml
+
+User-Agent: Bingbot
+Sitemap: https://alexisevelyn.me/sitemap-bing-search.xml
+
+User-Agent: DuckDuckBot
+Sitemap: https://alexisevelyn.me/sitemap-duckduckgo-search.xml
+
+User-Agent: Slurp
+Sitemap: https://alexisevelyn.me/sitemap-yahoo-search.xml
+
+User-Agent: Baiduspider
+Sitemap: https://alexisevelyn.me/sitemap-baidu-search.xml

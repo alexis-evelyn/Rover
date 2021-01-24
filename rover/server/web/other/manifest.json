@@ -1,7 +1,7 @@
 {
   "name": "Rover Tweet Analyzer",
   "short_name": "Rover",
-  "start_url": "/?pwa=true",
+  "start_url": "/?pwa=true&utm_source=homescreen&utm_medium=pwa",
   "display": "standalone",
   "orientation": "portrait-primary",
   "theme_color": "#660099",

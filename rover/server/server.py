@@ -137,39 +137,44 @@ class RequestHandler(BaseHTTPRequestHandler):
                 hour=str(current_time.hour).zfill(2), minute=str(current_time.minute).zfill(2), second=str(current_time.second).zfill(2)
             )
 
-            if len(tracking_parameters) > 0:
-                # Use MySQL Library For Escaping Search Text
-                sql_converter: conversion.MySQLConverter = conversion.MySQLConverter()
+            # Add Referer
+            if "referer" in self.headers:
+                utm_parameters["referer"]: str = self.headers["referer"]
 
-                # Regex Pattern To Strip All Non-Alphanumeric Characters
-                no_symbols_pattern = re.compile(r'[\W_]+')
+            # Removing Requirement For Needing UTM Parameter To Aid Tracking
+            # if len(tracking_parameters) > 0:
+            # Use MySQL Library For Escaping Search Text
+            sql_converter: conversion.MySQLConverter = conversion.MySQLConverter()
 
-                # Sanitize Keys
-                cleaned_keys: List[str] = []
-                for key in utm_parameters.keys():
-                    stripped_key: str = re.sub(no_symbols_pattern, '', key)
-                    cleaned_keys.append(sql_converter.escape(value=stripped_key))
+            # Regex Pattern To Strip All Non-Alphanumeric Characters
+            no_symbols_pattern = re.compile(r'[\W_]+')
 
-                # Sanitize Values
-                cleaned_values: List[str] = []
-                for value in utm_parameters.values():
-                    cleaned_values.append(sql_converter.escape(value=value))
+            # Sanitize Keys
+            cleaned_keys: List[str] = []
+            for key in utm_parameters.keys():
+                stripped_key: str = re.sub(no_symbols_pattern, '', key)
+                cleaned_keys.append(sql_converter.escape(value=stripped_key))
 
-                keys: str = ','.join(cleaned_keys)
-                # keys: str = sql_converter.escape(value=keys)
+            # Sanitize Values
+            cleaned_values: List[str] = []
+            for value in utm_parameters.values():
+                cleaned_values.append(sql_converter.escape(value=value))
 
-                # Put Values Into Format Able To Be Inserted Into Query
-                values: str = '","'.join(cleaned_values)
-                values: str = f'"{values}"'
+            keys: str = ','.join(cleaned_keys)
+            # keys: str = sql_converter.escape(value=keys)
 
-                insert_analytics_sql = f'''
-                    insert into utm ({keys}) values ({values});
-                '''
+            # Put Values Into Format Able To Be Inserted Into Query
+            values: str = '","'.join(cleaned_values)
+            values: str = f'"{values}"'
 
-                # self.logger.log(level=self.VERBOSE, msg=insert_analytics_sql)
-                self.analytics_repo.sql(query=insert_analytics_sql, result_format="csv")
+            insert_analytics_sql = f'''
+                insert into web ({keys}) values ({values});
+            '''
+
+            # self.logger.log(level=self.VERBOSE, msg=insert_analytics_sql)
+            self.analytics_repo.sql(query=insert_analytics_sql, result_format="csv")
         except Exception as e:
-            self.logger.info(f"UTM Parsing Error: {e}")
+            self.logger.error(f"UTM Parsing Error: {e}")
 
         try:
             if url.startswith("/api"):

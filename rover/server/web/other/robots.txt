@@ -19,9 +19,3 @@ Sitemap: https://alexisevelyn.me/sitemap-bing-search.xml
 
 User-Agent: DuckDuckBot
 Sitemap: https://alexisevelyn.me/sitemap-duckduckgo-search.xml
-
-User-Agent: Slurp
-Sitemap: https://alexisevelyn.me/sitemap-yahoo-search.xml
-
-User-Agent: Baiduspider
-Sitemap: https://alexisevelyn.me/sitemap-baidu-search.xml

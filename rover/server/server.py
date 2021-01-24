@@ -169,7 +169,7 @@ class RequestHandler(BaseHTTPRequestHandler):
                 # self.logger.log(level=self.VERBOSE, msg=insert_analytics_sql)
                 self.analytics_repo.sql(query=insert_analytics_sql, result_format="csv")
         except Exception as e:
-            self.logger.error(f"UTM Parsing Error: {e}")
+            self.logger.info(f"UTM Parsing Error: {e}")
 
         try:
             if url.startswith("/api"):

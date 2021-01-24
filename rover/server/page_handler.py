@@ -100,6 +100,7 @@ def load_offline_page(self):
 
 def write_header(self, site_title: str, twitter_title: str, twitter_description: str):
     current_time: str = f"{datetime.now().astimezone(tz=pytz.UTC):%A, %B, %d %Y at %H:%M:%S.%f %z}"
+    google_analytics_code: str = self.config["google_analytics_code"]
 
     self.wfile.write(bytes(load_text_file("rover/server/web/templates/header.html")
                            .replace("{site_title}", site_title)
@@ -107,6 +108,7 @@ def write_header(self, site_title: str, twitter_title: str, twitter_description:
                            .replace("{twitter_handle}", config.AUTHOR_TWITTER_HANDLE)
                            .replace("{twitter_description}", twitter_description)
                            .replace("{current_time}", current_time)
+                           .replace("{google_analytics_code}", google_analytics_code)
                            , "utf-8"))
 
 

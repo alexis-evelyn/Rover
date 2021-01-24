@@ -1,6 +1,9 @@
 # Credentials
 credentials.json
 
+# Config
+config.json
+
 # Working Files
 latest_status.json
 working

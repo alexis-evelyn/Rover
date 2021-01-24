@@ -37,6 +37,9 @@ CORS_SITES: str = "*"
 # Website URL
 WEBSITE_ROOT: str = "https://alexisevelyn.me"
 
+# Config
+CONFIG_FILE_PATH: str = "config.json"
+
 # Other
 REPLY: bool = True
 AUTHOR_TWITTER_ID: int = 1008066479114383360

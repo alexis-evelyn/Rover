@@ -1,5 +1,5 @@
 #!/usr/bin/python
-
+import json
 import logging
 import socketserver
 import threading
@@ -10,7 +10,8 @@ from urllib.parse import urlparse
 from doltpy.core import Dolt
 from doltpy.core.system_helpers import get_logger
 
-from archiver import config
+from archiver import config as archiver_config
+from rover import config as rover_config
 from config import config as main_config
 import rover.server.page_handler as handler
 import rover.server.api_handler as api
@@ -62,9 +63,13 @@ class RequestHandler(BaseHTTPRequestHandler):
         # TODO: Implement Global Handle On Repo
         # Initiate Repo For Server
         self.repo: Optional[Dolt] = None
-        self.initRepo(path=config.ARCHIVE_TWEETS_REPO_PATH,
+        self.initRepo(path=archiver_config.ARCHIVE_TWEETS_REPO_PATH,
                       create=False,
-                      url=config.ARCHIVE_TWEETS_REPO_URL)
+                      url=archiver_config.ARCHIVE_TWEETS_REPO_URL)
+
+        # Setup Web/Rover Config
+        with open(rover_config.CONFIG_FILE_PATH, "r") as file:
+            self.config = json.load(file)
 
         super().__init__(request, client_address, server)
 

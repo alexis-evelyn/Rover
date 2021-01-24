@@ -16,6 +16,8 @@ import traceback
 import pytz
 import pandas as pd
 
+from rover.server import helper_functions
+
 
 def load_page(self, page: str):
     # Site Data
@@ -39,6 +41,8 @@ def load_page(self, page: str):
     self.send_response(200)
     self.send_header("Content-type", "text/html")
 
+    helper_functions.handle_tracking_cookie(self=self)
+
     if "Service-Worker-Navigation-Preload" in self.headers:
         self.send_header("Vary", "Service-Worker-Navigation-Preload")
 
@@ -61,6 +65,8 @@ def load_file(self, path: str, mime_type: str):
     # HTTP Headers
     self.send_response(200)
     self.send_header("Content-type", mime_type)
+
+    helper_functions.handle_tracking_cookie(self=self)
 
     if "Service-Worker-Navigation-Preload" in self.headers:
         self.send_header("Vary", "Service-Worker-Navigation-Preload")
@@ -90,6 +96,8 @@ def load_404_page(self, error_code: int = 404):
     self.send_response(error_code)
     self.send_header("Content-type", "text/html")
 
+    helper_functions.handle_tracking_cookie(self=self)
+
     if "Service-Worker-Navigation-Preload" in self.headers:
         self.send_header("Vary", "Service-Worker-Navigation-Preload")
 
@@ -111,6 +119,8 @@ def load_404_page(self, error_code: int = 404):
 def load_offline_page(self):
     self.send_response(200)
     self.send_header("Content-type", "text/html")
+
+    helper_functions.handle_tracking_cookie(self=self)
 
     if "Service-Worker-Navigation-Preload" in self.headers:
         self.send_header("Vary", "Service-Worker-Navigation-Preload")
@@ -194,6 +204,8 @@ def load_tweet(self):
     self.send_response(200)
     self.send_header("Content-type", "text/html")
 
+    helper_functions.handle_tracking_cookie(self=self)
+
     if "Service-Worker-Navigation-Preload" in self.headers:
         self.send_header("Vary", "Service-Worker-Navigation-Preload")
 
@@ -238,6 +250,8 @@ def load_sitemap(self):
     # HTTP Headers
     self.send_response(200)
     self.send_header("Content-type", "application/xml")
+
+    helper_functions.handle_tracking_cookie(self=self)
 
     if "Service-Worker-Navigation-Preload" in self.headers:
         self.send_header("Vary", "Service-Worker-Navigation-Preload")

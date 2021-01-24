@@ -17,6 +17,7 @@ from urllib.parse import urlparse, parse_qs
 # 4 - Invalid Post Data
 # 5 - Need A Valid Tweet ID
 # 6 - No Tweet Found
+from rover.server import helper_functions
 
 
 def handle_api(self):
@@ -31,6 +32,8 @@ def handle_api(self):
 def send_headers(self, content_length: int = 0):
     self.send_response(200)
     self.send_header("Content-type", "application/json")
+
+    helper_functions.handle_tracking_cookie(self=self)
 
     if "Service-Worker-Navigation-Preload" in self.headers:
         self.send_header("Vary", "Service-Worker-Navigation-Preload")

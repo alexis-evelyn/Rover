@@ -5,6 +5,12 @@ import logging
 import socketserver
 import string
 import threading
+import uuid
+
+import rover.server.page_handler as handler
+import rover.server.api_handler as api
+import rover.server.schema_handler as schema
+
 from datetime import datetime, timezone
 from http.server import BaseHTTPRequestHandler, HTTPServer
 from typing import Tuple, Optional, List
@@ -17,9 +23,6 @@ from mysql.connector import conversion
 from archiver import config as archiver_config
 from rover import config as rover_config
 from config import config as main_config
-import rover.server.page_handler as handler
-import rover.server.api_handler as api
-import rover.server.schema_handler as schema
 
 threadLock: threading.Lock = threading.Lock()
 
@@ -141,6 +144,17 @@ class RequestHandler(BaseHTTPRequestHandler):
             if "referer" in self.headers:
                 utm_parameters["referer"]: str = self.headers["referer"]
 
+            if "cookie" in self.headers:
+                cookies_split: List[str] = self.headers['cookie'].split('; ')
+                cookies: dict = {}
+
+                for cookie_split in cookies_split:
+                    cookie: List[str] = cookie_split.split('=')
+                    cookies[cookie[0]] = cookie[1]
+
+                if 'analytics' in cookies:
+                    utm_parameters["tracker"]: str = cookies['analytics']
+
             # Removing Requirement For Needing UTM Parameter To Aid Tracking
             # if len(tracking_parameters) > 0:
             # Use MySQL Library For Escaping Search Text
@@ -172,7 +186,8 @@ class RequestHandler(BaseHTTPRequestHandler):
             '''
 
             # self.logger.log(level=self.VERBOSE, msg=insert_analytics_sql)
-            self.analytics_repo.sql(query=insert_analytics_sql, result_format="csv")
+            if not ("DNT" in self.headers and self.headers["DNT"] == "1"):
+                self.analytics_repo.sql(query=insert_analytics_sql, result_format="csv")
         except Exception as e:
             self.logger.error(f"UTM Parsing Error: {e}")
 

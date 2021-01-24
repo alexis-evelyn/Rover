@@ -10,6 +10,8 @@ from database import database
 
 from urllib.parse import urlparse, parse_qs
 
+from rover.server import helper_functions
+
 
 def handle_schema(self):
     # Determine Reply and Send It
@@ -19,6 +21,8 @@ def handle_schema(self):
 def send_headers(self, content_length: int = 0):
     self.send_response(200)
     self.send_header("Content-type", "application/json")
+
+    helper_functions.handle_tracking_cookie(self=self)
 
     if "Service-Worker-Navigation-Preload" in self.headers:
         self.send_header("Vary", "Service-Worker-Navigation-Preload")

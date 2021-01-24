@@ -78,12 +78,12 @@ def search_text(api: twitter.Api, status: twitter.models.Status,
         url = "https://twitter.com/{screen_name}/statuses/{status_id}".format(status_id=search_post_response["id"],
                                                                               screen_name=author)
     else:
-        url = "{website_root}/tweet/{status_id}?utm_source=homescreen&utm_medium=pwa" \
+        url = "{website_root}/tweet/{status_id}/?utm_source={utm_source}&utm_medium={utm_medium}&utm_campaign={utm_campaign}&utm_content={utm_content}" \
             .format(website_root=config.WEBSITE_ROOT,
                     status_id=search_post_response["id"],
                     utm_source="twitter",
                     utm_medium="rover",
-                    utm_campaign="response",
+                    utm_campaign="search",
                     utm_content=status.id)
 
     count: int = database.count_tweets(search_phrase=phrase,

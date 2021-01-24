@@ -44,6 +44,10 @@ WEBSITE_ROOT: str = "https://alexisevelyn.me"
 # Config
 CONFIG_FILE_PATH: str = "config.json"
 
+# Analytics Repo
+ANALYTICS_REPO_URL: str = "alexis-evelyn/rover-analytics"
+ANALYTICS_REPO_PATH: str = os.path.join(WORKING_DIRECTORY, "analytics")
+
 # Other
 REPLY: bool = True
 AUTHOR_TWITTER_ID: int = 1008066479114383360

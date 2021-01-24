@@ -1,14 +1,17 @@
 #!/usr/bin/python
 import json
+import re
 import logging
 import socketserver
+import string
 import threading
 from http.server import BaseHTTPRequestHandler, HTTPServer
-from typing import Tuple, Optional
-from urllib.parse import urlparse
+from typing import Tuple, Optional, List
+from urllib.parse import urlparse, parse_qs
 
 from doltpy.core import Dolt
 from doltpy.core.system_helpers import get_logger
+from mysql.connector import conversion
 
 from archiver import config as archiver_config
 from rover import config as rover_config
@@ -67,6 +70,8 @@ class RequestHandler(BaseHTTPRequestHandler):
                       create=False,
                       url=archiver_config.ARCHIVE_TWEETS_REPO_URL)
 
+        self.analytics_repo: Optional[Dolt] = Dolt(rover_config.ANALYTICS_REPO_PATH)
+
         # Setup Web/Rover Config
         with open(rover_config.CONFIG_FILE_PATH, "r") as file:
             self.config = json.load(file)
@@ -97,7 +102,67 @@ class RequestHandler(BaseHTTPRequestHandler):
             self.logger.debug("{ip_address} Requested {page_url}: {error_message}".format(ip_address=self.address_string(), page_url=self.path, error_message=e))
 
     def do_GET(self):
+        queries: dict[str, list[str]] = parse_qs(urlparse(self.path).query)
         url: str = urlparse(self.path).path.rstrip('/').lower()
+
+        try:
+            filtered_queries = filter(lambda elem: str(elem[0]).startswith("utm_"), queries.items())
+            tracking_parameters: dict[str, list[str]] = dict(filtered_queries)
+
+            # Print URL Path If UTM Tracking Applied
+            if len(tracking_parameters) > 0:
+                self.logger.debug(f"UTM Path: {urlparse(self.path).path}")
+
+            # Store Valid UTM In Dict For Logging
+            utm_parameters: dict = {
+                "path": urlparse(self.path).path
+            }
+
+            # Print UTM Queries
+            for track in tracking_parameters:
+                param_name: str = track.rsplit('_')[1].capitalize()
+
+                # We Don't Bother With `utm_` Without Anything After The Dash
+                if param_name.strip() == "":
+                    continue
+
+                utm_value: list = tracking_parameters[track]
+                utm_parameters[param_name.lower()] = ", ".join(utm_value)
+                self.logger.debug(f"UTM {param_name}: {', '.join(utm_value)}")
+
+            if len(tracking_parameters) > 0:
+                # Use MySQL Library For Escaping Search Text
+                sql_converter: conversion.MySQLConverter = conversion.MySQLConverter()
+
+                # Regex Pattern To Strip All Non-Alphanumeric Characters
+                no_symbols_pattern = re.compile(r'[\W_]+')
+
+                # Sanitize Keys
+                cleaned_keys: List[str] = []
+                for key in utm_parameters.keys():
+                    stripped_key: str = re.sub(no_symbols_pattern, '', key)
+                    cleaned_keys.append(sql_converter.escape(value=stripped_key))
+
+                # Sanitize Values
+                cleaned_values: List[str] = []
+                for value in utm_parameters.values():
+                    cleaned_values.append(sql_converter.escape(value=value))
+
+                keys: str = ','.join(cleaned_keys)
+                # keys: str = sql_converter.escape(value=keys)
+
+                # Put Values Into Format Able To Be Inserted Into Query
+                values: str = '","'.join(cleaned_values)
+                values: str = f'"{values}"'
+
+                insert_analytics_sql = f'''
+                    insert into utm ({keys}) values ({values});
+                '''
+
+                # self.logger.log(level=self.VERBOSE, msg=insert_analytics_sql)
+                self.analytics_repo.sql(query=insert_analytics_sql, result_format="csv")
+        except Exception as e:
+            self.logger.error(f"UTM Parsing Error: {e}")
 
         try:
             if url.startswith("/api"):

@@ -355,3 +355,6 @@ def retrieveMissingBroadcastFiles(repo: Dolt, tweets_table: str, media_table: st
         .where(media.stream_json.null())
 
     return repo.sql(query=query.get_sql(quote_char=None), result_format='json')["rows"]
+
+def log_utm(repo: Dolt, data: dict):
+    None

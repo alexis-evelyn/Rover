@@ -133,8 +133,8 @@ class RequestHandler(BaseHTTPRequestHandler):
             current_time: datetime = datetime.now(timezone.utc)
             utm_parameters["path"]: str = urlparse(self.path).path
             utm_parameters["date"]: str = "{year}-{month}-{day} {hour}:{minute}:{second}".format(
-                year=current_time.year, month=current_time.month, day=current_time.day,
-                hour=current_time.hour, minute=current_time.minute, second=current_time.second
+                year=str(current_time.year).zfill(4), month=str(current_time.month).zfill(2), day=str(current_time.day).zfill(2),
+                hour=str(current_time.hour).zfill(2), minute=str(current_time.minute).zfill(2), second=str(current_time.second).zfill(2)
             )
 
             if len(tracking_parameters) > 0:

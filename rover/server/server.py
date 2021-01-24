@@ -155,6 +155,9 @@ class RequestHandler(BaseHTTPRequestHandler):
                 if 'analytics' in cookies:
                     utm_parameters["tracker"]: str = cookies['analytics']
 
+                if 'session' in cookies:
+                    utm_parameters["tsession"]: str = cookies['session']
+
             # Removing Requirement For Needing UTM Parameter To Aid Tracking
             # if len(tracking_parameters) > 0:
             # Use MySQL Library For Escaping Search Text

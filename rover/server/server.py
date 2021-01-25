@@ -179,11 +179,18 @@ class RequestHandler(BaseHTTPRequestHandler):
                 if 'session' in cookies:
                     utm_parameters["tracking_session"]: str = cookies['session']
 
+            ip_address: str = str(self.client_address[0])
+            anon_ip: str = re.sub(r"(\d+).(\d+).(\d+).(\d+)", r"\1.\2.\3.0", ip_address)
+
+            # Anonymized IP Address
+            utm_parameters["ip_address"] = anon_ip
+
+            # self.logger.error(self.headers)
+
             analytics_df: pd.DataFrame = pd.DataFrame(utm_parameters, index=[0])
 
             if not ("DNT" in self.headers and self.headers["DNT"] == "1"):
                 analytics_df.to_sql('web', con=self.analytics_engine, if_exists='append', index=False)
-                # self.analytics_repo.sql(query=insert_analytics_sql, result_format="csv")
         except Exception as e:
             self.logger.error(f"UTM Parsing Error: {e}")
 

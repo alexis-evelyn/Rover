@@ -177,41 +177,10 @@ class RequestHandler(BaseHTTPRequestHandler):
                     utm_parameters["tracker"]: str = cookies['analytics']
 
                 if 'session' in cookies:
-                    utm_parameters["tsession"]: str = cookies['session']
+                    utm_parameters["tracking_session"]: str = cookies['session']
 
             analytics_df: pd.DataFrame = pd.DataFrame(utm_parameters, index=[0])
 
-            # # Removing Requirement For Needing UTM Parameter To Aid Tracking
-            # # if len(tracking_parameters) > 0:
-            # # Use MySQL Library For Escaping Search Text
-            # sql_converter: conversion.MySQLConverter = conversion.MySQLConverter()
-            #
-            # # Regex Pattern To Strip All Non-Alphanumeric Characters
-            # no_symbols_pattern = re.compile(r'[\W_]+')
-            #
-            # # Sanitize Keys
-            # cleaned_keys: List[str] = []
-            # for key in utm_parameters.keys():
-            #     stripped_key: str = re.sub(no_symbols_pattern, '', key)
-            #     cleaned_keys.append(sql_converter.escape(value=stripped_key))
-            #
-            # # Sanitize Values
-            # cleaned_values: List[str] = []
-            # for value in utm_parameters.values():
-            #     cleaned_values.append(sql_converter.escape(value=value))
-            #
-            # keys: str = ','.join(cleaned_keys)
-            # # keys: str = sql_converter.escape(value=keys)
-            #
-            # # Put Values Into Format Able To Be Inserted Into Query
-            # values: str = '","'.join(cleaned_values)
-            # values: str = f'"{values}"'
-            #
-            # insert_analytics_sql = f'''
-            #     insert into web ({keys}) values ({values});
-            # '''
-
-            # self.logger.log(level=self.VERBOSE, msg=insert_analytics_sql)
             if not ("DNT" in self.headers and self.headers["DNT"] == "1"):
                 analytics_df.to_sql('web', con=self.analytics_engine, if_exists='append', index=False)
                 # self.analytics_repo.sql(query=insert_analytics_sql, result_format="csv")

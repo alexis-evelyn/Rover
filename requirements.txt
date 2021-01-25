@@ -8,16 +8,17 @@ future==0.18.2
 idna>=2.10
 joblib==1.0.0
 mysql-connector-python>=8.0.21
+mysqlclient==2.0.3
 nltk==3.5
 numpy==1.19.5
 oauthlib==3.1.0
-pandas==1.2.0
+pandas==1.2.1
 Pillow==8.1.0
 protobuf==3.14.0
 psutil==5.8.0
 psycopg2-binary==2.8.6
 py==1.10.0
-PyPika==0.47.3
+PyPika==0.47.4
 python-dateutil==2.8.1
 python-twitter==3.5
 pytz==2020.5
@@ -30,4 +31,4 @@ SQLAlchemy==1.3.22
 textblob==0.15.3
 tqdm==4.56.0
 urllib3==1.26.2
-youtube-dl==2021.1.8
+youtube-dl==2021.1.24.1

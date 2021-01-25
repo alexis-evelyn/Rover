@@ -7,16 +7,21 @@ import string
 import threading
 import uuid
 
+import sqlalchemy
+
 import rover.server.page_handler as handler
 import rover.server.api_handler as api
 import rover.server.schema_handler as schema
+import pandas as pd
 
+from sqlalchemy import create_engine
 from datetime import datetime, timezone
 from http.server import BaseHTTPRequestHandler, HTTPServer
 from typing import Tuple, Optional, List
 from urllib.parse import urlparse, parse_qs
+from functools import partial
 
-from doltpy.core import Dolt
+from doltpy.core import Dolt, ServerConfig
 from doltpy.core.system_helpers import get_logger
 from mysql.connector import conversion
 
@@ -40,13 +45,45 @@ class WebServer(threading.Thread):
         self.host_name = "0.0.0.0"
         self.port = 8930
 
+        # TODO: Implement Global Handle On Repo
+        # Initiate Repo For Server
+        self.repo: Optional[Dolt] = None
+        self.initRepo(path=archiver_config.ARCHIVE_TWEETS_REPO_PATH,
+                      create=False,
+                      url=archiver_config.ARCHIVE_TWEETS_REPO_URL)
+
+        # Setup Analytics SQL Server
+        self.analytics_server_config: ServerConfig = ServerConfig(port=3307)
+        self.analytics_repo: Optional[Dolt] = Dolt(repo_dir=rover_config.ANALYTICS_REPO_PATH,
+                                                   server_config=self.analytics_server_config)
+
+        # Start Analytics SQL Server
+        self.analytics_repo.sql_server()
+        self.analytics_engine: sqlalchemy.engine = create_engine("mysql://root@127.0.0.1:3307/analytics", echo=False)
+
+        # Setup Web/Rover Config
+        with open(rover_config.CONFIG_FILE_PATH, "r") as file:
+            self.config: dict = json.load(file)
+
+        self.logger.log(self.VERBOSE, "Starting Web Server!!!")
+
+    def initRepo(self, path: str, create: bool, url: str = None):
+        # Prepare Repo For Data
+        if create:
+            repo = Dolt.init(path)
+            repo.remote(add=True, name='origin', url=url)
+            self.repo: Dolt = repo
+
+        self.repo: Dolt = Dolt(repo_dir=path)
+
     def run(self):
         self.logger.log(self.INFO_QUIET, "Starting " + self.name)
 
         # Get lock to synchronize threads
         threadLock.acquire()
 
-        webServer = HTTPServer((self.host_name, self.port), RequestHandler)
+        requestHandler: partial = partial(RequestHandler, self.analytics_engine, self.repo, self.config)
+        webServer = HTTPServer((self.host_name, self.port), requestHandler)
         self.logger.log(self.INFO_QUIET, "Server Started %s:%s" % (self.host_name, self.port))
 
         try:
@@ -62,34 +99,18 @@ class WebServer(threading.Thread):
 
 
 class RequestHandler(BaseHTTPRequestHandler):
-    def __init__(self, request: bytes, client_address: Tuple[str, int], server: socketserver.BaseServer):
+    def __init__(self, analytics_engine: sqlalchemy.engine, repo: Dolt, config: dict, request: bytes, client_address: Tuple[str, int], server: socketserver.BaseServer):
         self.logger: logging.Logger = get_logger(__name__)
         self.INFO_QUIET: int = main_config.INFO_QUIET
         self.VERBOSE: int = main_config.VERBOSE
 
-        # TODO: Implement Global Handle On Repo
-        # Initiate Repo For Server
-        self.repo: Optional[Dolt] = None
-        self.initRepo(path=archiver_config.ARCHIVE_TWEETS_REPO_PATH,
-                      create=False,
-                      url=archiver_config.ARCHIVE_TWEETS_REPO_URL)
+        self.config: dict = config
+        self.repo: Dolt = repo
+        self.analytics_engine: sqlalchemy.engine = analytics_engine
 
-        self.analytics_repo: Optional[Dolt] = Dolt(rover_config.ANALYTICS_REPO_PATH)
-
-        # Setup Web/Rover Config
-        with open(rover_config.CONFIG_FILE_PATH, "r") as file:
-            self.config = json.load(file)
+        self.logger.log(self.VERBOSE, "Starting Request Handler!!!")
 
         super().__init__(request, client_address, server)
-
-    def initRepo(self, path: str, create: bool, url: str = None):
-        # Prepare Repo For Data
-        if create:
-            repo = Dolt.init(path)
-            repo.remote(add=True, name='origin', url=url)
-            self.repo: Dolt = repo
-
-        self.repo: Dolt = Dolt(path)
 
     def log_message(self, log_format: str, *args: [str]):
         self.logger.log(logging.DEBUG, log_format % args)
@@ -158,39 +179,42 @@ class RequestHandler(BaseHTTPRequestHandler):
                 if 'session' in cookies:
                     utm_parameters["tsession"]: str = cookies['session']
 
-            # Removing Requirement For Needing UTM Parameter To Aid Tracking
-            # if len(tracking_parameters) > 0:
-            # Use MySQL Library For Escaping Search Text
-            sql_converter: conversion.MySQLConverter = conversion.MySQLConverter()
+            analytics_df: pd.DataFrame = pd.DataFrame(utm_parameters, index=[0])
 
-            # Regex Pattern To Strip All Non-Alphanumeric Characters
-            no_symbols_pattern = re.compile(r'[\W_]+')
-
-            # Sanitize Keys
-            cleaned_keys: List[str] = []
-            for key in utm_parameters.keys():
-                stripped_key: str = re.sub(no_symbols_pattern, '', key)
-                cleaned_keys.append(sql_converter.escape(value=stripped_key))
-
-            # Sanitize Values
-            cleaned_values: List[str] = []
-            for value in utm_parameters.values():
-                cleaned_values.append(sql_converter.escape(value=value))
-
-            keys: str = ','.join(cleaned_keys)
-            # keys: str = sql_converter.escape(value=keys)
-
-            # Put Values Into Format Able To Be Inserted Into Query
-            values: str = '","'.join(cleaned_values)
-            values: str = f'"{values}"'
-
-            insert_analytics_sql = f'''
-                insert into web ({keys}) values ({values});
-            '''
+            # # Removing Requirement For Needing UTM Parameter To Aid Tracking
+            # # if len(tracking_parameters) > 0:
+            # # Use MySQL Library For Escaping Search Text
+            # sql_converter: conversion.MySQLConverter = conversion.MySQLConverter()
+            #
+            # # Regex Pattern To Strip All Non-Alphanumeric Characters
+            # no_symbols_pattern = re.compile(r'[\W_]+')
+            #
+            # # Sanitize Keys
+            # cleaned_keys: List[str] = []
+            # for key in utm_parameters.keys():
+            #     stripped_key: str = re.sub(no_symbols_pattern, '', key)
+            #     cleaned_keys.append(sql_converter.escape(value=stripped_key))
+            #
+            # # Sanitize Values
+            # cleaned_values: List[str] = []
+            # for value in utm_parameters.values():
+            #     cleaned_values.append(sql_converter.escape(value=value))
+            #
+            # keys: str = ','.join(cleaned_keys)
+            # # keys: str = sql_converter.escape(value=keys)
+            #
+            # # Put Values Into Format Able To Be Inserted Into Query
+            # values: str = '","'.join(cleaned_values)
+            # values: str = f'"{values}"'
+            #
+            # insert_analytics_sql = f'''
+            #     insert into web ({keys}) values ({values});
+            # '''
 
             # self.logger.log(level=self.VERBOSE, msg=insert_analytics_sql)
             if not ("DNT" in self.headers and self.headers["DNT"] == "1"):
-                self.analytics_repo.sql(query=insert_analytics_sql, result_format="csv")
+                analytics_df.to_sql('web', con=self.analytics_engine, if_exists='append', index=False)
+                # self.analytics_repo.sql(query=insert_analytics_sql, result_format="csv")
         except Exception as e:
             self.logger.error(f"UTM Parsing Error: {e}")
 

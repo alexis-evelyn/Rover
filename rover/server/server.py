@@ -124,7 +124,10 @@ class RequestHandler(BaseHTTPRequestHandler):
         self.logger.log(logging.DEBUG, log_format % args)
 
     def do_POST(self):
+        queries: dict[str, list[str]] = parse_qs(urlparse(self.path).query)
         url: str = urlparse(self.path).path.rstrip('/').lower()
+
+        self.log_web_request(queries=queries)
 
         try:
             if url.startswith("/api"):
@@ -137,6 +140,51 @@ class RequestHandler(BaseHTTPRequestHandler):
     def do_GET(self):
         queries: dict[str, list[str]] = parse_qs(urlparse(self.path).query)
         url: str = urlparse(self.path).path.rstrip('/').lower()
+
+        self.log_web_request(queries=queries)
+
+        try:
+            if url.startswith("/api"):
+                api.handle_api(self=self)
+            # elif url.startswith("/schema"):
+            #     schema.handle_schema(self=self)
+            if url.startswith("/tweet"):
+                handler.load_tweet(self=self)
+            elif url == "":
+                handler.load_page(self=self, page='latest-tweets')
+            elif url == "/manifest.webmanifest":
+                handler.load_file(self=self, path="rover/server/web/other/manifest.json", mime_type="application/manifest+json")
+            elif url == "/robots.txt":
+                handler.load_file(self=self, path="rover/server/web/other/robots.txt", mime_type="text/plain")
+            elif url == "/favicon.ico":
+                handler.load_404_page(self=self)
+            elif url == "/images/rover-twitter-card.png":
+                handler.load_file(self=self, path="rover/server/web/images/Rover.png", mime_type="image/png")
+            elif url == "/images/rover.png":
+                handler.load_file(self=self, path="rover/server/web/images/Rover.png", mime_type="image/png")
+            elif url == "/images/rover.svg":
+                handler.load_file(self=self, path="rover/server/web/images/Rover.svg", mime_type="image/svg+xml")
+            elif url == "/css/stylesheet.css":
+                handler.load_file(self=self, path="rover/server/web/css/stylesheet.css", mime_type="text/css")
+            elif url == "/scripts/main.js":
+                handler.load_file(self=self, path="rover/server/web/scripts/main.js", mime_type="application/javascript")
+            elif url == "/scripts/helper.js":
+                handler.load_file(self=self, path="rover/server/web/scripts/helper.js", mime_type="application/javascript")
+            elif url == "/service-worker.js":
+                handler.load_file(self=self, path="rover/server/web/scripts/service-worker.js", mime_type="application/javascript")
+            elif url.startswith("/sitemap") and url.endswith(".xml"):
+                handler.load_sitemap(self=self)
+            elif url == "/404":
+                handler.load_404_page(self=self, error_code=200)
+            elif url == "/offline":
+                handler.load_offline_page(self=self)
+            else:
+                handler.load_404_page(self=self)
+        except BrokenPipeError as e:
+            self.logger.debug("{ip_address} Requested {page_url}: {error_message}".format(ip_address=self.address_string(), page_url=self.path, error_message=e))
+
+    def log_web_request(self, queries: dict[str, list[str]]):
+        self.logger.error(type(self.headers))
 
         try:
             filtered_queries = filter(lambda elem: str(elem[0]).startswith("utm_"), queries.items())
@@ -191,6 +239,10 @@ class RequestHandler(BaseHTTPRequestHandler):
             if "accept-language" in self.headers:
                 utm_parameters["language"] = self.headers["accept-language"]
 
+            # User Agent - TODO: Figure Out If/How To Anonymize This
+            if "user-agent" in self.headers:
+                utm_parameters["user_agent"] = self.headers["user-agent"]
+
             # Cloudflare Forwarded IP
             if 'CF-Connecting-IP' in self.headers:
                 ip_address: str = self.headers["CF-Connecting-IP"]
@@ -243,46 +295,6 @@ class RequestHandler(BaseHTTPRequestHandler):
                 analytics_df.to_sql('web', con=self.analytics_engine, if_exists='append', index=False)
         except Exception as e:
             self.logger.error(f"UTM Parsing Error: {e}")
-
-        try:
-            if url.startswith("/api"):
-                api.handle_api(self=self)
-            # elif url.startswith("/schema"):
-            #     schema.handle_schema(self=self)
-            if url.startswith("/tweet"):
-                handler.load_tweet(self=self)
-            elif url == "":
-                handler.load_page(self=self, page='latest-tweets')
-            elif url == "/manifest.webmanifest":
-                handler.load_file(self=self, path="rover/server/web/other/manifest.json", mime_type="application/manifest+json")
-            elif url == "/robots.txt":
-                handler.load_file(self=self, path="rover/server/web/other/robots.txt", mime_type="text/plain")
-            elif url == "/favicon.ico":
-                handler.load_404_page(self=self)
-            elif url == "/images/rover-twitter-card.png":
-                handler.load_file(self=self, path="rover/server/web/images/Rover.png", mime_type="image/png")
-            elif url == "/images/rover.png":
-                handler.load_file(self=self, path="rover/server/web/images/Rover.png", mime_type="image/png")
-            elif url == "/images/rover.svg":
-                handler.load_file(self=self, path="rover/server/web/images/Rover.svg", mime_type="image/svg+xml")
-            elif url == "/css/stylesheet.css":
-                handler.load_file(self=self, path="rover/server/web/css/stylesheet.css", mime_type="text/css")
-            elif url == "/scripts/main.js":
-                handler.load_file(self=self, path="rover/server/web/scripts/main.js", mime_type="application/javascript")
-            elif url == "/scripts/helper.js":
-                handler.load_file(self=self, path="rover/server/web/scripts/helper.js", mime_type="application/javascript")
-            elif url == "/service-worker.js":
-                handler.load_file(self=self, path="rover/server/web/scripts/service-worker.js", mime_type="application/javascript")
-            elif url.startswith("/sitemap") and url.endswith(".xml"):
-                handler.load_sitemap(self=self)
-            elif url == "/404":
-                handler.load_404_page(self=self, error_code=200)
-            elif url == "/offline":
-                handler.load_offline_page(self=self)
-            else:
-                handler.load_404_page(self=self)
-        except BrokenPipeError as e:
-            self.logger.debug("{ip_address} Requested {page_url}: {error_message}".format(ip_address=self.address_string(), page_url=self.path, error_message=e))
 
     def version_string(self):
         return "Rover"

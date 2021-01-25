@@ -6,6 +6,8 @@ import socketserver
 import string
 import threading
 import uuid
+import IP2Location
+import IP2Proxy
 
 import sqlalchemy
 
@@ -54,17 +56,20 @@ class WebServer(threading.Thread):
                       url=archiver_config.ARCHIVE_TWEETS_REPO_URL)
 
         # Setup Analytics SQL Server
-        self.analytics_server_config: ServerConfig = ServerConfig(port=3307)
+        self.analytics_server_config: ServerConfig = ServerConfig(port=rover_config.ANALYTICS_PORT)
         self.analytics_repo: Optional[Dolt] = Dolt(repo_dir=rover_config.ANALYTICS_REPO_PATH,
                                                    server_config=self.analytics_server_config)
 
         # Start Analytics SQL Server
         self.analytics_repo.sql_server()
-        self.analytics_engine: sqlalchemy.engine = create_engine("mysql://root@127.0.0.1:3307/analytics", echo=False)
+        self.analytics_engine: sqlalchemy.engine = create_engine(f"mysql://{rover_config.ANALYTICS_USERNAME}@{rover_config.ANALYTICS_HOST}:{rover_config.ANALYTICS_PORT}/{rover_config.ANALYTICS_DATABASE}", echo=False)
 
         # Setup Web/Rover Config
         with open(rover_config.CONFIG_FILE_PATH, "r") as file:
             self.config: dict = json.load(file)
+
+        self.ip_lookup: IP2Location = IP2Location.IP2Location(filename=rover_config.IP_DATABASE, mode="SHARED_MEMORY")
+        self.proxy_lookup: IP2Proxy = IP2Proxy.IP2Proxy(filename=rover_config.PROXY_DATABASE)
 
         self.logger.log(self.VERBOSE, "Starting Web Server!!!")
 
@@ -83,7 +88,7 @@ class WebServer(threading.Thread):
         # Get lock to synchronize threads
         threadLock.acquire()
 
-        requestHandler: partial = partial(RequestHandler, self.analytics_engine, self.repo, self.config)
+        requestHandler: partial = partial(RequestHandler, self.analytics_engine, self.repo, self.config, self.ip_lookup, self.proxy_lookup)
         webServer = HTTPServer((self.host_name, self.port), requestHandler)
         self.logger.log(self.INFO_QUIET, "Server Started %s:%s" % (self.host_name, self.port))
 
@@ -100,7 +105,7 @@ class WebServer(threading.Thread):
 
 
 class RequestHandler(BaseHTTPRequestHandler):
-    def __init__(self, analytics_engine: sqlalchemy.engine, repo: Dolt, config: dict, request: bytes, client_address: Tuple[str, int], server: socketserver.BaseServer):
+    def __init__(self, analytics_engine: sqlalchemy.engine, repo: Dolt, config: dict, ip_lookup: IP2Location, proxy_lookup: IP2Proxy, request: bytes, client_address: Tuple[str, int], server: socketserver.BaseServer):
         self.logger: logging.Logger = get_logger(__name__)
         self.INFO_QUIET: int = main_config.INFO_QUIET
         self.VERBOSE: int = main_config.VERBOSE
@@ -108,6 +113,8 @@ class RequestHandler(BaseHTTPRequestHandler):
         self.config: dict = config
         self.repo: Dolt = repo
         self.analytics_engine: sqlalchemy.engine = analytics_engine
+        self.ip_lookup: IP2Location = ip_lookup
+        self.proxy_lookup: IP2Proxy = proxy_lookup
 
         self.logger.log(self.VERBOSE, "Starting Request Handler!!!")
 
@@ -180,6 +187,10 @@ class RequestHandler(BaseHTTPRequestHandler):
                 if 'session' in cookies:
                     utm_parameters["tracking_session"]: str = cookies['session']
 
+            # Languages of Users (To Potentially Provide Translation In The Future)
+            if "accept-language" in self.headers:
+                utm_parameters["language"] = self.headers["accept-language"]
+
             # Cloudflare Forwarded IP
             if 'CF-Connecting-IP' in self.headers:
                 ip_address: str = self.headers["CF-Connecting-IP"]
@@ -193,10 +204,41 @@ class RequestHandler(BaseHTTPRequestHandler):
             # Anonymized IP Address
             utm_parameters["ip_address"] = anonymize_ip(ip_address)
 
-            self.logger.error(self.headers)
+            # {'ip': '162.144.105.45', 'country_short': 'US', 'country_long': 'United States of America', 'region': 'Utah', 'city': 'Provo', 'latitude': 40.213909, 'longitude': -111.634071, 'zipcode': '84606', 'timezone': '-07:00'}
+            ip_record: IP2Location.IP2LocationRecord = self.ip_lookup.get_all(ip_address)
 
+            # {'is_proxy': 1, 'proxy_type': 'PUB', 'country_short': 'US', 'country_long': 'United States of America', 'region': 'Utah', 'city': 'Provo', 'isp': 'Unified Layer', 'domain': 'unifiedlayer.com', 'usage_type': 'DCH', 'asn': '46606', 'as_name': 'UNIFIEDLAYER-AS-1', 'last_seen': '30'}
+            proxy_record: IP2Proxy.IP2ProxyRecord = self.proxy_lookup.get_all(ip_address)
+
+            # Country
+            utm_parameters["country"] = ip_record.country_short if ip_record.country_short != "-" else None
+
+            # Region
+            utm_parameters["region"] = ip_record.region if ip_record.region != "-" else None
+
+            # City
+            utm_parameters["city"] = ip_record.city if ip_record.city != "-" else None
+
+            # Latitude
+            utm_parameters["latitude"] = ip_record.latitude if ip_record.latitude != 0 else None
+
+            # Longitude
+            utm_parameters["longitude"] = ip_record.longitude if ip_record.longitude != 0 else None
+
+            # ZipCode
+            utm_parameters["zipcode"] = ip_record.zipcode if ip_record.zipcode != "-" else None
+
+            # Identify If Proxy
+            utm_parameters["is_proxy"] = proxy_record["is_proxy"]
+
+            # https://blog.ip2location.com/knowledge-base/what-are-the-proxy-types-supported-in-ip2proxy/
+            # VPN = Hiding IP Address, TOR = Dark Web Anonymity, DCH = Host Provider/Datacenter Anonymity, PUB = Proxy Server, WEB = Web Based Proxy, SES = Spidering/Bots, RES = Proxy Through Residential IP Address
+            utm_parameters["proxy_type"] = proxy_record["proxy_type"] if proxy_record["proxy_type"] != "-" else None
+
+            # Insert Into DataFrame
             analytics_df: pd.DataFrame = pd.DataFrame(utm_parameters, index=[0])
 
+            # If Client Doesn't Want To Be Tracked, Do Not Log, Otherwise Log Anonymized Data
             if not ("DNT" in self.headers and self.headers["DNT"] == "1"):
                 analytics_df.to_sql('web', con=self.analytics_engine, if_exists='append', index=False)
         except Exception as e:

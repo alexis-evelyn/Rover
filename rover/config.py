@@ -47,6 +47,14 @@ CONFIG_FILE_PATH: str = "config.json"
 # Analytics Repo
 ANALYTICS_REPO_URL: str = "alexis-evelyn/rover-analytics"
 ANALYTICS_REPO_PATH: str = os.path.join(WORKING_DIRECTORY, "analytics")
+ANALYTICS_USERNAME: str = "root"
+ANALYTICS_HOST: str = "127.0.0.1"
+ANALYTICS_PORT: int = 3307
+ANALYTICS_DATABASE: str = "analytics"
+
+# IP/Proxy Files
+IP_DATABASE: str = os.path.join(WORKING_DIRECTORY, "IP2LOCATION-LITE-DB11.IPV6.BIN/IP2LOCATION-LITE-DB11.IPV6.BIN")
+PROXY_DATABASE: str = os.path.join(WORKING_DIRECTORY, "IP2PROXY-LITE-PX10.BIN/IP2PROXY-LITE-PX10.BIN")
 
 # Sitemap Variables
 SITEMAP_PREFIX: str = "https://alexisevelyn.me/tweet/"

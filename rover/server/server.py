@@ -20,6 +20,7 @@ from http.server import BaseHTTPRequestHandler, HTTPServer
 from typing import Tuple, Optional, List
 from urllib.parse import urlparse, parse_qs
 from functools import partial
+from anonymizeip import anonymize_ip
 
 from doltpy.core import Dolt, ServerConfig
 from doltpy.core.system_helpers import get_logger
@@ -179,12 +180,18 @@ class RequestHandler(BaseHTTPRequestHandler):
                 if 'session' in cookies:
                     utm_parameters["tracking_session"]: str = cookies['session']
 
-            ip_address: str = str(self.client_address[0])
-            anon_ip: str = re.sub(r"(\d+).(\d+).(\d+).(\d+)", r"\1.\2.\3.0", ip_address)
+            # Cloudflare Forwarded IP
+            if 'CF-Connecting-IP' in self.headers:
+                ip_address: str = self.headers["CF-Connecting-IP"]
+            # NGinx Forwarded IP
+            elif 'X-Real-IP' in self.headers:
+                ip_address: str = self.headers["X-Real-IP"]
+            # Direct IP Connecting To This Server
+            else:
+                ip_address: str = str(self.client_address[0])
 
             # Anonymized IP Address
-            utm_parameters["ip_address"] = anon_ip
-            self.logger.error(anon_ip)
+            utm_parameters["ip_address"] = anonymize_ip(ip_address)
 
             self.logger.error(self.headers)
 

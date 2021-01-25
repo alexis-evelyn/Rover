@@ -184,8 +184,9 @@ class RequestHandler(BaseHTTPRequestHandler):
 
             # Anonymized IP Address
             utm_parameters["ip_address"] = anon_ip
+            self.logger.error(anon_ip)
 
-            # self.logger.error(self.headers)
+            self.logger.error(self.headers)
 
             analytics_df: pd.DataFrame = pd.DataFrame(utm_parameters, index=[0])
 

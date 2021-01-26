@@ -244,12 +244,15 @@ class RequestHandler(BaseHTTPRequestHandler):
             # Cloudflare Forwarded IP
             if 'CF-Connecting-IP' in self.headers:
                 ip_address: str = self.headers["CF-Connecting-IP"]
+                utm_parameters["ip_source"] = "Cloudflare"
             # NGinx Forwarded IP
             elif 'X-Real-IP' in self.headers:
                 ip_address: str = self.headers["X-Real-IP"]
+                utm_parameters["ip_source"] = "NGinx"
             # Direct IP Connecting To This Server
             else:
                 ip_address: str = str(self.client_address[0])
+                utm_parameters["ip_source"] = "Direct"
 
             # Anonymized IP Address
             utm_parameters["ip_address"] = anonymize_ip(ip_address)

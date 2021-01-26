@@ -251,6 +251,7 @@ class RequestHandler(BaseHTTPRequestHandler):
                 utm_parameters["ip_source"] = "NGinx"
             # Direct IP Connecting To This Server
             else:
+                self.logger.error(f"Headers: {self.headers}")
                 ip_address: str = str(self.client_address[0])
                 utm_parameters["ip_source"] = "Direct"
 

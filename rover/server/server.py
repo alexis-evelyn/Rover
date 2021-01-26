@@ -184,8 +184,6 @@ class RequestHandler(BaseHTTPRequestHandler):
             self.logger.debug("{ip_address} Requested {page_url}: {error_message}".format(ip_address=self.address_string(), page_url=self.path, error_message=e))
 
     def log_web_request(self, queries: dict[str, list[str]]):
-        self.logger.error(type(self.headers))
-
         try:
             filtered_queries = filter(lambda elem: str(elem[0]).startswith("utm_"), queries.items())
             tracking_parameters: dict[str, list[str]] = dict(filtered_queries)

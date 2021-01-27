@@ -343,7 +343,7 @@ def load_privacy_page(self):
 
     # Lookup User Query
     cookies: Optional[dict] = helper_functions.get_cookies(self=self)
-    if 'analytics' in cookies:
+    if cookies is not None and 'analytics' in cookies:
         tracker_id: str = cookies['analytics']
         lookup_user_query: str = urllib.parse.quote_plus(f'select * from web where tracker="{tracker_id}" order by date desc;')
     else:

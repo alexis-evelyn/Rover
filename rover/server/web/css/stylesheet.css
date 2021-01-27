@@ -16,16 +16,22 @@ div#gov-tweets {
     overflow-x: auto;
 }
 
-.twitter-button {
-    width: 100%;
-}
+.footer-buttons-div {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    box-sizing: border-box;
 
-.twitter-button-div {
     margin: auto;
     min-width: 60%;
     max-width: 85%;
 
     padding: 10px;
+}
+
+.footer-buttons-div > button {
+    margin-bottom: 5px;
+    width: 100%;
 }
 
 /* Material Design Cards */

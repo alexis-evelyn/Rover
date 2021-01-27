@@ -300,13 +300,16 @@ def retrieveAccountInfo(repo: Dolt, account_id: int) -> dict:
 
 def pickRandomOfficials(repo: Dolt, max_results: int = 3) -> dict:
     # select first_name, last_name from government where twitter_user_id
-    # is not null group by first_name, last_name order by rand() limit 3
+    # is not null and first_name != "N/A" and last_name != "N/A" group by
+    # first_name, last_name order by rand() limit 3
     randFunc: CustomFunction = CustomFunction("rand()")
 
     government: Table = Table("government")
     query: QueryBuilder = Query.from_(government) \
         .select(government.first_name, government.last_name) \
         .where(government.twitter_user_id.notnull()) \
+        .where(government.first_name != "N/A") \
+        .where(government.last_name != "N/A") \
         .groupby(government.first_name, government.last_name) \
         .orderby(randFunc.name) \
         .limit(max_results)

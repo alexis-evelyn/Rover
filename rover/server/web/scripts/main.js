@@ -16,6 +16,7 @@ installEruda();
 
 function registerServiceWorker() {
   if ('serviceWorker' in navigator) {
+    // TODO: Any way to verify the hash of a service worker?
     navigator.serviceWorker.register('/service-worker.js')
         .then(function(registration) {
           console.debug('Registration Successful, Scope Is:', registration.scope);
@@ -211,6 +212,7 @@ function installEruda() {
         return;
     }
 
+    // Dynamically Generated, So Cannot Use SRI
     let src = 'https://cdn.jsdelivr.net/npm/eruda';
     if (!/eruda=true/.test(window.location) && localStorage.getItem('active-eruda') !== 'true') {
         return;

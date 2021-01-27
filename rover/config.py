@@ -65,3 +65,4 @@ AUTHOR_TWITTER_ID: int = 1008066479114383360
 AUTHOR_TWITTER_HANDLE: str = "@AlexisEvelyn42"
 HIDE_DELETED_TWEETS: bool = False
 ONLY_DELETED_TWEETS: bool = False
+GITHUB_REPO: str = "https://github.com/alexis-evelyn/Rover"

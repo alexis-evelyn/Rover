@@ -1,7 +1,7 @@
 #!/usr/bin/python
 import re
 from re import Pattern, Match
-from typing import List, Optional
+from typing import List, Optional, Tuple
 
 from database import database
 from rover import config
@@ -15,6 +15,7 @@ import json
 import traceback
 import pytz
 import pandas as pd
+import subresource_integrity as integrity
 
 from rover.server import helper_functions
 
@@ -23,7 +24,7 @@ def load_page(self, page: str):
     # Site Data
     site_title: str = "Rover"
 
-    # TODO: Verify If Multiple Connections Can Cause Data Loss
+    # TODO: Verify If Multiple Connections Can Cause Data Loss (It Can't Read Only, Maybe For Writing)
     data: dict = database.pickRandomOfficials(repo=self.repo)
 
     # Twitter Metadata
@@ -31,9 +32,9 @@ def load_page(self, page: str):
     twitter_description: str = "Future Analysis Website Here" \
                                " For Officials Such As {official_one}," \
                                " {official_two}, and {official_three}" \
-                               .format(official_one=(data[0]["first_name"] + " " + data[0]["last_name"]),
-                                       official_two=(data[1]["first_name"] + " " + data[1]["last_name"]),
-                                       official_three=(data[2]["first_name"] + " " + data[2]["last_name"]))
+        .format(official_one=(data[0]["first_name"] + " " + data[0]["last_name"]),
+                official_two=(data[1]["first_name"] + " " + data[1]["last_name"]),
+                official_three=(data[2]["first_name"] + " " + data[2]["last_name"]))
 
     # twitter_description: str = "Future Analysis Website Here For Officials Such As Donald Trump, Joe Biden, and Barack Obama"
 
@@ -107,10 +108,12 @@ def load_404_page(self, error_code: int = 404):
     self.end_headers()
 
     # Header
-    write_header(self=self, site_title="404 - Page Not Found", twitter_title="Page Not Found", twitter_description="No Page Exists Here")
+    write_header(self=self, site_title="404 - Page Not Found", twitter_title="Page Not Found",
+                 twitter_description="No Page Exists Here")
 
     # 404 Page Body - TODO: Add In Optional Variable Substitution Via write_body(...)
-    self.wfile.write(bytes(load_text_file("rover/server/web/pages/errors/404.html").replace("{path}", self.path), "utf-8"))
+    self.wfile.write(
+        bytes(load_text_file("rover/server/web/pages/errors/404.html").replace("{path}", self.path), "utf-8"))
 
     # Footer
     write_footer(self=self)
@@ -130,8 +133,8 @@ def load_offline_page(self):
 
     self.end_headers()
 
-    title = "Currently Offline"
-    description = "Cannot Load Page Due Being Offline"
+    title: str = "Currently Offline"
+    description: str = "Cannot Load Page Due Being Offline"
 
     # Header
     write_header(self=self, site_title=title, twitter_title=title, twitter_description=description)
@@ -147,6 +150,17 @@ def write_header(self, site_title: str, twitter_title: str, twitter_description:
     current_time: str = f"{datetime.now().astimezone(tz=pytz.UTC):%A, %B, %d %Y at %H:%M:%S.%f %z}"
     google_analytics_code: str = self.config["google_analytics_code"]
 
+    # Files To Generate SRI Hashes For
+    stylesheet_css: bytes = load_binary_file(path="rover/server/web/css/stylesheet.css")
+    main_js: bytes = load_binary_file(path="rover/server/web/scripts/main.js")
+    helper_js: bytes = load_binary_file(path="rover/server/web/scripts/helper.js")
+
+    # SRI Hashes
+    algorithms: Tuple[str] = ("sha512",)
+    stylesheet_css_hash = integrity.render(data=stylesheet_css, algorithms=algorithms)
+    main_js_hash = integrity.render(data=main_js, algorithms=algorithms)
+    helper_js_hash = integrity.render(data=helper_js, algorithms=algorithms)
+
     self.wfile.write(bytes(load_text_file("rover/server/web/templates/header.html")
                            .replace("{site_title}", site_title)
                            .replace("{twitter_title}", twitter_title)
@@ -154,6 +168,12 @@ def write_header(self, site_title: str, twitter_title: str, twitter_description:
                            .replace("{twitter_description}", twitter_description)
                            .replace("{current_time}", current_time)
                            .replace("{google_analytics_code}", google_analytics_code)
+                           .replace("{github_repo}", config.GITHUB_REPO)
+
+                           # SRI Hash Integrity
+                           .replace("{stylesheet_css_integrity}", stylesheet_css_hash)
+                           .replace("{main_js_integrity}", main_js_hash)
+                           .replace("{helper_js_integrity}", helper_js_hash)
                            , "utf-8"))
 
 
@@ -191,7 +211,8 @@ def load_tweet(self):
     tweet_text: str = str(tweet[0]['text'])
     account_id: int = tweet[0]['twitter_user_id']
     account_info: dict = database.retrieveAccountInfo(repo=self.repo, account_id=account_id)[0]
-    account_name: str = "{first_name} {last_name}".format(first_name=account_info["first_name"], last_name=account_info["last_name"])
+    account_name: str = "{first_name} {last_name}".format(first_name=account_info["first_name"],
+                                                          last_name=account_info["last_name"])
 
     # Site Data
     site_title: str = "Rover"
@@ -266,8 +287,9 @@ def load_sitemap(self):
     tracking_match: Optional[Match[str]] = re.match(validate_url, self.path)
 
     if tracking_match:
-        tracking_parameters: str = "/?utm_source={utm_source}&utm_medium={utm_medium}&utm_campaign=sitemap"\
-            .format(utm_source=tracking_match.groups()[0], utm_medium=tracking_match.groups()[1])  # source example (google), medium example (search)
+        tracking_parameters: str = "/?utm_source={utm_source}&utm_medium={utm_medium}&utm_campaign=sitemap" \
+            .format(utm_source=tracking_match.groups()[0],
+                    utm_medium=tracking_match.groups()[1])  # source example (google), medium example (search)
 
     load_tweets_query: str = '''
         -- 50000

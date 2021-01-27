@@ -4,6 +4,8 @@ import random
 import uuid
 from typing import List, Optional, Tuple
 
+from rover import config
+
 
 def handle_tracking_cookie(self) -> Optional[Tuple[str, str]]:
     if "DNT" in self.headers and self.headers["DNT"] == "1":
@@ -62,3 +64,24 @@ def get_ip_address(self) -> Tuple[str, str]:
         ip_source: str = "Direct"
 
     return ip_address, ip_source
+
+
+def send_standard_headers(self):
+    # Performance Headers
+    if "Service-Worker-Navigation-Preload" in self.headers:
+        self.send_header("Vary", "Service-Worker-Navigation-Preload")
+
+    # Security Headers
+    self.send_header("X-Content-Type-Options", "nosniff")
+    self.send_header("X-XSS-Protection", "1; mode=block")
+    self.send_header("X-Frame-Options", "DENY")
+
+    # TODO: Add CONTENT-SECURITY-POLICY and CONTENT-SECURITY-POLICY-REPORT-ONLY From https://www.immuniweb.com/websec/?id=gkh5CGKh
+    # self.send_header("CONTENT-SECURITY-POLICY", "...")
+    # self.send_header("CONTENT-SECURITY-POLICY-REPORT-ONLY", "...")
+
+    if config.ALLOW_CORS:
+        self.send_header("Access-Control-Allow-Origin", config.CORS_SITES)
+
+    if config.ENABLE_HSTS:
+        self.send_header("Strict-Transport-Security", config.HSTS_SETTINGS)

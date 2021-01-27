@@ -44,13 +44,7 @@ def load_page(self, page: str):
     self.send_header("Content-type", "text/html")
 
     helper_functions.handle_tracking_cookie(self=self)
-
-    if "Service-Worker-Navigation-Preload" in self.headers:
-        self.send_header("Vary", "Service-Worker-Navigation-Preload")
-
-    if config.ENABLE_HSTS:
-        self.send_header("Strict-Transport-Security", config.HSTS_SETTINGS)
-
+    helper_functions.send_standard_headers(self=self)
     self.end_headers()
 
     # Header
@@ -69,13 +63,7 @@ def load_file(self, path: str, mime_type: str):
     self.send_header("Content-type", mime_type)
 
     helper_functions.handle_tracking_cookie(self=self)
-
-    if "Service-Worker-Navigation-Preload" in self.headers:
-        self.send_header("Vary", "Service-Worker-Navigation-Preload")
-
-    if config.ENABLE_HSTS:
-        self.send_header("Strict-Transport-Security", config.HSTS_SETTINGS)
-
+    helper_functions.send_standard_headers(self=self)
     self.end_headers()
 
     # Load File
@@ -99,13 +87,7 @@ def load_404_page(self, error_code: int = 404):
     self.send_header("Content-type", "text/html")
 
     helper_functions.handle_tracking_cookie(self=self)
-
-    if "Service-Worker-Navigation-Preload" in self.headers:
-        self.send_header("Vary", "Service-Worker-Navigation-Preload")
-
-    if config.ENABLE_HSTS:
-        self.send_header("Strict-Transport-Security", config.HSTS_SETTINGS)
-
+    helper_functions.send_standard_headers(self=self)
     self.end_headers()
 
     # Header
@@ -125,13 +107,7 @@ def load_offline_page(self):
     self.send_header("Content-type", "text/html")
 
     helper_functions.handle_tracking_cookie(self=self)
-
-    if "Service-Worker-Navigation-Preload" in self.headers:
-        self.send_header("Vary", "Service-Worker-Navigation-Preload")
-
-    if config.ENABLE_HSTS:
-        self.send_header("Strict-Transport-Security", config.HSTS_SETTINGS)
-
+    helper_functions.send_standard_headers(self=self)
     self.end_headers()
 
     title: str = "Currently Offline"
@@ -227,13 +203,7 @@ def load_tweet(self):
     self.send_header("Content-type", "text/html")
 
     helper_functions.handle_tracking_cookie(self=self)
-
-    if "Service-Worker-Navigation-Preload" in self.headers:
-        self.send_header("Vary", "Service-Worker-Navigation-Preload")
-
-    if config.ENABLE_HSTS:
-        self.send_header("Strict-Transport-Security", config.HSTS_SETTINGS)
-
+    helper_functions.send_standard_headers(self=self)
     self.end_headers()
 
     # Header
@@ -274,13 +244,7 @@ def load_sitemap(self):
     self.send_header("Content-type", "application/xml")
 
     helper_functions.handle_tracking_cookie(self=self)
-
-    if "Service-Worker-Navigation-Preload" in self.headers:
-        self.send_header("Vary", "Service-Worker-Navigation-Preload")
-
-    if config.ENABLE_HSTS:
-        self.send_header("Strict-Transport-Security", config.HSTS_SETTINGS)
-
+    helper_functions.send_standard_headers(self=self)
     self.end_headers()
 
     tracking_parameters: str = ""
@@ -329,13 +293,7 @@ def load_privacy_page(self):
     self.send_header("Content-type", "text/html")
 
     helper_functions.handle_tracking_cookie(self=self)
-
-    if "Service-Worker-Navigation-Preload" in self.headers:
-        self.send_header("Vary", "Service-Worker-Navigation-Preload")
-
-    if config.ENABLE_HSTS:
-        self.send_header("Strict-Transport-Security", config.HSTS_SETTINGS)
-
+    helper_functions.send_standard_headers(self=self)
     self.end_headers()
 
     # Header

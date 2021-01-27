@@ -34,16 +34,7 @@ def send_headers(self, content_length: int = 0):
     self.send_header("Content-type", "application/json")
 
     helper_functions.handle_tracking_cookie(self=self)
-
-    if "Service-Worker-Navigation-Preload" in self.headers:
-        self.send_header("Vary", "Service-Worker-Navigation-Preload")
-
-    if config.ALLOW_CORS:
-        self.send_header("Access-Control-Allow-Origin", config.CORS_SITES)
-
-    if config.ENABLE_HSTS:
-        self.send_header("Strict-Transport-Security", config.HSTS_SETTINGS)
-
+    helper_functions.send_standard_headers(self=self)
     self.send_header("Content-Length", content_length)
 
     self.end_headers()

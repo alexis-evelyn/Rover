@@ -99,7 +99,7 @@ def load_latest_tweets(repo: Dolt, table: str, queries: dict, self) -> dict:
     else:
         with open(file=archive_config.CACHE_FILE_PATH, mode="r") as cache:
             cache_body: List[str] = cache.readlines()
-            latest_tweets: dict = json.loads("\n".join(cache_body))
+            latest_tweets: dict = convertIDsToString(json.loads("\n".join(cache_body)))
 
     response: dict = {
         "results": latest_tweets

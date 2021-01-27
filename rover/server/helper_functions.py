@@ -16,6 +16,21 @@ def handle_tracking_cookie(self) -> Optional[Tuple[str, str]]:
     uuid_tracking: uuid.UUID = uuid.uuid4()
     uuid_session: str = str(random.sample(range(1, 1000000), 1)[0])
 
+    cookies: Optional[dict] = get_cookies(self=self)
+    if cookies is not None:
+        if 'analytics' in cookies and 'session' in cookies:
+            return cookies['analytics'], cookies['session']
+        elif 'analytics' in cookies:
+            self.send_header("Set-Cookie", f"session={uuid_session};path=/")
+            return None
+        elif 'session' in cookies:
+            self.send_header("Set-Cookie", f"analytics={uuid_tracking};expires={expire_time};path=/")
+            return None
+
+    self.send_header("Set-Cookie", f"analytics={uuid_tracking};expires={expire_time},session={uuid_session};path=/")
+
+
+def get_cookies(self) -> Optional[dict]:
     if "cookie" in self.headers:
         cookies_split: List[str] = self.headers['cookie'].split('; ')
         cookies: dict = {}
@@ -24,11 +39,5 @@ def handle_tracking_cookie(self) -> Optional[Tuple[str, str]]:
             cookie: List[str] = cookie_split.split('=')
             cookies[cookie[0]] = cookie[1]
 
-        if 'analytics' in cookies and 'session' in cookies:
-            return cookies['analytics'], cookies['session']
-        elif 'analytics' in cookies:
-            self.send_header("Set-Cookie", f"session={uuid_session};path=/")
-        elif 'session' in cookies:
-            self.send_header("Set-Cookie", f"analytics={uuid_tracking};expires={expire_time};path=/")
-
-    self.send_header("Set-Cookie", f"analytics={uuid_tracking};expires={expire_time},session={uuid_session};path=/")
+        return cookies
+    return None

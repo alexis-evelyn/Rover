@@ -1,0 +1,55 @@
+<!-- https://blog.netop.com/how-to-be-gdpr-compliant -->
+<!-- https://vinciworks.com/blog/free-data-protection-privacy-policy-template/ -->
+<!-- https://touchcallrecording.com/blog/45-gdpr-what-are-your-data-deletion-obligations -->
+
+<!--
+    From reading this site, it doesn't look as though I collect anything that GDPR requires me to delete as the ip addresses are anonymized and the cookies are randomly generated.
+        If I'm understanding this correctly, it has to be able to reasonably identify someone in real life which it doesn't do.
+
+        https://www.itgovernance.eu/blog/en/the-gdpr-what-exactly-is-personal-data
+-->
+<div class="cards" id="privacy-notice">
+    <div class="mdc-card tweet-card">
+        <div class="mdc-card__primary-action mdc-theme--text-primary-on-dark mdc-theme--primary-bg card__content" tabindex="0">
+            <div>
+                <h2 class="card__title mdc-typography mdc-typography--headline6">Privacy Notice - Last Updated January 27, 2021</h2>
+            </div>
+            <div class="card__text mdc-typography mdc-typography--body2">
+                I personally collect a range of non-personally identifiable information (non-PII) through the use of server side software.
+                That information can be viewed by clicking the "View My Information" button below.
+                I also collect the default information through Google Analytics, but have trouble using it, so I may remove it in the future.
+                You can view what type of data Google Analytics collects by clicking the "Google Analytics Privacy Policy" button below.
+                <br><br>
+                I collect two cookies personally (which are set via server side software).
+                One is called analytics, the other is called session.
+                I solely use those to help track what pages you visit and what parts of the API (Application Programming Interface) you use as well as using them to help track bots from potential spammers and hackers.
+                The API is what provides the list of tweets from the database that contains the tweets.
+                <br><br>
+                To avoid being tracked in the future by my own tools, just set your browser's Do Not Track setting to true. On Chrome (at the time of writing), it's called "Send a "Do Not Track" request with your browsing traffic".
+                For those with non-standard browsers, I specifically check if the "DNT" header is set to "1".
+                I then choose not to record any information at all when I receive that header.
+                I do not know how Google Analytics responds to Do Not Track requests, so you'll need to read their Privacy Policy.
+                <br><br>
+                As far as I can tell, I'm correctly stripping out any personally identifiable information.
+                If I'm wrong, just have someone who knows the privacy laws (e.g. a lawyer) send me an {analytics_contact_info_type} at {analytics_contact_info}, and I'll fix the issue and reset all the data from scratch (for everyone).
+                <br><br>
+                You'll need Javascript to click the buttons. This whole site requires Javascript to work. The non-PII information may not be accessible yet depending on when the last commit to the database was made.
+                <br><br>
+                This Privacy Policy can be updated at any time without notice, so check back whenever you need.
+                <br><br>
+                TL;DR: Just set your "Do Not Track" request to be on and no future information will be collected by my own tools. You'll have to speak to Google Analytics about their TL;DR.
+            </div>
+        </div>
+        <div class="mdc-card__actions mdc-theme--text-secondary-on-dark mdc-theme--secondary-bg card__actions">
+            <div class="mdc-card__action-buttons">
+                <button class="mdc-button download-button mdc-card__action mdc-card__action--button mdc-button--raised" onclick="window.open('{view_my_info_link}','_blank')">  <span class="mdc-button__ripple"></span> View My Information</button>
+                <button class="mdc-button load-cache-button mdc-card__action mdc-card__action--button mdc-button--raised" onclick="window.open('https://support.google.com/analytics/answer/7318509','_blank')">  <span class="mdc-button__ripple"></span> Google Analytics Privacy Policy</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- https://material-components.github.io/material-components-web-catalog/#/component/drawer -->
+<div class="twitter-button-div">
+    <button class="mdc-button twitter-button mdc-card__action mdc-card__action--button mdc-button--raised" onclick="window.open('https://twitter.com/DigitalRoverDog','_blank')">  <span class="mdc-button__ripple"></span> Visit Bot's Twitter For Search (Until Implemented On Site)</button>
+</div>

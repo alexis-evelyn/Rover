@@ -1,5 +1,6 @@
 #!/usr/bin/python
 import re
+import urllib.parse
 from re import Pattern, Match
 from typing import List, Optional, Tuple
 
@@ -313,3 +314,50 @@ def load_sitemap(self):
     urls_xml: Element = dict_to_xml(root_tag='urlset', iter_tag='url', urls=sitemap_dict)
 
     self.wfile.write(tostring(urls_xml, encoding='utf8', method='xml'))
+
+
+def load_privacy_page(self):
+    # Site Data
+    site_title: str = "Privacy Policy"
+
+    # Twitter Metadata
+    twitter_title: str = site_title
+    twitter_description: str = "Rover's Privacy Policy"
+
+    # HTTP Headers
+    self.send_response(200)
+    self.send_header("Content-type", "text/html")
+
+    helper_functions.handle_tracking_cookie(self=self)
+
+    if "Service-Worker-Navigation-Preload" in self.headers:
+        self.send_header("Vary", "Service-Worker-Navigation-Preload")
+
+    if config.ENABLE_HSTS:
+        self.send_header("Strict-Transport-Security", config.HSTS_SETTINGS)
+
+    self.end_headers()
+
+    # Header
+    write_header(self=self, site_title=site_title, twitter_title=twitter_title, twitter_description=twitter_description)
+
+    # Lookup User Query
+    cookies: Optional[dict] = helper_functions.get_cookies(self=self)
+    if 'analytics' in cookies:
+        tracker_id: str = cookies['analytics']
+        lookup_user_query: str = urllib.parse.quote_plus(f'select * from web where tracker="{tracker_id}" order by date desc;')
+    else:
+        lookup_user_query: str = urllib.parse.quote_plus(f'select * from web order by date desc;')
+
+    lookup_user_url: str = f"{config.ANALYTICS_REPO_USER_URL}?q={lookup_user_query}"
+
+    # Body
+    privacy_page: str = load_text_file(f"rover/server/web/pages/privacy.html") \
+        .replace("{analytics_contact_info_type}", config.ANALYTICS_CONTACT_INFO_TYPE) \
+        .replace("{analytics_contact_info}", config.ANALYTICS_CONTACT_INFO) \
+        .replace("{view_my_info_link}", lookup_user_url)
+
+    self.wfile.write(bytes(privacy_page, "utf-8"))
+
+    # Footer
+    write_footer(self=self)

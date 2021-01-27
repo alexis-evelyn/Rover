@@ -152,6 +152,8 @@ class RequestHandler(BaseHTTPRequestHandler):
                 handler.load_tweet(self=self)
             elif url == "":
                 handler.load_page(self=self, page='latest-tweets')
+            elif url == "/privacy":
+                handler.load_privacy_page(self=self)
             elif url == "/manifest.webmanifest":
                 handler.load_file(self=self, path="rover/server/web/other/manifest.json", mime_type="application/manifest+json")
             elif url == "/robots.txt":

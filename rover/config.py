@@ -51,6 +51,9 @@ ANALYTICS_USERNAME: str = "root"
 ANALYTICS_HOST: str = "127.0.0.1"
 ANALYTICS_PORT: int = 3307
 ANALYTICS_DATABASE: str = "analytics"
+ANALYTICS_REPO_USER_URL: str = "https://www.dolthub.com/repositories/alexis-evelyn/rover-analytics/query/master"
+ANALYTICS_CONTACT_INFO_TYPE: str = "email"
+ANALYTICS_CONTACT_INFO: str = "alexis dot a dot evelyn at gmail dot com"
 
 # IP/Proxy Files
 IP_DATABASE: str = os.path.join(WORKING_DIRECTORY, "IP2LOCATION-LITE-DB11.IPV6.BIN/IP2LOCATION-LITE-DB11.IPV6.BIN")

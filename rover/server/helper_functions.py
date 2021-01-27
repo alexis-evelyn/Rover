@@ -16,18 +16,22 @@ def handle_tracking_cookie(self) -> Optional[Tuple[str, str]]:
     uuid_tracking: uuid.UUID = uuid.uuid4()
     uuid_session: str = str(random.sample(range(1, 1000000), 1)[0])
 
+    # For If Debugging Via Localhost
+    _, ip_source = get_ip_address(self=self)
+    secure: str = " Secure;" if ip_source != "Direct" else ""
+
     cookies: Optional[dict] = get_cookies(self=self)
     if cookies is not None:
         if 'analytics' in cookies and 'session' in cookies:
             return cookies['analytics'], cookies['session']
         elif 'analytics' in cookies:
-            self.send_header("Set-Cookie", f"session={uuid_session};path=/")
+            self.send_header("Set-Cookie", f"session={uuid_session};path=/; HttpOnly;{secure} SameSite=None")
             return None
         elif 'session' in cookies:
-            self.send_header("Set-Cookie", f"analytics={uuid_tracking};expires={expire_time};path=/")
+            self.send_header("Set-Cookie", f"analytics={uuid_tracking};expires={expire_time};path=/; HttpOnly;{secure} SameSite=None")
             return None
 
-    self.send_header("Set-Cookie", f"analytics={uuid_tracking};expires={expire_time},session={uuid_session};path=/")
+    self.send_header("Set-Cookie", f"analytics={uuid_tracking};expires={expire_time},session={uuid_session};path=/; HttpOnly;{secure} SameSite=None")
 
 
 def get_cookies(self) -> Optional[dict]:
@@ -41,3 +45,20 @@ def get_cookies(self) -> Optional[dict]:
 
         return cookies
     return None
+
+
+def get_ip_address(self) -> Tuple[str, str]:
+    # Cloudflare Forwarded IP
+    if 'CF-Connecting-IP' in self.headers:
+        ip_address: str = self.headers["CF-Connecting-IP"]
+        ip_source: str = "Cloudflare"
+    # NGinx Forwarded IP
+    elif 'X-Real-IP' in self.headers:
+        ip_address: str = self.headers["X-Real-IP"]
+        ip_source: str = "NGinx"
+    # Direct IP Connecting To This Server
+    else:
+        ip_address: str = str(self.client_address[0])
+        ip_source: str = "Direct"
+
+    return ip_address, ip_source

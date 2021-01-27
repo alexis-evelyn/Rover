@@ -31,6 +31,7 @@ from mysql.connector import conversion
 from archiver import config as archiver_config
 from rover import config as rover_config
 from config import config as main_config
+from rover.server import helper_functions
 
 threadLock: threading.Lock = threading.Lock()
 
@@ -243,18 +244,8 @@ class RequestHandler(BaseHTTPRequestHandler):
             if "user-agent" in self.headers:
                 utm_parameters["user_agent"] = self.headers["user-agent"]
 
-            # Cloudflare Forwarded IP
-            if 'CF-Connecting-IP' in self.headers:
-                ip_address: str = self.headers["CF-Connecting-IP"]
-                utm_parameters["ip_source"] = "Cloudflare"
-            # NGinx Forwarded IP
-            elif 'X-Real-IP' in self.headers:
-                ip_address: str = self.headers["X-Real-IP"]
-                utm_parameters["ip_source"] = "NGinx"
-            # Direct IP Connecting To This Server
-            else:
-                ip_address: str = str(self.client_address[0])
-                utm_parameters["ip_source"] = "Direct"
+            ip_address, ip_source = helper_functions.get_ip_address(self=self)
+            utm_parameters["ip_source"] = ip_source
 
             # Anonymized IP Address
             utm_parameters["ip_address"] = anonymize_ip(ip_address)

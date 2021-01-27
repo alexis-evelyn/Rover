@@ -46,7 +46,7 @@ def send_reply(self, repo: Dolt, table: str):
     url: urlparse = urlparse(self.path)
     queries: dict = parse_qs(url.query)
 
-    response_dict: dict = run_function(repo=repo, table=table, url=url, queries=queries, self=self)
+    response_dict: dict = run_function(self=self, repo=repo, table=table, url=url, queries=queries)
 
     response: str = json.dumps(response_dict)
     content_length: int = len(response)
@@ -70,10 +70,10 @@ def run_function(self, repo: Dolt, table: str, url: urlparse, queries: dict) -> 
     }
 
     func = endpoints.get(url.path.rstrip('/'), invalid_endpoint)
-    return func(repo=repo, table=table, queries=queries, self=self)
+    return func(self=self, repo=repo, table=table, queries=queries)
 
 
-def load_latest_tweets(repo: Dolt, table: str, queries: dict, self) -> dict:
+def load_latest_tweets(self, repo: Dolt, table: str, queries: dict) -> dict:
     """
         Load Latest Tweets. Can Be From Account And/Or Paged.
         :param self:
@@ -85,34 +85,20 @@ def load_latest_tweets(repo: Dolt, table: str, queries: dict, self) -> dict:
     max_responses: int = int(queries['max'][0]) if "max" in queries and validateRangedNumber(value=queries['max'][0],
                                                                                              min=0, max=20) else 20
 
-    last_tweet_id: Optional[int] = int(queries['tweet'][0]) if "tweet" in queries and validateNumber(
-        value=queries['tweet'][0]) else None
+    # TODO: Deprecate This And Reserve For Another Function
+    # last_tweet_id: Optional[int] = int(queries['tweet'][0]) if "tweet" in queries and validateNumber(
+    #     value=queries['tweet'][0]) else None
 
     # TODO: Add Ability To Read From RAM (Saved To By Rover and Us) Otherwise Load From File Then Database
     if not os.path.exists(archive_config.CACHE_FILE_PATH):
-        latest_tweets: dict = convertIDsToString(
-            results=database.latest_tweets(repo=repo, table=table, max_responses=max_responses,
-                                           last_tweet_id=last_tweet_id))
-
-        with open(file=archive_config.CACHE_FILE_PATH, mode="w+") as cache:
-            cache.writelines(json.dumps(latest_tweets))
-            cache.close()
+        response: dict = helper_functions.save_cache_file(self=self, max_tweets=max_responses)
     else:
-        with open(file=archive_config.CACHE_FILE_PATH, mode="r") as cache:
-            cache_body: List[str] = cache.readlines()
-            latest_tweets: dict = convertIDsToString(json.loads("\n".join(cache_body)))
-
-    response: dict = {
-        "results": latest_tweets
-    }
-
-    if len(latest_tweets) > 0:
-        response['latest_tweet_id'] = latest_tweets[0]['id']
+        response: dict = helper_functions.load_cache_file(self=self, max_tweets=max_responses)
 
     return response
 
 
-def lookup_account(repo: Dolt, table: str, queries: dict, self) -> dict:
+def lookup_account(self, repo: Dolt, table: str, queries: dict) -> dict:
     if "account" not in queries:
         # TODO: Create A Proper Error Handler To Ensure Error Messages and IDs Are Standardized
         return {
@@ -168,7 +154,7 @@ def lookup_account(repo: Dolt, table: str, queries: dict, self) -> dict:
     return results
 
 
-def perform_search(repo: Dolt, table: str, queries: dict, self) -> dict:
+def perform_search(self, repo: Dolt, table: str, queries: dict) -> dict:
     original_search_text: str = queries["text"][0] if "text" in queries else ""
 
     search_phrase: str = search_tweets.convert_search_to_query(phrase=original_search_text)
@@ -184,7 +170,7 @@ def perform_search(repo: Dolt, table: str, queries: dict, self) -> dict:
     }
 
 
-def send_help(repo: Dolt, table: str, queries: dict, self) -> dict:
+def send_help(self, repo: Dolt, table: str, queries: dict) -> dict:
     """
         Used To Indicate Existing API Endpoints
         :return: JSON Response With URLs
@@ -201,7 +187,7 @@ def send_help(repo: Dolt, table: str, queries: dict, self) -> dict:
     }
 
 
-def invalid_endpoint(repo: Dolt, table: str, queries: dict, self) -> dict:
+def invalid_endpoint(self, repo: Dolt, table: str, queries: dict) -> dict:
     """
         Used To Indicate Reaching an API Url That Doesn't Exist
         :return: JSON Error Message With Code For Machines To Process
@@ -212,7 +198,7 @@ def invalid_endpoint(repo: Dolt, table: str, queries: dict, self) -> dict:
     }
 
 
-def handle_webhook(repo: Dolt, table: str, queries: dict, self) -> dict:
+def handle_webhook(self, repo: Dolt, table: str, queries: dict) -> dict:
     try:
         content_length = int(self.headers['Content-Length'])
         post_data = self.rfile.read(content_length)
@@ -241,7 +227,7 @@ def handle_webhook(repo: Dolt, table: str, queries: dict, self) -> dict:
         }
 
 
-def retrieve_tweet(repo: Dolt, table: str, queries: dict, self) -> dict:
+def retrieve_tweet(self, repo: Dolt, table: str, queries: dict) -> dict:
     tweet_id: Optional[int] = int(queries['id'][0]) if "id" in queries and validateNumber(queries['id'][0]) else None
 
     response: dict = {

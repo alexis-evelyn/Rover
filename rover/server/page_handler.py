@@ -192,10 +192,10 @@ def load_tweet(self):
                                                           last_name=account_info["last_name"])
 
     # Site Data
-    site_title: str = "Rover"
+    site_title: str = "Tweet By {account_name}".format(account_name=account_name.replace('\"', '&quot;'))
 
     # Twitter Metadata
-    twitter_title: str = "Tweet By {account_name}".format(account_name=account_name.replace('\"', '&quot;'))
+    twitter_title: str = site_title
     twitter_description: str = "{tweet_text}".format(tweet_text=tweet_text.replace('\"', '&quot;'))
 
     # HTTP Headers

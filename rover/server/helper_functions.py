@@ -1,15 +1,20 @@
 #!/usr/bin/python
 import datetime
+import json
 import random
 import uuid
 from typing import List, Optional, Tuple
 
+from archiver import config as archiver_config
+from database import database
 from rover import config
+from rover.server.api_handler import lookup_account, convertIDsToString
 
 
 def handle_tracking_cookie(self) -> Optional[Tuple[str, str]]:
     if "DNT" in self.headers and self.headers["DNT"] == "1":
-        self.send_header("Set-Cookie", "analytics=honor_dnt;expires=Thu, 01 Jan 1970 00:00:00 GMT,session=honor_dnt;expires=Thu, 01 Jan 1970 00:00:00 GMT")
+        self.send_header("Set-Cookie",
+                         "analytics=honor_dnt;expires=Thu, 01 Jan 1970 00:00:00 GMT,session=honor_dnt;expires=Thu, 01 Jan 1970 00:00:00 GMT")
         return
 
     expires = datetime.datetime.utcnow() + datetime.timedelta(days=30)  # expires in 30 days
@@ -30,10 +35,12 @@ def handle_tracking_cookie(self) -> Optional[Tuple[str, str]]:
             self.send_header("Set-Cookie", f"session={uuid_session};path=/; HttpOnly;{secure} SameSite=None")
             return None
         elif 'session' in cookies:
-            self.send_header("Set-Cookie", f"analytics={uuid_tracking};expires={expire_time};path=/; HttpOnly;{secure} SameSite=None")
+            self.send_header("Set-Cookie",
+                             f"analytics={uuid_tracking};expires={expire_time};path=/; HttpOnly;{secure} SameSite=None")
             return None
 
-    self.send_header("Set-Cookie", f"analytics={uuid_tracking};expires={expire_time},session={uuid_session};path=/; HttpOnly;{secure} SameSite=None")
+    self.send_header("Set-Cookie",
+                     f"analytics={uuid_tracking};expires={expire_time},session={uuid_session};path=/; HttpOnly;{secure} SameSite=None")
 
 
 def get_cookies(self) -> Optional[dict]:
@@ -86,3 +93,40 @@ def send_standard_headers(self):
 
     if config.ENABLE_HSTS:
         self.send_header("Strict-Transport-Security", config.HSTS_SETTINGS)
+
+
+def save_cache_file(self, max_tweets: int = 20):
+    # TODO: Add Ability To Pop Oldest Tweet And Append Latest One If File Exists
+    latest_tweets: dict = convertIDsToString(database.latest_tweets(repo=self.repo, table=config.ARCHIVE_TWEETS_TABLE,
+                                                                    max_responses=max_tweets))
+
+    response: dict = {
+        "results": latest_tweets
+    }
+
+    if len(latest_tweets) > 0:
+        twitter_account_ids: List[str] = [tweet['twitter_user_id'] for tweet in latest_tweets]
+
+        deduped_twitter_account_ids: List[str] = []
+        [deduped_twitter_account_ids.append(account_id) for account_id in twitter_account_ids if
+         account_id not in deduped_twitter_account_ids]
+
+        account_info: dict = lookup_account(self=self, repo=self.repo, table=config.ARCHIVE_TWEETS_TABLE,
+                                            queries={"account": deduped_twitter_account_ids})
+
+        response["accounts"] = account_info["accounts"]
+        response['latest_tweet_id'] = latest_tweets[0]['id']
+
+    with open(file=archiver_config.CACHE_FILE_PATH, mode="w+") as cache:
+        cache.writelines(json.dumps(response))
+        cache.close()
+
+    return response
+
+
+def load_cache_file(self, max_tweets: int = 20) -> dict:
+    with open(file=archiver_config.CACHE_FILE_PATH, mode="r") as cache:
+        cache_body: List[str] = cache.readlines()
+        response: dict = json.loads("\n".join(cache_body))
+
+    return response

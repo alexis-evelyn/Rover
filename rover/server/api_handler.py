@@ -88,6 +88,7 @@ def load_latest_tweets(repo: Dolt, table: str, queries: dict, self) -> dict:
     last_tweet_id: Optional[int] = int(queries['tweet'][0]) if "tweet" in queries and validateNumber(
         value=queries['tweet'][0]) else None
 
+    # TODO: Add Ability To Read From RAM (Saved To By Rover and Us) Otherwise Load From File Then Database
     if not os.path.exists(archive_config.CACHE_FILE_PATH):
         latest_tweets: dict = convertIDsToString(
             results=database.latest_tweets(repo=repo, table=table, max_responses=max_responses,

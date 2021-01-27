@@ -193,6 +193,7 @@ class Archiver(threading.Thread):
 
         # Don't Bother Pushing If Not Commit
         if madeCommit:
+            self.updateTweetCache()
             self.pushData(branch=config.ARCHIVE_TWEETS_REPO_BRANCH)
 
     def downloadNewTweets(self, twitter_user_id: str):
@@ -611,3 +612,12 @@ class Archiver(threading.Thread):
 
     def pushData(self, branch: str):
         self.repo.push('origin', branch)
+
+    def updateTweetCache(self):
+        # TODO: Add Ability To Pop Oldest Tweet And Append Latest One If File Exists
+        max_tweets: int = 20
+        latest_tweets: dict = database.latest_tweets(repo=self.repo, table=config.ARCHIVE_TWEETS_TABLE, max_responses=max_tweets)
+
+        with open(file=config.CACHE_FILE_PATH, mode="w+") as cache:
+            cache.writelines(json.dumps(latest_tweets))
+            cache.close()

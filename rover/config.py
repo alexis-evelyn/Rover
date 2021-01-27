@@ -21,7 +21,7 @@ TEMPORARY_IMAGE_FORMAT: str = "PNG"
 ARCHIVE_TWEETS_REPO_PATH: str = os.path.join(WORKING_DIRECTORY, "presidential-tweets")
 ARCHIVE_TWEETS_TABLE: str = "tweets"
 
-# Config Files
+# Config/Working Files
 STATUS_FILE_PATH: str = "latest_status.json"
 CREDENTIALS_FILE_PATH: str = "credentials.json"
 

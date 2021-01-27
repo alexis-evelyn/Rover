@@ -113,7 +113,7 @@ function generateTableFromTweets(tweets) {
                     "    <div class=\"mdc-card__primary-action mdc-theme--text-primary-on-dark mdc-theme--primary-bg card__content\" tabindex=\"0\">\n" +
                     "        <div>\n" +
                     "            <h2 class=\"card__title mdc-typography mdc-typography--headline6\">Tweet</h2>\n" +
-                    "            <h3 class=\"card__subtitle mdc-typography mdc-typography--subtitle2\">by <span class='account-name account-" + item.twitter_user_id + "'>Loading Name For " + item.twitter_user_id + "</span> on <span class='tweet-date'>" + item.date + " UTC</span></h3>\n" +
+                    "            <h3 class=\"card__subtitle mdc-typography mdc-typography--subtitle2\">by <span class='account-name account-" + item.twitter_user_id + "'>Loading Name For " + item.twitter_user_id + "</span> on <span class='tweet-date'>" + item.date + "</span></h3>\n" +
                     "        </div>\n" +
                     "        <div class=\"card__text mdc-typography mdc-typography--body2\">" + item.text + "</div>\n" +
                     "    </div>\n" +

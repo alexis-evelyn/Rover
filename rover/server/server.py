@@ -222,14 +222,8 @@ class RequestHandler(BaseHTTPRequestHandler):
             if "referer" in self.headers:
                 utm_parameters["referer"]: str = self.headers["referer"]
 
-            if "cookie" in self.headers:
-                cookies_split: List[str] = self.headers['cookie'].split('; ')
-                cookies: dict = {}
-
-                for cookie_split in cookies_split:
-                    cookie: List[str] = cookie_split.split('=')
-                    cookies[cookie[0]] = cookie[1]
-
+            cookies: Optional[dict] = helper_functions.get_cookies(self=self)
+            if cookies is not None:
                 if 'analytics' in cookies:
                     utm_parameters["tracker"]: str = cookies['analytics']
 

@@ -1,10 +1,12 @@
 #!/usr/bin/python
 
 import json
-from typing import Optional
+import os
+from typing import Optional, List
 
 from doltpy.core import Dolt
 
+from archiver import config as archive_config, archiver
 from rover import config, search_tweets
 from database import database
 
@@ -86,9 +88,18 @@ def load_latest_tweets(repo: Dolt, table: str, queries: dict, self) -> dict:
     last_tweet_id: Optional[int] = int(queries['tweet'][0]) if "tweet" in queries and validateNumber(
         value=queries['tweet'][0]) else None
 
-    latest_tweets: dict = convertIDsToString(
-        results=database.latest_tweets(repo=repo, table=table, max_responses=max_responses,
-                                       last_tweet_id=last_tweet_id))
+    if not os.path.exists(archive_config.CACHE_FILE_PATH):
+        latest_tweets: dict = convertIDsToString(
+            results=database.latest_tweets(repo=repo, table=table, max_responses=max_responses,
+                                           last_tweet_id=last_tweet_id))
+
+        with open(file=archive_config.CACHE_FILE_PATH, mode="w+") as cache:
+            cache.writelines(json.dumps(latest_tweets))
+            cache.close()
+    else:
+        with open(file=archive_config.CACHE_FILE_PATH, mode="r") as cache:
+            cache_body: List[str] = cache.readlines()
+            latest_tweets: dict = json.loads("\n".join(cache_body))
 
     response: dict = {
         "results": latest_tweets

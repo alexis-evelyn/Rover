@@ -6,6 +6,7 @@ config.json
 
 # Working Files
 latest_status.json
+archiver_tweet_cache.json
 working
 
 # Deprecated

@@ -146,12 +146,28 @@ function generateTableFromTweets(tweets) {
 
 // Setup UI Animations and Stuff
 function setupMaterialUI() {
+    // Snackbar Notifications
+    const MDCSnackbar = mdc.snackbar.MDCSnackbar;
+
     $(document).ready(function () {
+        // Ripple Effect On Buttons
         let ripple_buttons = document.querySelectorAll('.ripple-button');
 
         ripple_buttons.forEach(function(ripple_button) {
             mdc.ripple.MDCRipple.attachTo(ripple_button);
         });
+
+        // Cookie Notifications
+        const cookiesAlert = new MDCSnackbar(document.querySelector('#cookies-alert'));
+
+        if (getCookie("shown_cookie_prompt") == null) {
+            cookiesAlert.timeoutMs = -1 // Indefinitely
+            cookiesAlert.open()
+
+            let cookieDate = new Date;
+            cookieDate.setFullYear(cookieDate.getFullYear() + 2);
+            document.cookie = "shown_cookie_prompt=true; expires=" + cookieDate.toUTCString();
+        }
     });
 }
 
@@ -167,11 +183,7 @@ function isJSON(item) {
         return false;
     }
 
-    if (typeof item === "object" && item !== null) {
-        return true;
-    }
-
-    return false;
+    return typeof item === "object" && item !== null;
 }
 
 // Stolen From: https://www.w3schools.com/js/js_cookies.asp

@@ -123,7 +123,9 @@ async function downloadNewTweets() {
 
                         if (isJSON(contents)) {
                             // Set Cookie To Make Retrieving New Tweets Only Easier
-                            document.cookie = "latest_tweet_id=" + JSON.parse(contents)["latest_tweet_id"]
+                            let cookieDate = new Date;
+                            cookieDate.setFullYear(cookieDate.getFullYear() + 2);
+                            document.cookie = "latest_tweet_id=" + JSON.parse(contents)["latest_tweet_id"] + "; expires=" + cookieDate.toUTCString();
                         } else {
                             // Clear Cookie If Not JSON
                             document.cookie = "latest_tweet_id=; expires=Thu, 01 Jan 1970 00:00:00 UTC";

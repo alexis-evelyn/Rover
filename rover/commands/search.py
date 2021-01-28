@@ -75,7 +75,7 @@ def search_text(api: twitter.Api, status: twitter.models.Status,
         failed_account_lookup: bool = True
 
     if search_post_response["isDeleted"] == 0 and not failed_account_lookup:
-        url = "https://twitter.com/{screen_name}/statuses/{status_id}".format(status_id=search_post_response["id"],
+        url = "https://twitter.com/{screen_name}/status/{status_id}".format(status_id=search_post_response["id"],
                                                                               screen_name=author)
     else:
         url = "{website_root}/tweet/{status_id}/?utm_source={utm_source}&utm_medium={utm_medium}&utm_campaign={utm_campaign}&utm_content={utm_content}" \

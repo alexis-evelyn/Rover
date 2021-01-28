@@ -15,14 +15,8 @@ def latest_tweets(repo: Dolt, table: str, max_responses: int = 10, account_id: O
                   last_tweet_id: Optional[int] = None) -> dict:
     tweets: Table = Table(table)
     query: QueryBuilder = Query.from_(tweets) \
-        .select(tweets.id, tweets.twitter_user_id, tweets.date,
-                tweets.text, tweets.device, tweets.favorites,
-                tweets.retweets, tweets.quoteTweets, tweets.replies,
-                tweets.isRetweet, tweets.isDeleted, tweets.repliedToTweetId,
-                tweets.repliedToUserId, tweets.repliedToTweetDate,
-                tweets.retweetedTweetId, tweets.retweetedUserId,
-                tweets.retweetedTweetDate, tweets.hasWarning, tweets.warningLabel) \
-        .orderby(tweets.id, order=Order.desc) \
+        .select(Star()) \
+        .orderby(tweets.date, order=Order.desc) \
         .limit(max_responses)
 
     if account_id is not None:
@@ -47,14 +41,8 @@ def search_tweets(search_phrase: str, repo: Dolt, table: str, max_responses: int
                   hide_deleted_tweets: bool = False, only_deleted_tweets: bool = False) -> dict:
     tweets: Table = Table(table)
     query: QueryBuilder = Query.from_(tweets) \
-        .select(tweets.id, tweets.twitter_user_id, tweets.date,
-                tweets.text, tweets.device, tweets.favorites,
-                tweets.retweets, tweets.quoteTweets, tweets.replies,
-                tweets.isRetweet, tweets.isDeleted, tweets.repliedToTweetId,
-                tweets.repliedToUserId, tweets.repliedToTweetDate,
-                tweets.retweetedTweetId, tweets.retweetedUserId,
-                tweets.retweetedTweetDate, tweets.hasWarning, tweets.warningLabel) \
-        .orderby(tweets.id, order=Order.desc) \
+        .select(Star()) \
+        .orderby(tweets.date, order=Order.desc) \
         .limit(max_responses) \
         .where(Lower(tweets.text).like(
             search_phrase.lower()
@@ -81,7 +69,7 @@ def count_tweets(search_phrase: str, repo: Dolt, table: str, account_id: Optiona
     tweets: Table = Table(table)
     query: QueryBuilder = Query.from_(tweets) \
         .select(Count(tweets.id)) \
-        .orderby(tweets.id, order=Order.desc) \
+        .orderby(tweets.date, order=Order.desc) \
         .where(Lower(tweets.text).like(
             search_phrase.lower()
         )  # TODO: lower(text) COLLATE utf8mb4_unicode_ci like lower('{search_phrase}')
@@ -111,7 +99,7 @@ def count_tweets(search_phrase: str, repo: Dolt, table: str, account_id: Optiona
 def lookupActiveAccounts(repo: Dolt) -> dict:
     government: Table = Table("government")
     query: QueryBuilder = Query.from_(government) \
-        .select(government.twitter_user_id, government.twitter_handle, government.first_name, government.last_name) \
+        .select(Star()) \
         .where(government.archived == 0)
 
     return repo.sql(query=query.get_sql(quote_char=None), result_format='json')["rows"]
@@ -122,7 +110,7 @@ def lookupLatestTweetId(repo: Dolt, table: str, twitter_user_id: str) -> Optiona
     query: QueryBuilder = Query.from_(tweets) \
         .select(tweets.id) \
         .where(tweets.twitter_user_id == twitter_user_id) \
-        .orderby(tweets.id, order=Order.desc) \
+        .orderby(tweets.date, order=Order.desc) \
         .limit(1)
 
     tweet_id = repo.sql(query=query.get_sql(quote_char=None), result_format='json')["rows"]

@@ -23,24 +23,24 @@ def handle_tracking_cookie(self) -> Optional[Tuple[str, str]]:
     uuid_tracking: uuid.UUID = uuid.uuid4()
     uuid_session: str = str(random.sample(range(1, 1000000), 1)[0])
 
-    # For If Debugging Via Localhost
+    # For If Debugging Via Localhost (Chrome Marks SameSite As None Being A Warning If Secure Is Not Set)
     _, ip_source = get_ip_address(self=self)
-    secure: str = " Secure;" if ip_source != "Direct" else ""
+    secure: str = " Secure; SameSite=None" if ip_source != "Direct" else ""
 
     cookies: Optional[dict] = get_cookies(self=self)
     if cookies is not None:
         if 'analytics' in cookies and 'session' in cookies:
             return cookies['analytics'], cookies['session']
         elif 'analytics' in cookies:
-            self.send_header("Set-Cookie", f"session={uuid_session};path=/; HttpOnly;{secure} SameSite=None")
+            self.send_header("Set-Cookie", f"session={uuid_session};path=/; HttpOnly;{secure}")
             return None
         elif 'session' in cookies:
             self.send_header("Set-Cookie",
-                             f"analytics={uuid_tracking};expires={expire_time};path=/; HttpOnly;{secure} SameSite=None")
+                             f"analytics={uuid_tracking};expires={expire_time};path=/; HttpOnly;{secure}")
             return None
 
     self.send_header("Set-Cookie",
-                     f"analytics={uuid_tracking};expires={expire_time},session={uuid_session};path=/; HttpOnly;{secure} SameSite=None")
+                     f"analytics={uuid_tracking};expires={expire_time},session={uuid_session};path=/; HttpOnly;{secure}")
 
 
 def get_cookies(self) -> Optional[dict]:

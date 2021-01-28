@@ -212,6 +212,7 @@ def load_tweet(self):
     # Body
     # write_body(self=self, page="single-tweet")
     self.wfile.write(bytes(load_text_file(f"rover/server/web/pages/single-tweet.html")
+                           .replace("{tweet_json}", json.dumps(tweet[0]))
                            .replace("{twitter_account}", account_name)
                            .replace("{tweet_text}", tweet_text)
                            , "utf-8"))

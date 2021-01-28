@@ -4,32 +4,53 @@ overrideScrollReload()
 
 // TODO: Add Means To Delete All Cache and Service Worker!!!
 
+let days = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"]
+let months = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
+
+function convertDateToLocalString(dateNum) {
+    // let temp = Date.parse("2021-01-26 13:20:46 +0000 UTC")
+    let date = new Date(dateNum)
+
+    let weekday = days[date.getDay()]
+    let month = months[date.getMonth()]
+    let day = date.getDate()
+    let year = date.getFullYear()
+
+    let tf_hour = date.getHours()
+
+    let locale = 'en-US'  // undefined is a valid option
+
+    let hour
+    let meridian
+    if (tf_hour > 12) {
+        hour = (tf_hour - 12).toLocaleString(locale, {minimumIntegerDigits: 2, useGrouping:false})
+        meridian = "PM"
+    } else {
+        hour = (tf_hour).toLocaleString(locale, {minimumIntegerDigits: 2, useGrouping:false})
+        meridian = "AM"
+    }
+
+    let minute = (date.getMinutes()).toLocaleString(locale, {minimumIntegerDigits: 2, useGrouping:false})
+    let second = (date.getSeconds()).toLocaleString(locale, {minimumIntegerDigits: 2, useGrouping:false})
+
+    // Sunday, January 5, 2020 01:43:15 PM
+    return "{}, {} {}, {} {}:{}:{} {}".format(weekday, month, day, year, hour, minute, second, meridian)
+}
+
+// Stolen From: https://stackoverflow.com/a/4974690/6828099
+String.prototype.format = function () {
+    let i = 0, args = arguments;
+
+    return this.replace(/{}/g, function () {
+        return typeof args[i] != 'undefined' ? args[i++] : '';
+    });
+};
+
 // From https://stackoverflow.com/a/17192845/6828099
 function uintToString(uintArray) {
     let encodedString = String.fromCharCode.apply(null, uintArray);
 
     return decodeURIComponent(escape(encodedString));
-}
-
-function lookupNameFromID(twitter_account_id) {
-    caches.open(accountCacheName).then(cache => {
-        cache.match(twitter_account_id).then(account => {
-            if (account === undefined) {
-                downloadAccountInfo(twitter_account_id).then(result => {
-                    console.debug("Downloaded Account Info: '" + twitter_account_id + "'")
-                    updateAccountNamesOnTable(result)
-                })
-                return
-            }
-
-            let reader = account.body.getReader()
-
-            reader.read().then(result => {
-                console.debug("Found Account Info: '" + twitter_account_id + "'")
-                updateAccountNamesOnTable(uintToString(result.value))
-            })
-        })
-    })
 }
 
 async function downloadAccountInfo(twitter_account_id) {
@@ -84,43 +105,35 @@ async function downloadAccountInfo(twitter_account_id) {
     });
 }
 
-function updateAccountNamesOnTable(accounts) {
-    // TODO: Implement Proper Looping For Multi-Account Handle
-    // TODO: Needs to be done for the downloading the data too
-    response = $.parseJSON(accounts).accounts[0];
-
-    $(document).ready(function () {
-        $("span.account-" + response.account_id).text(response.first_name + " " + response.last_name)
-
-        // onclick=\" window.open('https://www.twitter.com/" + item.twitter_user_id + "/statuses/" + item.id + "','_blank')\"
-        //$("button.account-" + response.account_id).text("response.account_id TODO: REPLACE ME WITH FIXING ONCLICK")
-    })
-}
-
 function generateTableFromTweets(tweets) {
     $(document).ready(function () {
         // Convert String To JSON
         // TODO: This particular function breaks with 22 or more tweets (based on String Size, Not Tweet Count)
         // TODO: It appears that the JSON gets chopped off in JQuery's Internal Code (Only When Embedding JSON)
         response = $.parseJSON(tweets);
+        accounts = response.accounts
+
+        // const timeZone = Intl.DateTimeFormat().resolvedOptions().timeZone;
 
         $(function() {
             let cards = ""
-            $.each(response.results, function(i, item) {
-                lookupNameFromID(item.twitter_user_id)  // TODO: Implement Proper Looping For Multi-Account Handle
+            $.each(response.results, function(i, tweet) {
+                account = accounts.find(account => account.account_id === tweet.twitter_user_id)
+                dateTime = Date.parse(tweet.date)
+                date = convertDateToLocalString(dateTime)
 
-                cards += "<div class=\"mdc-card tweet-card\">\n" +
+                cards += "<div class=\"mdc-card tweet-card\" id=\"tweet-" + tweet.id + "\">\n" +
                     "    <div class=\"mdc-card__primary-action mdc-theme--text-primary-on-dark mdc-theme--primary-bg card__content\" tabindex=\"0\">\n" +
                     "        <div>\n" +
                     "            <h2 class=\"card__title mdc-typography mdc-typography--headline6\">Tweet</h2>\n" +
-                    "            <h3 class=\"card__subtitle mdc-typography mdc-typography--subtitle2\">by <span class='account-name account-" + item.twitter_user_id + "'>Loading Name For " + item.twitter_user_id + "</span> on <span class='tweet-date'>" + item.date + "</span></h3>\n" +
+                    "            <h3 class=\"card__subtitle mdc-typography mdc-typography--subtitle2\">by <span class='account-name'>" + account.first_name + " " + account.last_name + "</span> on <span class='tweet-date'>" + date + "</span></h3>\n" +
                     "        </div>\n" +
-                    "        <div class=\"card__text mdc-typography mdc-typography--body2\">" + item.text + "</div>\n" +
+                    "        <div class=\"card__text mdc-typography mdc-typography--body2\">" + tweet.text + "</div>\n" +
                     "    </div>\n" +
                     "    <div class=\"mdc-card__actions mdc-theme--text-secondary-on-dark mdc-theme--secondary-bg card__actions\">\n" +
                     "        <div class=\"mdc-card__action-buttons\">\n" +
-                    "            <button class=\"mdc-button mdc-card__action mdc-card__action--button mdc-button--raised\">  <span class=\"mdc-button__ripple\"></span> " + item.device + "</button>\n" +
-                    "            <button class=\"mdc-button mdc-card__action mdc-card__action--button mdc-button--raised account-" + item.twitter_user_id + "\" onclick=\" window.open('https://www.twitter.com/" + item.twitter_user_id + "/statuses/" + item.id + "','_blank')\">  <span class=\"mdc-button__ripple\"></span> View Tweet</button>\n" +
+                    "            <button class=\"mdc-button mdc-card__action mdc-card__action--button mdc-button--raised\">  <span class=\"mdc-button__ripple\"></span> " + tweet.device + "</button>\n" +
+                    "            <button class=\"mdc-button mdc-card__action mdc-card__action--button mdc-button--raised account-" + tweet.twitter_user_id + "\" onclick=\"window.open('https://www.twitter.com/" + account.handle + "/status/" + tweet.id + "','_blank')\">  <span class=\"mdc-button__ripple\"></span> View Tweet</button>\n" +
                     "        </div>\n" +
                     "    </div>\n" +
                     "</div>"

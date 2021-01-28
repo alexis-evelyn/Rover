@@ -5,14 +5,15 @@ from mysql.connector import conversion
 import html
 
 
-def convert_search_to_query(phrase: str) -> str:
+def convert_search_to_query(phrase: str, regex: bool = False) -> str:
     # Use MySQL Library For Escaping Search Text
     sql_converter: conversion.MySQLConverter = conversion.MySQLConverter()
     phrase = sql_converter.escape(value=phrase)
 
-    phrase = phrase.replace(' ', '%')
     phrase = phrase.replace(r"\'", r"'")  # This gets fixed later by PyPika
-    phrase = '%' + phrase + '%'
+    if not regex:
+        phrase = phrase.replace(' ', '%')
+        phrase = '%' + phrase + '%'
 
     return phrase
 

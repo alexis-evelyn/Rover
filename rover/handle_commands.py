@@ -28,7 +28,9 @@ def process_command(api: twitter.Api, status: twitter.models.Status,
     elif "hello" in status.full_text:
         commands.say_hello(api=api, status=status)
     elif "search" in status.full_text:
-        commands.search_text(api=api, status=status)
+        commands.search_text(api=api, status=status, regex=False)
+    elif "regex" in status.full_text:
+        commands.search_text(api=api, status=status, regex=True)
     elif "analyze" in status.full_text:
         commands.analyze_tweet(api=api, status=status)
     elif "help" in status.full_text:

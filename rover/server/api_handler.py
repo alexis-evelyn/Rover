@@ -1,10 +1,11 @@
 #!/usr/bin/python
-
+import distutils.util
 import json
 import os
 from typing import Optional, List
 
 from doltpy.core import Dolt
+from mysql.connector import conversion
 
 from archiver import config as archive_config, archiver
 from rover import config, search_tweets
@@ -156,15 +157,17 @@ def lookup_account(self, repo: Dolt, table: str, queries: dict) -> dict:
 
 def perform_search(self, repo: Dolt, table: str, queries: dict) -> dict:
     original_search_text: str = queries["text"][0] if "text" in queries else ""
+    regex: bool = bool(distutils.util.strtobool(queries["regex"][0])) if "regex" in queries else False
 
-    search_phrase: str = search_tweets.convert_search_to_query(phrase=original_search_text)
+    search_phrase: str = search_tweets.convert_search_to_query(phrase=original_search_text, regex=regex)  # r"^RT @[\w]:*"
 
     search_results: dict = convertIDsToString(
-        results=database.search_tweets(search_phrase=search_phrase, repo=repo, table=table))
-    tweet_count: int = database.count_tweets(search_phrase=search_phrase, repo=repo, table=table)
+        results=database.search_tweets(search_phrase=search_phrase, repo=repo, table=table, regex=regex))
+    tweet_count: int = database.count_tweets(search_phrase=search_phrase, repo=repo, table=table, regex=regex)
 
     return {
         "search_text": original_search_text,
+        "regex": regex,
         "count": tweet_count,
         "results": search_results
     }

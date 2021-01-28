@@ -11,7 +11,7 @@ from rover import config
 from rover.search_tweets import SafeDict, get_search_keywords, convert_search_to_query, get_username_by_id
 
 
-def search_text(api: twitter.Api, status: twitter.models.Status,
+def search_text(api: twitter.Api, status: twitter.models.Status, regex: bool = False,
                 INFO_QUIET: int = logging.INFO + 1,
                 VERBOSE: int = logging.DEBUG - 1):
     # Broken For Some Reason
@@ -29,10 +29,15 @@ def search_text(api: twitter.Api, status: twitter.models.Status,
         status_text = status.text
 
     # This Variable Is Useful For Debugging Search Queries And Exploits
-    original_phrase = get_search_keywords(text=status_text)
+    if regex:
+        search_word: str = "search"
+    else:
+        search_word: str = "regex"
+
+    original_phrase = get_search_keywords(text=status_text, search_word_query=search_word)
 
     repo: Dolt = Dolt(config.ARCHIVE_TWEETS_REPO_PATH)
-    phrase = convert_search_to_query(phrase=original_phrase)
+    phrase = convert_search_to_query(phrase=original_phrase, regex=regex)
 
     search_results: dict = database.search_tweets(search_phrase=phrase,
                                                   repo=repo,

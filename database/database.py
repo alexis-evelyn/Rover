@@ -5,9 +5,10 @@ from typing import Optional, List
 from doltpy.core import Dolt
 from mysql.connector import conversion
 from pypika import Query, Table, Order
+from pypika.enums import Matching, Comparator
 from pypika.functions import Lower, Count
 from pypika.queries import QueryBuilder, CreateQueryBuilder, Column
-from pypika.terms import Star, CustomFunction
+from pypika.terms import Star, CustomFunction, BasicCriterion
 
 
 def latest_tweets(repo: Dolt, table: str, max_responses: int = 10, account_id: Optional[int] = None,
@@ -38,17 +39,25 @@ def latest_tweets(repo: Dolt, table: str, max_responses: int = 10, account_id: O
 
 
 def search_tweets(search_phrase: str, repo: Dolt, table: str, max_responses: int = 10, account_id: Optional[int] = None,
-                  hide_deleted_tweets: bool = False, only_deleted_tweets: bool = False) -> dict:
+                  hide_deleted_tweets: bool = False, only_deleted_tweets: bool = False, regex: bool = False) -> dict:
     tweets: Table = Table(table)
-    query: QueryBuilder = Query.from_(tweets) \
-        .select(Star()) \
-        .orderby(tweets.date, order=Order.desc) \
-        .limit(max_responses) \
-        .where(Lower(tweets.text).like(
-            search_phrase.lower()
-        )  # TODO: lower(text) COLLATE utf8mb4_unicode_ci like lower('{search_phrase}')
-    )
-
+    if regex:
+        query: QueryBuilder = Query.from_(tweets) \
+            .select(Star()) \
+            .orderby(tweets.date, order=Order.desc) \
+            .limit(max_responses) \
+            .where(
+                BasicCriterion(CustomMatching.regexp, tweets.text, tweets.text.wrap_constant(search_phrase))
+            )
+    else:
+        query: QueryBuilder = Query.from_(tweets) \
+            .select(Star()) \
+            .orderby(tweets.date, order=Order.desc) \
+            .limit(max_responses) \
+            .where(Lower(tweets.text).like(
+                search_phrase.lower()
+            )  # TODO: lower(text) COLLATE utf8mb4_unicode_ci like lower('{search_phrase}')
+        )
     if account_id is not None:
         # Show Results For Specific Account
         query: QueryBuilder = query.where(tweets.twitter_user_id, account_id)
@@ -65,15 +74,23 @@ def search_tweets(search_phrase: str, repo: Dolt, table: str, max_responses: int
 
 
 def count_tweets(search_phrase: str, repo: Dolt, table: str, account_id: Optional[int] = None,
-                 hide_deleted_tweets: bool = False, only_deleted_tweets: bool = False) -> int:
+                 hide_deleted_tweets: bool = False, only_deleted_tweets: bool = False, regex: bool = False) -> int:
     tweets: Table = Table(table)
-    query: QueryBuilder = Query.from_(tweets) \
-        .select(Count(tweets.id)) \
-        .orderby(tweets.date, order=Order.desc) \
-        .where(Lower(tweets.text).like(
-            search_phrase.lower()
-        )  # TODO: lower(text) COLLATE utf8mb4_unicode_ci like lower('{search_phrase}')
-    )
+    if regex:
+        query: QueryBuilder = Query.from_(tweets) \
+            .select(Count(tweets.id)) \
+            .orderby(tweets.date, order=Order.desc) \
+            .where(
+                BasicCriterion(CustomMatching.regexp, tweets.text, tweets.text.wrap_constant(search_phrase))
+            )
+    else:
+        query: QueryBuilder = Query.from_(tweets) \
+            .select(Count(tweets.id)) \
+            .orderby(tweets.date, order=Order.desc) \
+            .where(Lower(tweets.text).like(
+                search_phrase.lower()
+            )  # TODO: lower(text) COLLATE utf8mb4_unicode_ci like lower('{search_phrase}')
+        )
 
     if account_id is not None:
         # Show Results For Specific Account
@@ -346,3 +363,7 @@ def retrieveMissingBroadcastFiles(repo: Dolt, tweets_table: str, media_table: st
         .where(media.stream_json.null())
 
     return repo.sql(query=query.get_sql(quote_char=None), result_format='json')["rows"]
+
+
+class CustomMatching(Comparator):
+    regexp = " REGEXP "

@@ -132,8 +132,8 @@ function generateTableFromTweets(tweets) {
                     "    </div>\n" +
                     "    <div class=\"mdc-card__actions mdc-theme--text-secondary-on-dark mdc-theme--secondary-bg card__actions\">\n" +
                     "        <div class=\"mdc-card__action-buttons\">\n" +
-                    "            <button class=\"mdc-button mdc-card__action mdc-card__action--button mdc-button--raised\">  <span class=\"mdc-button__ripple\"></span> " + tweet.device + "</button>\n" +
-                    "            <button class=\"mdc-button mdc-card__action mdc-card__action--button mdc-button--raised account-" + tweet.twitter_user_id + "\" onclick=\"window.open('https://www.twitter.com/" + account.handle + "/status/" + tweet.id + "','_blank')\">  <span class=\"mdc-button__ripple\"></span> View Tweet</button>\n" +
+                    "            <button class=\"mdc-button mdc-card__action mdc-card__action--button mdc-button--raised view-tweet-internal account-" + tweet.twitter_user_id + "\" onclick=\"window.open('/tweet/" + tweet.id + "','_self')\">  <span class=\"mdc-button__ripple\"></span> Permalink</button>\n" +
+                    "            <button class=\"mdc-button mdc-card__action mdc-card__action--button mdc-button--raised view-tweet-external account-" + tweet.twitter_user_id + "\" onclick=\"window.open('https://www.twitter.com/" + account.handle + "/status/" + tweet.id + "','_blank')\">  <span class=\"mdc-button__ripple\"></span> View On Twitter</button>\n" +
                     "        </div>\n" +
                     "    </div>\n" +
                     "</div>"

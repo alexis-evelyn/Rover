@@ -12,7 +12,8 @@ from rover.hostility_analysis import HostilityAnalysis
 from rover.search_tweets import get_search_keywords, convert_search_to_query
 
 
-def analyze_tweet(api: twitter.Api, status: twitter.models.Status,
+# TODO: Determine Whether Or Not To Redesign Function
+def analyze_tweet(api: twitter.Api, status: twitter.models.Status, regex: bool = False,
                   INFO_QUIET: int = logging.INFO + 1,
                   VERBOSE: int = logging.DEBUG - 1):
 
@@ -22,9 +23,9 @@ def analyze_tweet(api: twitter.Api, status: twitter.models.Status,
     original_phrase = get_search_keywords(text=status_text, search_word_query='analyze')
 
     repo: Dolt = Dolt(config.ARCHIVE_TWEETS_REPO_PATH)
-    phrase = convert_search_to_query(phrase=original_phrase)
+    phrase = convert_search_to_query(phrase=original_phrase, regex=regex)
 
-    search_results = database.search_tweets(search_phrase=phrase, repo=repo, table=config.ARCHIVE_TWEETS_TABLE)
+    search_results = database.search_tweets(search_phrase=phrase, repo=repo, table=config.ARCHIVE_TWEETS_TABLE, regex=regex)
 
     # Instantiate Text Processor
     analyzer: HostilityAnalysis = HostilityAnalysis(logger_param=logger, verbose_level=VERBOSE)

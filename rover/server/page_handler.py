@@ -215,6 +215,7 @@ def load_tweet(self):
                            .replace("{tweet_json}", json.dumps(tweet[0]))
                            .replace("{twitter_account}", account_name)
                            .replace("{tweet_text}", tweet_text)
+                           .replace("{device}", tweet[0]['device'])
                            , "utf-8"))
 
     # Footer

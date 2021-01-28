@@ -30,10 +30,11 @@ def search_text(api: twitter.Api, status: twitter.models.Status, regex: bool = F
 
     # This Variable Is Useful For Debugging Search Queries And Exploits
     if regex:
-        search_word: str = "search"
-    else:
         search_word: str = "regex"
+    else:
+        search_word: str = "search"
 
+    logger.log(level=VERBOSE, msg=f"Search Word: {search_word} - Status Text: {status_text}")
     original_phrase = get_search_keywords(text=status_text, search_word_query=search_word)
 
     repo: Dolt = Dolt(config.ARCHIVE_TWEETS_REPO_PATH)
@@ -43,7 +44,8 @@ def search_text(api: twitter.Api, status: twitter.models.Status, regex: bool = F
                                                   repo=repo,
                                                   table=config.ARCHIVE_TWEETS_TABLE,
                                                   hide_deleted_tweets=config.HIDE_DELETED_TWEETS,
-                                                  only_deleted_tweets=config.ONLY_DELETED_TWEETS)
+                                                  only_deleted_tweets=config.ONLY_DELETED_TWEETS,
+                                                  regex=regex)
 
     # Print Out 10 Found Search Results To Debug Logger
     loop_count = 0
@@ -96,7 +98,8 @@ def search_text(api: twitter.Api, status: twitter.models.Status, regex: bool = F
                                        repo=repo,
                                        table=config.ARCHIVE_TWEETS_TABLE,
                                        hide_deleted_tweets=config.HIDE_DELETED_TWEETS,
-                                       only_deleted_tweets=config.ONLY_DELETED_TWEETS)
+                                       only_deleted_tweets=config.ONLY_DELETED_TWEETS,
+                                       regex=regex)
 
     logger.debug("Count For Phrase \"{search_phrase}\": {count}".format(search_phrase=original_phrase, count=count))
 
@@ -105,10 +108,15 @@ def search_text(api: twitter.Api, status: twitter.models.Status, regex: bool = F
     else:
         word_times = "times"
 
-    new_status = "@{user} @{screen_name} has tweeted about \"{search_phrase}\" {search_count} {word_times}. The latest example is at {status_link}".format_map(
+    if regex:
+        status_context: str = "matches the regex"
+    else:
+        status_context: str = "has tweeted about"
+
+    new_status = "@{user} @{screen_name} {status_context} \"{search_phrase}\" {search_count} {word_times}. The latest example is at {status_link}".format_map(
         SafeDict(
             user=status.user.screen_name, status_link=url, screen_name=author,
-            search_count=count, word_times=word_times))
+            search_count=count, word_times=word_times, status_context=status_context))
 
     possibly_truncated_status: str = truncate_if_needed(original_phrase=original_phrase, new_status=new_status)
 

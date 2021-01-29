@@ -35,7 +35,7 @@ def latest_tweets(repo: Dolt, table: str, max_responses: int = 10, account_id: O
         query: QueryBuilder = query.where(tweets.isDeleted == 1)
 
     # Retrieve Latest Tweets
-    return repo.sql(query=query.get_sql(quote_char=None), result_format="json")["rows"]
+    return repo.sql(query=query.get_sql(quote_char=None), result_format="csv")
 
 
 def search_tweets(search_phrase: str, repo: Dolt, table: str, max_responses: int = 10, account_id: Optional[int] = None,

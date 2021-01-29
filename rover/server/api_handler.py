@@ -2,6 +2,7 @@
 import distutils.util
 import json
 import os
+import time
 from typing import Optional, List
 
 from doltpy.core import Dolt
@@ -93,7 +94,12 @@ def load_latest_tweets(self, repo: Dolt, table: str, queries: dict) -> dict:
 
     # TODO: Add Ability To Read From RAM (Saved To By Rover and Us) Otherwise Load From File Then Database
     if not os.path.exists(archive_config.CACHE_FILE_PATH):
+        self.logger.warning(f"Generating Cache File!!!")
+        time_start: time = time.time()
         response: dict = helper_functions.save_cache_file(self=self, max_tweets=max_responses)
+        time_end: time = time.time()
+
+        self.logger.warning(f"Generating File Took {time_end - time_start}!!!")
     else:
         response: dict = helper_functions.load_cache_file(self=self, max_tweets=max_responses)
 

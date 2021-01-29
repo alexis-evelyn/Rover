@@ -130,7 +130,7 @@ def lookupLatestTweetId(repo: Dolt, table: str, twitter_user_id: str) -> Optiona
         .orderby(tweets.date, order=Order.desc) \
         .limit(1)
 
-    tweet_id = repo.sql(query=query.get_sql(quote_char=None), result_format='csv')
+    tweet_id = repo.sql(query=query.get_sql(quote_char=None), result_format='json')["rows"]
 
     if len(tweet_id) < 1 or 'id' not in tweet_id[0]:
         return None

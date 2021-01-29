@@ -68,6 +68,9 @@ class Archiver(threading.Thread):
         # Media Threads
         self.media_threads: List[int] = []
 
+        # Timings
+        self.timings: dict = {}
+
     def run(self):
         self.logger.log(self.INFO_QUIET, "Starting " + self.name)
 
@@ -205,10 +208,8 @@ class Archiver(threading.Thread):
 
         # Sanitization
         if not isinstance(since_id, int):
-            self.logger.error("No Latest ID")
             resp = self.twitter_api.lookup_tweets_via_search(user_id=twitter_user_id)
         else:
-            self.logger.error("Yes Latest ID")
             resp = self.twitter_api.lookup_tweets_via_search(user_id=twitter_user_id, since_id=since_id)
 
         tweets = json.loads(resp.text)

@@ -5,8 +5,10 @@ import os
 import time
 from typing import Optional, List
 
+import sqlalchemy
 from doltpy.core import Dolt
 from mysql.connector import conversion
+from sqlalchemy import select
 
 from archiver import config as archive_config, archiver
 from rover import config, search_tweets
@@ -50,7 +52,8 @@ def send_reply(self, repo: Dolt, table: str):
 
     response_dict: dict = run_function(self=self, repo=repo, table=table, url=url, queries=queries)
 
-    response: str = json.dumps(response_dict)
+    # Stolen From: https://stackoverflow.com/a/36142844/6828099
+    response: str = json.dumps(response_dict, sort_keys=True, default=str)
     content_length: int = len(response)
 
     # logger.debug(f"Content Length: {content_length}")
@@ -65,6 +68,7 @@ def send_reply(self, repo: Dolt, table: str):
 def run_function(self, repo: Dolt, table: str, url: urlparse, queries: dict) -> dict:
     endpoints = {
         '/api': send_help,
+        '/api/analytics': web_analytics,
         '/api/latest': load_latest_tweets,
         '/api/search': perform_search,
         '/api/accounts': lookup_account,
@@ -99,7 +103,7 @@ def load_latest_tweets(self, repo: Dolt, table: str, queries: dict) -> dict:
         response: dict = helper_functions.save_cache_file(self=self, max_tweets=max_responses)
         time_end: time = time.time()
 
-        self.logger.warning(f"Generating File Took {time_end - time_start}!!!")
+        self.logger.warning(f"Generating File Took {time_end - time_start} Seconds!!!")
     else:
         response: dict = helper_functions.load_cache_file(self=self, max_tweets=max_responses)
 
@@ -264,6 +268,21 @@ def retrieve_tweet(self, repo: Dolt, table: str, queries: dict) -> dict:
             "tweet_id": tweet[0]['id']
         }
 
+    return response
+
+
+def web_analytics(self, repo: Dolt, table: str, queries: dict) -> dict:
+    analytics_engine: sqlalchemy.engine = self.analytics_engine
+    # stmt = select(User.id).where(User.id.in_([1, 2, 3]))
+    get_analytics: str = "select * from web order by date desc limit 30"
+
+    result_proxy = analytics_engine.execute(get_analytics)
+    results: List[dict] = [{column: value for column, value in row_proxy.items()} for row_proxy in result_proxy]
+
+    # self.logger.error(f"Results: {results}")
+    response: dict = {
+        "results": results
+    }
     return response
 
 

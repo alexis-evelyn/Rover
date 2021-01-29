@@ -70,7 +70,7 @@ def search_tweets(search_phrase: str, repo: Dolt, table: str, max_responses: int
         query: QueryBuilder = query.where(tweets.isDeleted == 1)
 
     # Perform Search Query
-    return repo.sql(query=query.get_sql(quote_char=None), result_format="json")["rows"]
+    return repo.sql(query=query.get_sql(quote_char=None), result_format="csv")
 
 
 def count_tweets(search_phrase: str, repo: Dolt, table: str, account_id: Optional[int] = None,
@@ -104,7 +104,7 @@ def count_tweets(search_phrase: str, repo: Dolt, table: str, account_id: Optiona
         query: QueryBuilder = query.where(tweets.isDeleted == 1)
 
     # Perform Count Query
-    count_result = repo.sql(query=query.get_sql(quote_char=None), result_format="json")["rows"]
+    count_result = repo.sql(query=query.get_sql(quote_char=None), result_format="csv")
 
     # Retrieve Count of Tweets From Search
     for header in count_result[0]:
@@ -119,7 +119,7 @@ def lookupActiveAccounts(repo: Dolt) -> dict:
         .select(Star()) \
         .where(government.archived == 0)
 
-    return repo.sql(query=query.get_sql(quote_char=None), result_format='json')["rows"]
+    return repo.sql(query=query.get_sql(quote_char=None), result_format='csv')
 
 
 def lookupLatestTweetId(repo: Dolt, table: str, twitter_user_id: str) -> Optional[int]:
@@ -130,7 +130,7 @@ def lookupLatestTweetId(repo: Dolt, table: str, twitter_user_id: str) -> Optiona
         .orderby(tweets.date, order=Order.desc) \
         .limit(1)
 
-    tweet_id = repo.sql(query=query.get_sql(quote_char=None), result_format='json')["rows"]
+    tweet_id = repo.sql(query=query.get_sql(quote_char=None), result_format='csv')
 
     if len(tweet_id) < 1 or 'id' not in tweet_id[0]:
         return None
@@ -176,7 +176,7 @@ def retrieveTweetJSON(repo: Dolt, table: str, tweet_id: str) -> Optional[str]:
         .where(tweets.id == tweet_id) \
         .limit(1)
 
-    result = repo.sql(query=query.get_sql(quote_char=None), result_format='json')["rows"]
+    result = repo.sql(query=query.get_sql(quote_char=None), result_format='csv')
 
     if len(result) < 1:
         return None
@@ -300,7 +300,7 @@ def retrieveAccountInfo(repo: Dolt, account_id: int) -> dict:
         .select(Star()) \
         .where(government.twitter_user_id == account_id)
 
-    return repo.sql(query=query.get_sql(quote_char=None), result_format='json')["rows"]
+    return repo.sql(query=query.get_sql(quote_char=None), result_format='csv')
 
 
 def pickRandomOfficials(repo: Dolt, max_results: int = 3) -> dict:
@@ -320,7 +320,7 @@ def pickRandomOfficials(repo: Dolt, max_results: int = 3) -> dict:
         .limit(max_results)
 
     # print(query.get_sql(quote_char=None))
-    return repo.sql(query=query.get_sql(quote_char=None), result_format='json')["rows"]
+    return repo.sql(query=query.get_sql(quote_char=None), result_format='csv')
 
 
 def retrieveMissingBroadcastInfo(repo: Dolt, tweets_table: str, media_table: str) -> dict:
@@ -332,7 +332,7 @@ def retrieveMissingBroadcastInfo(repo: Dolt, tweets_table: str, media_table: str
         .where(tweets.expandedUrls.like("https://twitter.com/i/broadcasts/%")) \
         .where(media.broadcast_json.isnull())
 
-    return repo.sql(query=query.get_sql(quote_char=None), result_format='json')["rows"]
+    return repo.sql(query=query.get_sql(quote_char=None), result_format='csv')
 
 
 def addMediaFiles(repo: Dolt, table: str, tweet_id: str, data: List[str]):
@@ -362,7 +362,7 @@ def retrieveMissingBroadcastFiles(repo: Dolt, tweets_table: str, media_table: st
         .select(media.id, media.stream_json) \
         .where(media.stream_json.null())
 
-    return repo.sql(query=query.get_sql(quote_char=None), result_format='json')["rows"]
+    return repo.sql(query=query.get_sql(quote_char=None), result_format='csv')
 
 
 class CustomMatching(Comparator):

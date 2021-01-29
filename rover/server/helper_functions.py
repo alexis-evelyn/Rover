@@ -132,7 +132,7 @@ def save_cache_file(self, max_tweets: int = 20):
         response['latest_tweet_id'] = latest_tweets[0]['id']
 
     with open(file=archiver_config.CACHE_FILE_PATH, mode="w+") as cache:
-        cache.writelines(json.dumps(response))
+        cache.writelines(json.dumps(response, sort_keys=True, default=str))
         cache.close()
 
     return response

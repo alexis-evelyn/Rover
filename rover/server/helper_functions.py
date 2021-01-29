@@ -109,7 +109,10 @@ def save_cache_file(self, max_tweets: int = 20):
     # TODO: Implement Proper Parsing On Javascript Side
     # To deal with Javascript JSON Parsing Fail Due To Too Long of A String
     for result in latest_tweets:
-        result.pop('json', None)
+        try:
+            del result['json']
+        except KeyError:
+            continue
 
     response: dict = {
         "results": latest_tweets

@@ -119,6 +119,9 @@ class RequestHandler(BaseHTTPRequestHandler):
 
         self.logger.log(self.VERBOSE, "Starting Request Handler!!!")
 
+        # For Server Timing Headers/Analytics
+        self.timings: dict = {}
+
         super().__init__(request, client_address, server)
 
     def log_message(self, log_format: str, *args: [str]):

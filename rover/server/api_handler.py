@@ -43,7 +43,19 @@ def send_headers(self, content_length: int = 0):
     helper_functions.send_standard_headers(self=self)
     self.send_header("Content-Length", content_length)
 
+    if config.SEND_TIMING_HEADERS:
+        self.send_header("Server-Timing", parse_timings(timings=self.timings))
+
     self.end_headers()
+
+
+def parse_timings(timings: dict) -> str:
+    header: str = ""
+    for key in timings:
+        header += f"{key};dur={timings[key]};"
+
+    header = header[:-1]
+    return header
 
 
 def send_reply(self, repo: Dolt, table: str):
@@ -66,6 +78,7 @@ def send_reply(self, repo: Dolt, table: str):
 
 
 def run_function(self, repo: Dolt, table: str, url: urlparse, queries: dict) -> dict:
+    timing_start: time = time.time()
     endpoints = {
         '/api': send_help,
         '/api/analytics': web_analytics,
@@ -77,6 +90,7 @@ def run_function(self, repo: Dolt, table: str, url: urlparse, queries: dict) -> 
     }
 
     func = endpoints.get(url.path.rstrip('/'), invalid_endpoint)
+    self.timings["run_function"] = time.time() - timing_start
     return func(self=self, repo=repo, table=table, queries=queries)
 
 
@@ -89,6 +103,7 @@ def load_latest_tweets(self, repo: Dolt, table: str, queries: dict) -> dict:
         :param queries: GET Queries Dictionary
         :return: JSON Response
     """
+    timing_start: time = time.time()
     max_responses: int = int(queries['max'][0]) if "max" in queries and validateRangedNumber(value=queries['max'][0],
                                                                                              min=0, max=20) else 20
 
@@ -107,10 +122,12 @@ def load_latest_tweets(self, repo: Dolt, table: str, queries: dict) -> dict:
     else:
         response: dict = helper_functions.load_cache_file(self=self, max_tweets=max_responses)
 
+    self.timings["load_latest_tweets"] = time.time() - timing_start
     return response
 
 
 def lookup_account(self, repo: Dolt, table: str, queries: dict) -> dict:
+    timing_start: time = time.time()
     if "account" not in queries:
         # TODO: Create A Proper Error Handler To Ensure Error Messages and IDs Are Standardized
         return {
@@ -158,15 +175,18 @@ def lookup_account(self, repo: Dolt, table: str, queries: dict) -> dict:
         })
 
     if not found_a_result:
+        self.timings["lookup_account_fail"] = time.time() - timing_start
         return {
             "error": "No Results Found!!!",
             "code": 3
         }
 
+    self.timings["lookup_account"] = time.time() - timing_start
     return results
 
 
 def perform_search(self, repo: Dolt, table: str, queries: dict) -> dict:
+    timing_start: time = time.time()
     original_search_text: str = queries["text"][0] if "text" in queries else ""
     regex: bool = bool(distutils.util.strtobool(queries["regex"][0])) if "regex" in queries else False
 
@@ -176,6 +196,7 @@ def perform_search(self, repo: Dolt, table: str, queries: dict) -> dict:
         results=database.search_tweets(search_phrase=search_phrase, repo=repo, table=table, regex=regex))
     tweet_count: int = database.count_tweets(search_phrase=search_phrase, repo=repo, table=table, regex=regex)
 
+    self.timings["perform_search"] = time.time() - timing_start
     return {
         "search_text": original_search_text,
         "regex": regex,
@@ -213,6 +234,7 @@ def invalid_endpoint(self, repo: Dolt, table: str, queries: dict) -> dict:
 
 
 def handle_webhook(self, repo: Dolt, table: str, queries: dict) -> dict:
+    timing_start: time = time.time()
     try:
         content_length = int(self.headers['Content-Length'])
         post_data = self.rfile.read(content_length)
@@ -233,8 +255,10 @@ def handle_webhook(self, repo: Dolt, table: str, queries: dict) -> dict:
         # For Ping To Verify Webhook Existence - {"message":"ping","repository":{"name":"presidential-tweets","owner":"alexis-evelyn"}}
         # Only Event As Of Time of Writing - {"ref":"refs/heads/master","head":"1pmuiljube6m238144qo69gvfra853uc","prev":"ro99bhicq8renuh3cectpfuaih8fp64p","repository":{"name":"corona-virus","owner":"dolthub"}}
 
+        self.timings["handle_webhook"] = time.time() - timing_start
         return response
     except:
+        self.timings["handle_webhook_fail"] = time.time() - timing_start
         return {
             "error": "Invalid Post Data",
             "code": 4
@@ -242,6 +266,7 @@ def handle_webhook(self, repo: Dolt, table: str, queries: dict) -> dict:
 
 
 def retrieve_tweet(self, repo: Dolt, table: str, queries: dict) -> dict:
+    timing_start: time = time.time()
     tweet_id: Optional[int] = int(queries['id'][0]) if "id" in queries and validateNumber(queries['id'][0]) else None
 
     response: dict = {
@@ -268,10 +293,12 @@ def retrieve_tweet(self, repo: Dolt, table: str, queries: dict) -> dict:
             "tweet_id": tweet[0]['id']
         }
 
+    self.timings["retrieve_tweet"] = time.time() - timing_start
     return response
 
 
 def web_analytics(self, repo: Dolt, table: str, queries: dict) -> dict:
+    timing_start: time = time.time()
     analytics_engine: sqlalchemy.engine = self.analytics_engine
     # stmt = select(User.id).where(User.id.in_([1, 2, 3]))
     get_analytics: str = "select * from web order by date desc limit 30"
@@ -283,6 +310,8 @@ def web_analytics(self, repo: Dolt, table: str, queries: dict) -> dict:
     response: dict = {
         "results": results
     }
+
+    self.timings["web_analytics"] = time.time() - timing_start
     return response
 
 

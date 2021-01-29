@@ -38,6 +38,9 @@ CORS_SITES: str = "*"
 ENABLE_HSTS: bool = True
 HSTS_SETTINGS: str = "max-age=63072000; includeSubDomains; preload"
 
+# Send Timing Headers
+SEND_TIMING_HEADERS: bool = True
+
 # Website URL
 WEBSITE_ROOT: str = "https://alexisevelyn.me"
 

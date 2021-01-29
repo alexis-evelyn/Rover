@@ -58,6 +58,7 @@ def send_reply(self, repo: Dolt, table: str):
     send_headers(self=self, content_length=content_length)
 
     self.wfile.write(bytes(response, "utf-8"))
+    self.close_connection = True
 
 
 def run_function(self, repo: Dolt, table: str, url: urlparse, queries: dict) -> dict:

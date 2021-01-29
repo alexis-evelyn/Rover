@@ -83,6 +83,12 @@ def send_standard_headers(self):
     self.send_header("X-XSS-Protection", "1; mode=block")
     self.send_header("X-Frame-Options", "DENY")
 
+    # Debug Headers
+    ip_address, ip_source = get_ip_address(self=self)
+    self.send_header("X-REQUESTED-PATH", str(self.path))
+    self.send_header("X-YOUR-IP", ip_address)
+    self.send_header("X-YOUR-IP-SOURCE", ip_source)
+
     # TODO: Add CONTENT-SECURITY-POLICY and CONTENT-SECURITY-POLICY-REPORT-ONLY From https://www.immuniweb.com/websec/?id=FjR5kcVe
     # TODO: Add Cookie Notice On Site Too. Use JS Cookie To Mark Notice Read
     # self.send_header("CONTENT-SECURITY-POLICY", "...")

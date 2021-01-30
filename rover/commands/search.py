@@ -83,7 +83,7 @@ def search_text(api: TweetAPI2, status: dict, regex: bool = False,
         author = database.retrieveAccountInfo(repo=repo, account_id=search_post_response["twitter_user_id"])[0]["twitter_handle"]
         failed_account_lookup: bool = True
 
-    if search_post_response["isDeleted"] == 0 and not failed_account_lookup:
+    if search_post_response["isDeleted"] == str(0) and not failed_account_lookup:
         url = "https://twitter.com/{screen_name}/status/{status_id}".format(status_id=search_post_response["id"],
                                                                             screen_name=author)
     else:

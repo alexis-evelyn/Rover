@@ -87,8 +87,8 @@ def analyze_tweet(api: TweetAPI2, status: dict, regex: bool = False,
 
     possibly_truncated_status: str = truncate_if_needed(original_phrase=analyzed_tweet["processed_text"], new_status=new_status)
 
-    logger.error(f"Truncated Reply: {possibly_truncated_status}")
+    # logger.error(f"Truncated Reply: {possibly_truncated_status}")
 
     if config.REPLY:
         response: Response = api.send_tweet(in_reply_to_status_id=status["id"], status=possibly_truncated_status)
-        logger.error(f"Sent Reply: {response.text}")
+        # logger.error(f"Sent Reply: {response.text}")

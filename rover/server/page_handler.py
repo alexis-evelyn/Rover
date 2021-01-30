@@ -146,6 +146,7 @@ def write_header(self, site_title: str, twitter_title: str, twitter_description:
                            .replace("{current_time}", current_time)
                            .replace("{google_analytics_code}", google_analytics_code)
                            .replace("{github_repo}", config.GITHUB_REPO)
+                           .replace("{website_root}", config.WEBSITE_ROOT)
 
                            # SRI Hash Integrity
                            .replace("{stylesheet_css_integrity}", stylesheet_css_hash)
@@ -305,7 +306,8 @@ def load_privacy_page(self):
     cookies: Optional[dict] = helper_functions.get_cookies(self=self)
     if cookies is not None and 'analytics' in cookies:
         tracker_id: str = cookies['analytics']
-        lookup_user_query: str = urllib.parse.quote_plus(f'select * from web where tracker="{tracker_id}" order by date desc;')
+        lookup_user_query: str = urllib.parse.quote_plus(
+            f'select * from web where tracker="{tracker_id}" order by date desc;')
     else:
         lookup_user_query: str = urllib.parse.quote_plus(f'select * from web order by date desc;')
 

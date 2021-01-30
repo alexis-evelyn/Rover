@@ -67,7 +67,7 @@ def analyze_tweet(api: TweetAPI2, status: dict, regex: bool = False,
                     status_id=search_post_response["id"],
                     utm_source="twitter",
                     utm_medium="rover",
-                    utm_campaign="search",
+                    utm_campaign="analysis",
                     utm_content=status["id"])
 
     analyzed_tweets: List[dict] = helper_functions.analyze_tweets(logger=logger, VERBOSE=VERBOSE, tweets=search_results)

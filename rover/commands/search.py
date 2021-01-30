@@ -86,12 +86,17 @@ def search_text(api: TweetAPI2, status: dict, regex: bool = False,
         url = "https://twitter.com/{screen_name}/status/{status_id}".format(status_id=search_post_response["id"],
                                                                             screen_name=author)
     else:
+        if regex:
+            campaign: str = "regex"
+        else:
+            campaign: str = "search"
+
         url = "{website_root}/tweet/{status_id}/?utm_source={utm_source}&utm_medium={utm_medium}&utm_campaign={utm_campaign}&utm_content={utm_content}" \
             .format(website_root=config.WEBSITE_ROOT,
                     status_id=search_post_response["id"],
                     utm_source="twitter",
                     utm_medium="rover",
-                    utm_campaign="search",
+                    utm_campaign=campaign,
                     utm_content=status["id"])
 
     count: int = database.count_tweets(search_phrase=phrase,

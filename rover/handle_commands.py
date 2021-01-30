@@ -25,14 +25,14 @@ def process_command(api: TweetAPI2, status: dict,
     VERBOSE = verbose_level
 
     # TODO: Implement Better Command Parsing Handling
-    if "image" in status["text"]:
-        commands.draw_image(api=api, status=status)
-    elif "hello" in status["text"]:
-        commands.say_hello(api=api, status=status)
-    elif "search" in status["text"]:
+    if "search" in status["text"]:
         commands.search_text(api=api, status=status, regex=False)
     elif "regex" in status["text"]:
         commands.search_text(api=api, status=status, regex=True)
+    elif "image" in status["text"]:
+        commands.draw_image(api=api, status=status)
+    elif "hello" in status["text"]:
+        commands.say_hello(api=api, status=status)
     elif "analyze" in status["text"]:
         commands.analyze_tweet(api=api, status=status)
     elif "help" in status["text"]:

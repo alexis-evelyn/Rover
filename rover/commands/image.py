@@ -42,7 +42,7 @@ def draw_image(api: TweetAPI2, status: dict):
         output = io.BytesIO()
         im.save(output, config.TEMPORARY_IMAGE_FORMAT)
 
-        new_status = "@{user}".format(user=status["author_user_name"])
+        # new_status = "@{user}".format(user=status["author_user_name"])
 
         if config.REPLY:
-            response: Response = api.send_tweet(in_reply_to_status_id=status["id"], status=new_status, media=output)
+            api.send_tweet(in_reply_to_status_id=status["id"], status="", media=output)

@@ -118,7 +118,7 @@ class Rover(threading.Thread):
         latest_status = None
         for mention in reversed(mentions):
             # Don't Respond To Own Tweets (870156302298873856 is user id for @DigitalRoverDog)
-            if mention["author_id"] == self.user_id:
+            if str(mention["author_id"]) == str(self.user_id):
                 continue
 
             # To Prevent Implicit Replying (So the bot only replies to explicit requests)

@@ -33,7 +33,7 @@ def get_username_by_id(api: TweetAPI2, author_id: int) -> Optional[str]:
     except:
         return None
 
-    if "data" not in response and "username" not in response["data"]:
+    if "data" not in response or "username" not in response["data"]:
         return None
 
     return response["data"]["username"]

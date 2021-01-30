@@ -4,7 +4,7 @@
 # So I'm Just Downloading The Tweets Myself
 import re
 from re import Match
-from typing import Optional, List
+from typing import Optional, List, Union
 
 import requests
 
@@ -22,9 +22,9 @@ class BearerAuth(requests.auth.AuthBase):
 
 
 class TweetAPI2:
-    def __init__(self, auth: BearerAuth | OAuth1, alt_auth: Optional[BearerAuth | OAuth1] = None):
-        self.auth: BearerAuth | OAuth1 = auth
-        self.alt_auth: Optional[BearerAuth | OAuth1] = alt_auth
+    def __init__(self, auth: Union[BearerAuth, OAuth1], alt_auth: Optional[Union[BearerAuth, OAuth1]] = None):
+        self.auth: Union[BearerAuth, OAuth1] = auth
+        self.alt_auth: Optional[Union[BearerAuth, OAuth1]] = alt_auth
         self.user_agent = "Chrome/90"
 
     def get_tweet(self, tweet_id: str) -> Response:

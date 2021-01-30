@@ -15,7 +15,7 @@ from requests import Response
 from requests_oauthlib import OAuth1
 from twitter import TwitterError
 
-from archiver.tweet_api_two import TweetAPI2
+from archiver.tweet_api_two import TweetAPI2, BearerAuth
 from rover import handle_commands, config
 from config import config as main_config
 
@@ -60,7 +60,8 @@ class Rover(threading.Thread):
 
             # TODO: Add Means To Obtain Tokens Without Manually Going Through The API - https://requests-oauthlib.readthedocs.io/en/latest/oauth1_workflow.html
             # Authentication Method For Accounts
-            self.api: TweetAPI2 = TweetAPI2(auth=self.__oauth)
+            # self.api: TweetAPI2 = TweetAPI2(auth=self.__oauth)
+            self.api: TweetAPI2 = TweetAPI2(auth=BearerAuth(token=self.__credentials["BEARER_TOKEN"]))
 
     def run(self):
         self.logger.log(self.INFO_QUIET, "Starting " + self.name)
@@ -111,6 +112,7 @@ class Rover(threading.Thread):
 
         if "data" not in mentions_dict:
             self.logger.warning("Data Key Missing From Mentions Response!!!")
+            self.logger.error(mentions_dict)
             return
 
         mentions: List[dict] = mentions_dict["data"]
@@ -170,9 +172,12 @@ class Rover(threading.Thread):
             self.logger.error("Twitter Error: {error_message}".format(error_message=error.message))
 
     def is_explicitly_mentioned(self, mention: dict) -> bool:
+        mention_text: str = str(mention["text"]).lower()
+        own_username: str = f"@{self.user_name}".lower()
+
         # If the mention shows up more than once, return true. Twitter adds one implicit reply when replying to a user,
         # but if more than one mention exists, then it's a guaranteed explicit mention.
-        if mention["text"].startswith(f"@{self.user_name}" + " ") and {mention['text'].count(f"@{self.user_name}")} == 1:
+        if mention_text.startswith(own_username + " ") and mention_text.count(own_username) == 1:
             # If Not A Reply, Accept (Since It Cannot Be An Implicit Mention Added By Twitter)
             is_reply: bool = False
             if "referenced_tweets" in mention and len(mention["referenced_tweets"]) > 0:
@@ -196,7 +201,7 @@ class Rover(threading.Thread):
             return False
 
         # More than one of the username showed up, so definitely a mention
-        if mention['text'].count(f"@{self.user_name}") > 1:
+        if mention_text.count(own_username) > 0:
             return True
 
         # No Mentions Showed Up, Should Never Have Been Read In To This Function

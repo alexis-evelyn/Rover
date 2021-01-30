@@ -60,7 +60,7 @@ def search_text(api: TweetAPI2, status: dict, regex: bool = False,
 
     # Check To Make Sure Results Found
     if len(search_results) < 1:
-        no_tweets_found_status = "@{user} No results found for \"{search_phrase}\"".format_map(
+        no_tweets_found_status = "No results found for \"{search_phrase}\"".format_map(
             SafeDict(user=status["author_user_name"]))
 
         possibly_truncated_no_tweets_found_status: str = truncate_if_needed(original_phrase=original_phrase, new_status=no_tweets_found_status)
@@ -115,7 +115,7 @@ def search_text(api: TweetAPI2, status: dict, regex: bool = False,
     else:
         status_context: str = "has tweeted about"
 
-    new_status = "@{user} @{screen_name} {status_context} \"{search_phrase}\" {search_count} {word_times}. The latest example is at {status_link}".format_map(
+    new_status = "@{screen_name} {status_context} \"{search_phrase}\" {search_count} {word_times}. The latest example is at {status_link}".format_map(
         SafeDict(
             user=status["author_user_name"], status_link=url, screen_name=author,
             search_count=count, word_times=word_times, status_context=status_context))

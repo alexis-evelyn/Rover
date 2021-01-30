@@ -102,7 +102,7 @@ class Rover(threading.Thread):
             self.save_status_to_file(replied_to_status)
 
     def process_tweet(self, latest_status: int = None) -> Optional[int]:
-        mentions_response: Response = self.api.get_mentions(screen_name=config.TWITTER_USER_HANDLE)
+        mentions_response: Response = self.api.get_mentions(screen_name=config.TWITTER_USER_HANDLE, since_id=latest_status)
 
         try:
             mentions_dict: dict = json.loads(mentions_response.text)
@@ -111,8 +111,7 @@ class Rover(threading.Thread):
             return
 
         if "data" not in mentions_dict:
-            self.logger.warning("Data Key Missing From Mentions Response!!!")
-            self.logger.error(mentions_dict)
+            self.logger.log(self.VERBOSE, "Data Key Missing From Mentions Response!!!")
             return
 
         mentions: List[dict] = mentions_dict["data"]

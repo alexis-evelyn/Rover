@@ -79,7 +79,6 @@ class TweetAPI2:
         # https://api.twitter.com/2/users/:id
 
         params: dict = {
-            "id": user_id,
             "user.fields": "created_at,description,entities,id,location,name,pinned_tweet_id,profile_image_url,protected,public_metrics,url,username,verified,withheld",
             "expansions": "pinned_tweet_id",
             "tweet.fields": "attachments,author_id,context_annotations,conversation_id,created_at,entities,geo,id,in_reply_to_user_id,lang,possibly_sensitive,public_metrics,referenced_tweets,source,text,withheld"

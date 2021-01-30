@@ -13,7 +13,7 @@ from pypika.terms import Star, CustomFunction, BasicCriterion
 
 def latest_tweets(repo: Dolt, table: str, max_responses: int = 10, account_id: Optional[int] = None,
                   hide_deleted_tweets: bool = False, only_deleted_tweets: bool = False,
-                  last_tweet_id: Optional[int] = None) -> dict:
+                  last_tweet_id: Optional[int] = None) -> List[dict]:
     tweets: Table = Table(table)
     query: QueryBuilder = Query.from_(tweets) \
         .select(Star()) \
@@ -39,7 +39,7 @@ def latest_tweets(repo: Dolt, table: str, max_responses: int = 10, account_id: O
 
 
 def search_tweets(search_phrase: str, repo: Dolt, table: str, max_responses: int = 10, account_id: Optional[int] = None,
-                  hide_deleted_tweets: bool = False, only_deleted_tweets: bool = False, regex: bool = False) -> dict:
+                  hide_deleted_tweets: bool = False, only_deleted_tweets: bool = False, regex: bool = False) -> List[dict]:
     tweets: Table = Table(table)
     if regex:
         query: QueryBuilder = Query.from_(tweets) \
@@ -113,7 +113,7 @@ def count_tweets(search_phrase: str, repo: Dolt, table: str, account_id: Optiona
     return -1
 
 
-def lookupActiveAccounts(repo: Dolt) -> dict:
+def lookupActiveAccounts(repo: Dolt) -> List[dict]:
     government: Table = Table("government")
     query: QueryBuilder = Query.from_(government) \
         .select(Star()) \
@@ -169,6 +169,7 @@ def isAlreadyArchived(repo: Dolt, table: str, tweet_id: str,
     return True
 
 
+# TODO: Check if Valid JSON and Convert To Dictionary
 def retrieveTweetJSON(repo: Dolt, table: str, tweet_id: str) -> Optional[str]:
     tweets: Table = Table(table)
     query: QueryBuilder = Query.from_(tweets) \
@@ -294,7 +295,8 @@ def createTableIfNotExists(repo: Dolt, table: str):
     repo.sql(query=query.get_sql(quote_char=None), result_format="csv")
 
 
-def retrieveAccountInfo(repo: Dolt, account_id: int) -> dict:
+# TODO: Verify At Least One Entry Exists And Extract Match From List
+def retrieveAccountInfo(repo: Dolt, account_id: int) -> List[dict]:
     government: Table = Table("government")
     query: QueryBuilder = Query.from_(government) \
         .select(Star()) \
@@ -303,7 +305,7 @@ def retrieveAccountInfo(repo: Dolt, account_id: int) -> dict:
     return repo.sql(query=query.get_sql(quote_char=None), result_format='csv')
 
 
-def pickRandomOfficials(repo: Dolt, max_results: int = 3) -> dict:
+def pickRandomOfficials(repo: Dolt, max_results: int = 3) -> List[dict]:
     # select first_name, last_name from government where twitter_user_id
     # is not null and first_name != "N/A" and last_name != "N/A" group by
     # first_name, last_name order by rand() limit 3
@@ -323,7 +325,7 @@ def pickRandomOfficials(repo: Dolt, max_results: int = 3) -> dict:
     return repo.sql(query=query.get_sql(quote_char=None), result_format='csv')
 
 
-def retrieveMissingBroadcastInfo(repo: Dolt, tweets_table: str, media_table: str) -> dict:
+def retrieveMissingBroadcastInfo(repo: Dolt, tweets_table: str, media_table: str) -> List[dict]:
     tweets: Table = Table(tweets_table)
     media: Table = Table(media_table)
 
@@ -354,7 +356,7 @@ def addMediaFiles(repo: Dolt, table: str, tweet_id: str, data: List[str]):
     repo.sql(query=query_insert.get_sql(quote_char=None), result_format="csv")
 
 
-def retrieveMissingBroadcastFiles(repo: Dolt, tweets_table: str, media_table: str) -> dict:
+def retrieveMissingBroadcastFiles(repo: Dolt, tweets_table: str, media_table: str) -> List[dict]:
     # Old: select id from tweets where stream_json is not null and id not in (select id from media);
     # select id, stream_json from media where stream_json is null
     media: Table = Table(media_table)

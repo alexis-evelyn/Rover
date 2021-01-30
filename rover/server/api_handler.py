@@ -3,7 +3,7 @@ import distutils.util
 import json
 import os
 import time
-from typing import Optional, List
+from typing import Optional, List, Union
 
 import sqlalchemy
 from doltpy.core import Dolt
@@ -82,6 +82,7 @@ def run_function(self, repo: Dolt, table: str, url: urlparse, queries: dict) -> 
     endpoints = {
         '/api': send_help,
         '/api/analytics': web_analytics,
+        '/api/analyze': analyze_tweet,
         '/api/latest': load_latest_tweets,
         '/api/search': perform_search,
         '/api/accounts': lookup_account,
@@ -190,7 +191,8 @@ def perform_search(self, repo: Dolt, table: str, queries: dict) -> dict:
     original_search_text: str = queries["text"][0] if "text" in queries else ""
     regex: bool = bool(distutils.util.strtobool(queries["regex"][0])) if "regex" in queries else False
 
-    search_phrase: str = search_tweets.convert_search_to_query(phrase=original_search_text, regex=regex)  # r"^RT @[\w]:*"
+    search_phrase: str = search_tweets.convert_search_to_query(phrase=original_search_text,
+                                                               regex=regex)  # r"^RT @[\w]:*"
 
     search_results: dict = convertIDsToString(
         results=database.search_tweets(search_phrase=search_phrase, repo=repo, table=table, regex=regex))
@@ -315,7 +317,39 @@ def web_analytics(self, repo: Dolt, table: str, queries: dict) -> dict:
     return response
 
 
-def convertIDsToString(results: dict):
+def analyze_tweet(self, repo: Dolt, table: str, queries: dict) -> dict:
+    timing_start: time = time.time()
+    tweet_id: Optional[int] = int(queries['id'][0]) if "id" in queries and validateNumber(queries['id'][0]) else None
+
+    if tweet_id is None:
+        return {
+            "error": "Need A Valid Tweet ID",
+            "code": 5
+        }
+
+    # Retrieve Tweet
+    tweet: dict = database.retrieveTweet(repo=repo, table=table, tweet_id=str(tweet_id),
+                                         hide_deleted_tweets=False,
+                                         only_deleted_tweets=False)
+
+    if len(tweet) < 1:
+        return {
+            "error": "No Tweet Found",
+            "code": 6
+        }
+
+    # Analyze Tweet
+    helper_functions.analyze_tweets(logger=self.logger, VERBOSE=self.VERBOSE, tweets=[tweet])
+
+    response: dict = {
+        "note": "Not Implemented Yet"
+    }
+
+    self.timings["analyze_tweet"] = time.time() - timing_start
+    return response
+
+
+def convertIDsToString(results: Union[List[dict], dict]):
     for result in results:
         result["twitter_user_id"] = str(result["twitter_user_id"])
         result["id"] = str(result["id"])

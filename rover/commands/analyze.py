@@ -13,6 +13,9 @@ from rover.search_tweets import get_search_keywords, convert_search_to_query
 
 
 # TODO: Determine Whether Or Not To Redesign Function
+from rover.server import helper_functions
+
+
 def analyze_tweet(api: TweetAPI2, status: dict, regex: bool = False,
                   INFO_QUIET: int = logging.INFO + 1,
                   VERBOSE: int = logging.DEBUG - 1):
@@ -27,14 +30,4 @@ def analyze_tweet(api: TweetAPI2, status: dict, regex: bool = False,
 
     search_results = database.search_tweets(search_phrase=phrase, repo=repo, table=config.ARCHIVE_TWEETS_TABLE, regex=regex)
 
-    # Instantiate Text Processor
-    analyzer: HostilityAnalysis = HostilityAnalysis(logger_param=logger, verbose_level=VERBOSE)
-
-    # Load Tweets To Analyze
-    for result in search_results:
-        logger.log(VERBOSE, "Adding Tweet For Processing: {tweet_id} - {tweet_text}".format(tweet_id=result["id"],
-                                                                                            tweet_text=result["text"]))
-        analyzer.add_tweet_to_process(result)
-
-    analyzer.preprocess_tweets()
-    analyzer.process_tweets()
+    helper_functions.analyze_tweets(logger=logger, VERBOSE=VERBOSE, tweets=search_results)

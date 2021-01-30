@@ -3,11 +3,13 @@ import datetime
 import json
 import random
 import uuid
+from logging import Logger
 from typing import List, Optional, Tuple
 
 from archiver import config as archiver_config
 from database import database
 from rover import config
+from rover.hostility_analysis import HostilityAnalysis
 from rover.server.api_handler import lookup_account, convertIDsToString
 
 
@@ -144,3 +146,17 @@ def load_cache_file(self, max_tweets: int = 20) -> dict:
         response: dict = json.loads("\n".join(cache_body))
 
     return response
+
+
+def analyze_tweets(logger: Logger, VERBOSE: int, tweets: List[dict]):
+    # Instantiate Text Processor
+    analyzer: HostilityAnalysis = HostilityAnalysis(logger_param=logger, verbose_level=VERBOSE)
+
+    # Load Tweets To Analyze
+    for result in tweets:
+        logger.log(VERBOSE, "Adding Tweet For Processing: {tweet_id} - {tweet_text}".format(tweet_id=result["id"],
+                                                                                            tweet_text=result["text"]))
+        analyzer.add_tweet_to_process(result)
+
+    analyzer.preprocess_tweets()
+    analyzer.process_tweets()

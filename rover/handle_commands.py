@@ -1,7 +1,6 @@
 #!/usr/bin/python
 
 import logging
-import twitter
 
 from doltpy.core.system_helpers import get_logger
 from typing import Optional

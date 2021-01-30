@@ -1,14 +1,11 @@
 #!/usr/bin/python
 import json
-from typing import Optional
-
-import twitter
-from mysql.connector import conversion
 import html
 
 from requests import Response
-
 from archiver.tweet_api_two import TweetAPI2
+from mysql.connector import conversion
+from typing import Optional
 
 
 def convert_search_to_query(phrase: str, regex: bool = False) -> str:

@@ -3,7 +3,6 @@
 import argparse
 import logging
 import threading
-import time
 
 # Custom Log Levels
 from doltpy.core import system_helpers

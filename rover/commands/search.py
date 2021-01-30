@@ -3,11 +3,8 @@
 import logging
 from typing import Optional
 
-import twitter
 from doltpy.core import Dolt
 from doltpy.core.system_helpers import logger
-from requests import Response
-from twitter import TwitterError
 
 from archiver.tweet_api_two import TweetAPI2
 from database import database
@@ -133,10 +130,10 @@ def search_text(api: TweetAPI2, status: dict, regex: bool = False,
 
 def truncate_if_needed(original_phrase: str, new_status: str) -> str:
     truncate_amount = abs(
-        (len('\u2026') + len("{search_phrase}") + twitter.api.CHARACTER_LIMIT - len(new_status)) - len(original_phrase))
+        (len('\u2026') + len("{search_phrase}") + config.TWITTER_CHARACTER_LIMIT - len(new_status)) - len(original_phrase))
 
     # Don't Put Ellipses If Search Is Not Truncated
-    if (len(original_phrase) + len(new_status) + len('\u2026') - len("{search_phrase}")) >= twitter.api.CHARACTER_LIMIT:
+    if (len(original_phrase) + len(new_status) + len('\u2026') - len("{search_phrase}")) >= config.TWITTER_CHARACTER_LIMIT:
         return new_status.format(search_phrase=(original_phrase[:truncate_amount] + '\u2026'))
 
     return new_status.format(search_phrase=original_phrase)

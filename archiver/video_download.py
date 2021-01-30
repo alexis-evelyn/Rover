@@ -1,9 +1,10 @@
 #!/usr/bin/python
+
 import logging
 import os
 import threading
-
 import youtube_dl
+
 from config import config as main_config
 from doltpy.core.system_helpers import get_logger
 

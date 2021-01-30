@@ -3,10 +3,7 @@ import io
 import os
 import random
 
-import twitter
-
 from PIL import Image, ImageDraw, ImageFont
-from requests import Response
 
 from archiver.tweet_api_two import TweetAPI2
 from rover import config

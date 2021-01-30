@@ -8,12 +8,10 @@ from typing import Optional, Any, Reversible, List
 from json.decoder import JSONDecodeError
 from os import path
 
-import twitter
 from doltpy.core import DoltException
 from doltpy.core.system_helpers import get_logger
 from requests import Response
 from requests_oauthlib import OAuth1
-from twitter import TwitterError
 
 from archiver.tweet_api_two import TweetAPI2, BearerAuth
 from rover import handle_commands, config
@@ -70,10 +68,7 @@ class Rover(threading.Thread):
             self.threadLock.acquire()
 
             # Look For Tweets To Respond To
-            try:
-                self.look_for_tweets()
-            except TwitterError as e:
-                self.log_twitter_error(error=e)
+            self.look_for_tweets()
 
             # Release Lock
             self.threadLock.release()
@@ -142,32 +137,17 @@ class Rover(threading.Thread):
                 handle_commands.process_command(api=self.api, status=mention,
                                                 info_level=self.INFO_QUIET,
                                                 verbose_level=self.VERBOSE)
-            except TwitterError as e:
-                self.log_twitter_error(error=e)
             except DoltException as e:
                 self.logger.error(
                     f"Failed To Process SQL Request: '{mention['text']}' - Error: '{e.stderr.decode('utf-8')}'")
                 if config.REPLY:
-                    try:
-                        self.api.send_tweet(in_reply_to_status_id=mention["id"],
-                                            auto_populate_reply_metadata=True,
-                                            status=f"Sorry, I cannot process that request at the moment. Please try again later after {config.AUTHOR_TWITTER_HANDLE} fixes the issue.")
-                    except TwitterError as e:
-                        self.log_twitter_error(error=e)
+                    self.api.send_tweet(in_reply_to_status_id=mention["id"],
+                                        auto_populate_reply_metadata=True,
+                                        status=f"Sorry, I cannot process that request at the moment. Please try again later after {config.AUTHOR_TWITTER_HANDLE} fixes the issue.")
 
             latest_status = mention["id"]
 
         return latest_status
-
-    def log_twitter_error(self, error: TwitterError):
-        # To Deal With That Duplicate Status Error - [{'code': 187, 'message': 'Status is a duplicate.'}]
-        # [{'message': 'Over capacity', 'code': 130}]
-        if type(error.message) is dict:
-            self.logger.error("Twitter Error (Code {code}): {error_message}".format(code=error.message["code"],
-                                                                                    error_message=error.message[
-                                                                                        "message"]))
-        else:
-            self.logger.error("Twitter Error: {error_message}".format(error_message=error.message))
 
     def is_explicitly_mentioned(self, mention: dict) -> bool:
         mention_text: str = str(mention["text"]).lower()

@@ -21,7 +21,6 @@ from archiver.tweet_api_two import BearerAuth, TweetAPI2
 from config import config as main_config
 from database import database
 from rover.server import helper_functions
-from rover.server.api_handler import lookup_account
 
 
 class Archiver(threading.Thread):

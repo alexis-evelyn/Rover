@@ -1,12 +1,10 @@
 #!/usr/bin/python
 
-# Apparently, I Cannot Figure Out How To Get Twython to Give Me The Original JSON,
-# So I'm Just Downloading The Tweets Myself
 import json
 import re
 from io import BytesIO
 from re import Match
-from typing import Optional, List, Union, TextIO, BinaryIO
+from typing import Optional, List
 
 import requests
 

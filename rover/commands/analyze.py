@@ -2,7 +2,6 @@
 
 import logging
 
-import twitter
 from doltpy.core import Dolt
 from doltpy.core.system_helpers import logger
 

@@ -1,7 +1,5 @@
 #!/usr/bin/python
 
-import twitter
-
 from archiver.tweet_api_two import TweetAPI2
 from rover import config
 

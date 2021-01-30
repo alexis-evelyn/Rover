@@ -4,11 +4,12 @@
 # So I'm Just Downloading The Tweets Myself
 import re
 from re import Match
-from typing import Optional
+from typing import Optional, List
 
 import requests
 
 from requests import Response
+from requests_oauthlib import OAuth1
 
 
 class BearerAuth(requests.auth.AuthBase):
@@ -21,9 +22,9 @@ class BearerAuth(requests.auth.AuthBase):
 
 
 class TweetAPI2:
-    def __init__(self, auth: BearerAuth, alt_auth: Optional[BearerAuth] = None):
-        self.auth: BearerAuth = auth
-        self.alt_auth: Optional[BearerAuth] = alt_auth
+    def __init__(self, auth: BearerAuth | OAuth1, alt_auth: Optional[BearerAuth | OAuth1] = None):
+        self.auth: BearerAuth | OAuth1 = auth
+        self.alt_auth: Optional[BearerAuth | OAuth1] = alt_auth
         self.user_agent = "Chrome/90"
 
     def get_tweet(self, tweet_id: str) -> Response:
@@ -48,6 +49,40 @@ class TweetAPI2:
 
         # 1340760721618063361 = id
         api_url: str = 'https://api.twitter.com/1.1/statuses/show.json'
+        return requests.get(url=api_url, params=params, auth=self.auth)
+
+    def get_mentions(self, screen_name: str, since_id: Optional[int] = None) -> Response:
+        # https://api.twitter.com/2/tweets/search/recent?query=@DigitalRoverDog%20-from:DigitalRoverDog%20-is:retweet%20%20-is:quote%20to:DigitalRoverDog&max_results=100
+        # @DigitalRoverDog -from:DigitalRoverDog -is:retweet -is:quote to:DigitalRoverDog
+
+        params: dict = {
+            "max_results": 100,
+            "query": f"@{screen_name} -from:{screen_name} to:{screen_name} -is:retweet -is:quote",
+            "tweet.fields": "attachments,author_id,context_annotations,conversation_id,created_at,entities,geo,id,in_reply_to_user_id,lang,possibly_sensitive,public_metrics,referenced_tweets,source,text,withheld",
+            "expansions": "attachments.poll_ids,attachments.media_keys,author_id,geo.place_id,in_reply_to_user_id,referenced_tweets.id,entities.mentions.username,referenced_tweets.id.author_id",
+            "media.fields": "duration_ms,height,media_key,preview_image_url,public_metrics,type,url,width",
+            "place.fields": "contained_within,country,country_code,full_name,geo,id,name,place_type",
+            "poll.fields": "duration_minutes,end_datetime,id,options,voting_status",
+            "user.fields": "created_at,description,entities,id,location,name,pinned_tweet_id,profile_image_url,protected,public_metrics,url,username,verified,withheld"
+        }
+
+        if since_id is not None:
+            params['since_id'] = since_id
+
+        api_url: str = 'https://api.twitter.com/2/tweets/search/recent'
+        return requests.get(url=api_url, params=params, auth=self.auth)
+
+    def lookup_user_via_id(self, user_id: str) -> Response:
+        # https://api.twitter.com/2/users/:id
+
+        params: dict = {
+            "id": user_id,
+            "user.fields": "created_at,description,entities,id,location,name,pinned_tweet_id,profile_image_url,protected,public_metrics,url,username,verified,withheld",
+            "expansions": "pinned_tweet_id",
+            "tweet.fields": "attachments,author_id,context_annotations,conversation_id,created_at,entities,geo,id,in_reply_to_user_id,lang,possibly_sensitive,public_metrics,referenced_tweets,source,text,withheld"
+        }
+
+        api_url: str = f'https://api.twitter.com/2/users/{user_id}'
         return requests.get(url=api_url, params=params, auth=self.auth)
 
     def lookup_tweets_via_timeline(self, user_id: str = None, screen_name: str = None,
@@ -75,7 +110,8 @@ class TweetAPI2:
         api_url: str = 'https://api.twitter.com/1.1/statuses/user_timeline.json'
         return requests.get(url=api_url, params=params, auth=self.auth)
 
-    def lookup_tweets_via_search(self, user_id: str = None, screen_name: str = None, since_id: int = None) -> Response:
+    def lookup_tweets_via_search(self, user_id: Optional[str] = None, screen_name: Optional[str] = None,
+                                 since_id: Optional[int] = None) -> Response:
         # https://api.twitter.com/2/tweets/search/recent?query=from:25073877&max_results=100&since_id=1336411597330391045
 
         params: dict = {
@@ -166,3 +202,10 @@ class TweetAPI2:
 
         api_url: str = f'https://mobile.twitter.com/i/api/1.1/live_video_stream/status/{media_key}'
         return requests.get(url=api_url, headers=headers, auth=self.alt_auth)
+
+    def send_tweet(self, status: str,
+                   in_reply_to_status_id: Optional[str] = None,
+                   auto_populate_reply_metadata: bool = True,
+                   exclude_reply_user_ids: Optional[List[int]] = None,
+                   media: Optional[str] = None):
+        pass

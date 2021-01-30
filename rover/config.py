@@ -28,7 +28,7 @@ CREDENTIALS_FILE_PATH: str = "credentials.json"
 # Twitter Account Info
 # TODO: Figure Out How To Automatically Determine This
 TWITTER_USER_ID: int = 870156302298873856
-TWITTER_USER_HANDLE: str = "@DigitalRoverDog"
+TWITTER_USER_HANDLE: str = "DigitalRoverDog"
 
 # CORS
 ALLOW_CORS: bool = True

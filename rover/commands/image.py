@@ -7,10 +7,11 @@ import twitter
 
 from PIL import Image, ImageDraw, ImageFont
 
+from archiver.tweet_api_two import TweetAPI2
 from rover import config
 
 
-def draw_image(api: twitter.Api, status: twitter.models.Status):
+def draw_image(api: TweetAPI2, status: dict):
     if not os.path.exists(config.WORKING_DIRECTORY):
         os.makedirs(config.WORKING_DIRECTORY)
 
@@ -40,9 +41,9 @@ def draw_image(api: twitter.Api, status: twitter.models.Status):
         # output = io.BytesIO()  # Why does the PostUpdate not work with general bytesio?
         im.save(config.TEMPORARY_IMAGE_PATH, config.TEMPORARY_IMAGE_FORMAT)
 
-        new_status = "@{user}".format(user=status.user.screen_name)
+        new_status = "@{user}".format(user=status["author_user_name"])
 
         if config.REPLY:
-            api.PostUpdate(in_reply_to_status_id=status.id, status=new_status, media=config.TEMPORARY_IMAGE_PATH)
+            api.send_tweet(in_reply_to_status_id=status["id"], status=new_status, media=config.TEMPORARY_IMAGE_PATH)
 
         os.remove(config.TEMPORARY_IMAGE_PATH)  # Remove temporary file

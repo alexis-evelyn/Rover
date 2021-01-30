@@ -6,6 +6,7 @@ import twitter
 from doltpy.core import Dolt
 from doltpy.core.system_helpers import logger
 
+from archiver.tweet_api_two import TweetAPI2
 from database import database
 from rover import config
 from rover.hostility_analysis import HostilityAnalysis
@@ -13,7 +14,7 @@ from rover.search_tweets import get_search_keywords, convert_search_to_query
 
 
 # TODO: Determine Whether Or Not To Redesign Function
-def analyze_tweet(api: twitter.Api, status: twitter.models.Status, regex: bool = False,
+def analyze_tweet(api: TweetAPI2, status: dict, regex: bool = False,
                   INFO_QUIET: int = logging.INFO + 1,
                   VERBOSE: int = logging.DEBUG - 1):
 

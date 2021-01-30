@@ -4,21 +4,25 @@ import json
 import logging
 import threading
 import time
-from typing import Optional, Any, Reversible
+from typing import Optional, Any, Reversible, List
 from json.decoder import JSONDecodeError
 from os import path
 
 import twitter
 from doltpy.core import DoltException
 from doltpy.core.system_helpers import get_logger
+from requests import Response
+from requests_oauthlib import OAuth1
 from twitter import TwitterError
 
+from archiver.tweet_api_two import TweetAPI2
 from rover import handle_commands, config
 from config import config as main_config
 
 
 class Rover(threading.Thread):
-    def __init__(self, threadID: int, name: str, threadLock: threading.Lock, requested_wait_time: int = 60, reply: bool = True):
+    def __init__(self, threadID: int, name: str, threadLock: threading.Lock, requested_wait_time: int = 60,
+                 reply: bool = True):
         threading.Thread.__init__(self)
         self.threadID = threadID
         self.name = name
@@ -49,6 +53,14 @@ class Rover(threading.Thread):
         # Setup For Twitter API
         with open(self.credentials_file, "r") as file:
             self.__credentials: dict = json.load(file)
+            self.__oauth: OAuth1 = OAuth1(client_key=self.__credentials['consumer']['key'],
+                                          client_secret=self.__credentials['consumer']['secret'],
+                                          resource_owner_key=self.__credentials['token']['key'],
+                                          resource_owner_secret=self.__credentials['token']['secret'])
+
+            # TODO: Add Means To Obtain Tokens Without Manually Going Through The API - https://requests-oauthlib.readthedocs.io/en/latest/oauth1_workflow.html
+            # Authentication Method For Accounts
+            self.api: TweetAPI2 = TweetAPI2(auth=self.__oauth)
 
     def run(self):
         self.logger.log(self.INFO_QUIET, "Starting " + self.name)
@@ -88,49 +100,62 @@ class Rover(threading.Thread):
         if replied_to_status is not None:
             self.save_status_to_file(replied_to_status)
 
-    def process_tweet(self, latest_status: int = None) -> int:
-        api = twitter.Api(consumer_key=self.__credentials['consumer']['key'],
-                          consumer_secret=self.__credentials['consumer']['secret'],
-                          access_token_key=self.__credentials['token']['key'],
-                          access_token_secret=self.__credentials['token']['secret'],
-                          sleep_on_rate_limit=True,
-                          tweet_mode="extended")
+    def process_tweet(self, latest_status: int = None) -> Optional[int]:
+        mentions_response: Response = self.api.get_mentions(screen_name=config.TWITTER_USER_HANDLE)
 
-        mentions: Reversible[json] = api.GetMentions(since_id=latest_status)
-        # mentions: Reversible[json] = api.GetStatuses(status_ids=[1334461310734659584, 1334465300243345408, 1334466433368137729, 1335104236129046528, 1335109553088831489, 1335110267932438528])  # For Debugging Bot
-        # mentions = api.GetStatuses(status_ids=[1335104236129046528])
+        try:
+            mentions_dict: dict = json.loads(mentions_response.text)
+        except:
+            self.logger.error("Could Not Load JSON From Mentions Response!!!")
+            return
+
+        if "data" not in mentions_dict:
+            self.logger.warning("Data Key Missing From Mentions Response!!!")
+            return
+
+        mentions: List[dict] = mentions_dict["data"]
 
         latest_status = None
         for mention in reversed(mentions):
             # Don't Respond To Own Tweets (870156302298873856 is user id for @DigitalRoverDog)
-            if mention.user.id == self.user_id:
+            if mention["author_id"] == self.user_id:
                 continue
 
             # To Prevent Implicit Replying (So the bot only replies to explicit requests)
             if not self.is_explicitly_mentioned(mention=mention):
                 continue
 
+            if "includes" in mentions_dict and "users" in mentions_dict["includes"]:
+                users: List[dict] = mentions_dict["includes"]["users"]
+
+                for user in users:
+                    if user["id"] == mention["author_id"]:
+                        mention["author_screen_name"] = user["name"]
+                        mention["author_user_name"] = user["username"]
+                        break
+
             self.logger.log(self.INFO_QUIET,
-                            "Responding To Tweet From @{user}: {text}".format(user=mention.user.screen_name,
-                                                                              text=mention.full_text))
+                            "Responding To Tweet From @{user}: {text}".format(user=mention["author_user_name"],
+                                                                              text=mention["text"]))
 
             try:
-                handle_commands.process_command(api=api, status=mention,
+                handle_commands.process_command(api=self.api, status=mention,
                                                 info_level=self.INFO_QUIET,
                                                 verbose_level=self.VERBOSE)
             except TwitterError as e:
                 self.log_twitter_error(error=e)
             except DoltException as e:
-                self.logger.error(f"Failed To Process SQL Request: '{mention.text}' - Error: '{e.stderr.decode('utf-8')}'")
+                self.logger.error(
+                    f"Failed To Process SQL Request: '{mention['text']}' - Error: '{e.stderr.decode('utf-8')}'")
                 if config.REPLY:
                     try:
-                        api.PostUpdate(in_reply_to_status_id=mention.id,
-                                       auto_populate_reply_metadata=True,
-                                       status=f"Sorry, I cannot process that request at the moment. Please try again later after {config.AUTHOR_TWITTER_HANDLE} fixes the issue.")
+                        self.api.send_tweet(in_reply_to_status_id=mention["id"],
+                                            auto_populate_reply_metadata=True,
+                                            status=f"Sorry, I cannot process that request at the moment. Please try again later after {config.AUTHOR_TWITTER_HANDLE} fixes the issue.")
                     except TwitterError as e:
                         self.log_twitter_error(error=e)
 
-            latest_status = mention.id
+            latest_status = mention["id"]
 
         return latest_status
 
@@ -139,16 +164,24 @@ class Rover(threading.Thread):
         # [{'message': 'Over capacity', 'code': 130}]
         if type(error.message) is dict:
             self.logger.error("Twitter Error (Code {code}): {error_message}".format(code=error.message["code"],
-                                                                                    error_message=error.message["message"]))
+                                                                                    error_message=error.message[
+                                                                                        "message"]))
         else:
             self.logger.error("Twitter Error: {error_message}".format(error_message=error.message))
 
-    def is_explicitly_mentioned(self, mention: json) -> bool:
+    def is_explicitly_mentioned(self, mention: dict) -> bool:
         # If the mention shows up more than once, return true. Twitter adds one implicit reply when replying to a user,
         # but if more than one mention exists, then it's a guaranteed explicit mention.
-        if mention.full_text.startswith(self.user_name + " ") and mention.full_text.count(self.user_name) == 1:
+        if mention["text"].startswith(f"@{self.user_name}" + " ") and {mention['text'].count(f"@{self.user_name}")} == 1:
             # If Not A Reply, Accept (Since It Cannot Be An Implicit Mention Added By Twitter)
-            if mention.in_reply_to_status_id is None:
+            is_reply: bool = False
+            if "referenced_tweets" in mention and len(mention["referenced_tweets"]) > 0:
+                for referenced_tweet in mention["referenced_tweets"]:
+                    if referenced_tweet["type"] == "replied_to":
+                        is_reply: bool = True
+
+            # If Not Reply, Then Guaranteed Mention
+            if not is_reply:
                 return True
 
             # 1334465300243345408 should pass, 1335110267932438528 should fail
@@ -158,10 +191,18 @@ class Rover(threading.Thread):
             self.logger.log(self.VERBOSE,
                             "Own Name: {own_name}, Own ID: {own_id}".format(own_name=self.user_name,
                                                                             own_id=self.user_id))
-            self.logger.debug("Tweet with ID {id} Failed to Pass Filter: {json}".format(id=mention.id, json=mention))
+            self.logger.debug(
+                "Tweet with ID {id} Failed to Pass Filter: {json}".format(id=mention["id"], json=json.dumps(mention)))
             return False
 
-        return True
+        # More than one of the username showed up, so definitely a mention
+        if mention['text'].count(f"@{self.user_name}") > 1:
+            return True
+
+        # No Mentions Showed Up, Should Never Have Been Read In To This Function
+        self.logger.warning("Tweet with ID {id} With No Mention Showed Up In The Explicit Mention Check: {json}".format(
+            id=mention["id"], json=json.dumps(mention)))
+        return False
 
     def save_status_to_file(self, status_id: int):
         file_contents = {

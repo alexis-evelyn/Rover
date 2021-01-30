@@ -26,8 +26,14 @@ def main(arguments: argparse.Namespace):
     with open(config.CREDENTIALS_FILE_PATH, "r") as file:
         credentials = json.load(file)
 
+    # To Differentiate Between Development Environment and Production
+    if "BEARER_TOKEN_DIS" in credentials:
+        bearer_token: str = credentials['BEARER_TOKEN_DIS']
+    else:
+        bearer_token: str = credentials['BEARER_TOKEN']
+
     # Token
-    token: BearerAuth = BearerAuth(token=credentials['BEARER_TOKEN'])
+    token: BearerAuth = BearerAuth(token=bearer_token)
     tweetAPI: TweetAPI2 = TweetAPI2(auth=token)
 
     r = tweetAPI.stream_tweets()

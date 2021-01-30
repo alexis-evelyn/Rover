@@ -1,8 +1,14 @@
 #!/usr/bin/python
+import json
+from typing import Optional
 
 import twitter
 from mysql.connector import conversion
 import html
+
+from requests import Response
+
+from archiver.tweet_api_two import TweetAPI2
 
 
 def convert_search_to_query(phrase: str, regex: bool = False) -> str:
@@ -18,9 +24,19 @@ def convert_search_to_query(phrase: str, regex: bool = False) -> str:
     return phrase
 
 
-def get_username_by_id(api: twitter.Api, author_id: int) -> str:
-    user: twitter.models.User = api.GetUser(user_id=author_id)
-    return user.screen_name
+def get_username_by_id(api: TweetAPI2, author_id: int) -> Optional[str]:
+    user: Response = api.lookup_user_via_id(user_id=str(author_id))
+
+    response: dict
+    try:
+        response = json.loads(user.text)
+    except:
+        return None
+
+    if "data" not in response and "username" not in response["data"]:
+        return None
+
+    return response["data"]["username"]
 
 
 def get_search_keywords(text: str, search_word_query: str = 'search') -> str:

@@ -328,9 +328,11 @@ def analyze_tweet(self, repo: Dolt, table: str, queries: dict) -> dict:
         }
 
     # Retrieve Tweet
+    retrieve_tweet_start: time = time.time()
     tweet: List[dict] = database.retrieveTweet(repo=repo, table=table, tweet_id=str(tweet_id),
                                                hide_deleted_tweets=False,
                                                only_deleted_tweets=False)
+    self.timings["retrieve_tweet_analyze"] = time.time() - retrieve_tweet_start
 
     if len(tweet) < 1:
         return {
@@ -339,7 +341,9 @@ def analyze_tweet(self, repo: Dolt, table: str, queries: dict) -> dict:
         }
 
     # Analyze Tweet
+    analyze_tweet_start: time = time.time()
     results: List[dict] = helper_functions.analyze_tweets(logger=self.logger, VERBOSE=self.VERBOSE, tweets=tweet)
+    self.timings["analyze_tweet_only"] = time.time() - analyze_tweet_start
 
     response: dict = {
         "note": "Not Fully Implemented Yet",

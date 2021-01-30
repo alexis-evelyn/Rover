@@ -21,7 +21,7 @@ def analyze_tweet(api: TweetAPI2, status: dict, regex: bool = False,
                   INFO_QUIET: int = logging.INFO + 1,
                   VERBOSE: int = logging.DEBUG - 1):
 
-    status_text = "12:00 A.M. on the Great Election Fraud of 2020!"  # status.full_text
+    status_text = status["text"]
 
     # This Variable Is Useful For Debugging Search Queries And Exploits
     original_phrase = get_search_keywords(text=status_text, search_word_query='analyze')

@@ -139,7 +139,7 @@ def lookupLatestTweetId(repo: Dolt, table: str, twitter_user_id: str) -> Optiona
 
 
 def retrieveTweet(repo: Dolt, table: str, tweet_id: str,
-                  hide_deleted_tweets: bool = False, only_deleted_tweets: bool = False) -> Optional[dict]:
+                  hide_deleted_tweets: bool = False, only_deleted_tweets: bool = False) -> Optional[List[dict]]:
     tweets: Table = Table(table)
     query: QueryBuilder = Query.from_(tweets) \
         .select(Star()) \

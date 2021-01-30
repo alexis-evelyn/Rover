@@ -1,7 +1,7 @@
 #!/usr/bin/python
 
 import logging
-from typing import Optional
+from typing import Optional, List
 
 from doltpy.core import Dolt
 from doltpy.core.system_helpers import logger
@@ -38,34 +38,35 @@ def search_text(api: TweetAPI2, status: dict, regex: bool = False,
     repo: Dolt = Dolt(config.ARCHIVE_TWEETS_REPO_PATH)
     phrase = convert_search_to_query(phrase=original_phrase, regex=regex)
 
-    search_results: dict = database.search_tweets(search_phrase=phrase,
-                                                  repo=repo,
-                                                  table=config.ARCHIVE_TWEETS_TABLE,
-                                                  hide_deleted_tweets=config.HIDE_DELETED_TWEETS,
-                                                  only_deleted_tweets=config.ONLY_DELETED_TWEETS,
-                                                  regex=regex)
+    search_results: List[dict] = database.search_tweets(search_phrase=phrase,
+                                                        repo=repo,
+                                                        table=config.ARCHIVE_TWEETS_TABLE,
+                                                        hide_deleted_tweets=config.HIDE_DELETED_TWEETS,
+                                                        only_deleted_tweets=config.ONLY_DELETED_TWEETS,
+                                                        regex=regex)
 
-    # Print Out 10 Found Search Results To Debug Logger
-    loop_count = 0
-    for result in search_results:
-        logger.debug("Example Tweet For Phrase \"{search_phrase}\": {tweet_id} - {tweet_text}".format(
-            search_phrase=original_phrase, tweet_id=result["id"], tweet_text=result["text"]))
-
-        loop_count += 1
-        if loop_count >= 10:
-            break
+    # # Print Out 10 Found Search Results To Debug Logger
+    # loop_count = 0
+    # for result in search_results:
+    #     logger.debug("Example Tweet For Phrase \"{search_phrase}\": {tweet_id} - {tweet_text}".format(
+    #         search_phrase=original_phrase, tweet_id=result["id"], tweet_text=result["text"]))
+    #
+    #     loop_count += 1
+    #     if loop_count >= 10:
+    #         break
 
     # Check To Make Sure Results Found
     if len(search_results) < 1:
-        no_tweets_found_status = "No results found for \"{search_phrase}\"".format_map(
-            SafeDict(user=status["author_user_name"]))
+        no_tweets_found_status = "No results found for \"{search_phrase}\""
 
-        possibly_truncated_no_tweets_found_status: str = truncate_if_needed(original_phrase=original_phrase, new_status=no_tweets_found_status)
+        possibly_truncated_no_tweets_found_status: str = truncate_if_needed(original_phrase=original_phrase,
+                                                                            new_status=no_tweets_found_status)
 
         if config.REPLY:
             api.send_tweet(in_reply_to_status_id=status["id"], status=possibly_truncated_no_tweets_found_status)
 
-        logger.log(INFO_QUIET, "Sending Status: {new_status}".format(new_status=possibly_truncated_no_tweets_found_status))
+        logger.log(INFO_QUIET,
+                   "Sending Status: {new_status}".format(new_status=possibly_truncated_no_tweets_found_status))
         logger.debug("Status Length: {length}".format(length=len(possibly_truncated_no_tweets_found_status)))
         return
 
@@ -77,7 +78,8 @@ def search_text(api: TweetAPI2, status: dict, regex: bool = False,
 
     if author is None:
         # If Failed (e.g. suspended account), Then Retrieve Stored Handle From Database
-        author = database.retrieveAccountInfo(repo=repo, account_id=search_post_response["twitter_user_id"])[0]["twitter_handle"]
+        author = database.retrieveAccountInfo(repo=repo, account_id=search_post_response["twitter_user_id"])[0][
+            "twitter_handle"]
         failed_account_lookup: bool = True
 
     if search_post_response["isDeleted"] == str(0) and not failed_account_lookup:
@@ -114,7 +116,7 @@ def search_text(api: TweetAPI2, status: dict, regex: bool = False,
 
     new_status = "@{screen_name} {status_context} \"{search_phrase}\" {search_count} {word_times}. The latest example is at {status_link}".format_map(
         SafeDict(
-            user=status["author_user_name"], status_link=url, screen_name=author,
+            status_link=url, screen_name=author,
             search_count=count, word_times=word_times, status_context=status_context))
 
     possibly_truncated_status: str = truncate_if_needed(original_phrase=original_phrase, new_status=new_status)
@@ -130,10 +132,12 @@ def search_text(api: TweetAPI2, status: dict, regex: bool = False,
 
 def truncate_if_needed(original_phrase: str, new_status: str) -> str:
     truncate_amount = abs(
-        (len('\u2026') + len("{search_phrase}") + config.TWITTER_CHARACTER_LIMIT - len(new_status)) - len(original_phrase))
+        (len('\u2026') + len("{search_phrase}") + config.TWITTER_CHARACTER_LIMIT - len(new_status)) - len(
+            original_phrase))
 
     # Don't Put Ellipses If Search Is Not Truncated
-    if (len(original_phrase) + len(new_status) + len('\u2026') - len("{search_phrase}")) >= config.TWITTER_CHARACTER_LIMIT:
+    if (len(original_phrase) + len(new_status) + len('\u2026') - len(
+            "{search_phrase}")) >= config.TWITTER_CHARACTER_LIMIT:
         return new_status.format(search_phrase=(original_phrase[:truncate_amount] + '\u2026'))
 
     return new_status.format(search_phrase=original_phrase)

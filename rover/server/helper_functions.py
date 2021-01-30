@@ -159,4 +159,4 @@ def analyze_tweets(logger: Logger, VERBOSE: int, tweets: List[dict]):
         analyzer.add_tweet_to_process(result)
 
     analyzer.preprocess_tweets()
-    analyzer.process_tweets()
+    return analyzer.process_tweets()

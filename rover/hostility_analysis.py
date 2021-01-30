@@ -124,11 +124,20 @@ class HostilityAnalysis:
             self.logger.log(self.VERBOSE, TextBlob(tweet).ngrams(2))
 
         # Process Sentiment of Tweets
+        results: List[dict] = []
         sentiment: pd.DataFrame = self.tweets["text"].apply(lambda x: TextBlob(x).sentiment)
         for row in range(0, len(sentiment.index)):
             polarity, subjectivity = sentiment[row]
             processed_text: str = self.tweets["text"][row]
             tweet_id: str = self.tweets["id"][row]
+
+            result: dict = {
+                "polarity": polarity,
+                "subjectivity": subjectivity,
+                "tweet_id": tweet_id,
+                "processed_text": processed_text
+            }
+            results.append(result)
 
             self.logger.warning(f"Polarity: {polarity}, Subjectivity: {subjectivity}, Tweet ID: {tweet_id}, Text: {processed_text}")
 
@@ -136,3 +145,4 @@ class HostilityAnalysis:
         # TODO: Make Sure To Pull Tweet(s) From User Request
         # WTF are Word Embeddings? https://www.analyticsvidhya.com/blog/2018/02/the-different-methods-deal-text-data-predictive-python/
         # https://www.analyticsvidhya.com/blog/2017/06/word-embeddings-count-word2veec/
+        return results

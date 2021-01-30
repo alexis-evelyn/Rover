@@ -6,6 +6,7 @@ from typing import Optional
 import twitter
 from doltpy.core import Dolt
 from doltpy.core.system_helpers import logger
+from requests import Response
 from twitter import TwitterError
 
 from archiver.tweet_api_two import TweetAPI2
@@ -123,7 +124,8 @@ def search_text(api: TweetAPI2, status: dict, regex: bool = False,
 
     # CHARACTER_LIMIT
     if config.REPLY:
-        api.PostUpdates(in_reply_to_status_id=status["id"], status=possibly_truncated_status, continuation='\u2026')
+        # api.PostUpdates(in_reply_to_status_id=status["id"], status=possibly_truncated_status, continuation='\u2026')
+        api.send_tweet(in_reply_to_status_id=status["id"], status=possibly_truncated_status)
 
     logger.log(INFO_QUIET, "Sending Status: {new_status}".format(new_status=possibly_truncated_status))
     logger.debug("Status Length: {length}".format(length=len(possibly_truncated_status)))

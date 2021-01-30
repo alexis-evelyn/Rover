@@ -2,9 +2,11 @@
 
 # Apparently, I Cannot Figure Out How To Get Twython to Give Me The Original JSON,
 # So I'm Just Downloading The Tweets Myself
+import json
 import re
+from io import BytesIO
 from re import Match
-from typing import Optional, List, Union
+from typing import Optional, List, Union, TextIO, BinaryIO
 
 import requests
 
@@ -22,9 +24,10 @@ class BearerAuth(requests.auth.AuthBase):
 
 
 class TweetAPI2:
-    def __init__(self, auth: Union[BearerAuth, OAuth1], alt_auth: Optional[Union[BearerAuth, OAuth1]] = None):
-        self.auth: Union[BearerAuth, OAuth1] = auth
-        self.alt_auth: Optional[Union[BearerAuth, OAuth1]] = alt_auth
+    def __init__(self, auth: BearerAuth, alt_auth: Optional[BearerAuth] = None, reply_auth: Optional[OAuth1] = None):
+        self.auth: BearerAuth = auth
+        self.alt_auth: Optional[BearerAuth] = alt_auth
+        self.reply_auth: Optional[OAuth1] = reply_auth
         self.user_agent = "Chrome/90"
 
     def get_tweet(self, tweet_id: str) -> Response:
@@ -203,9 +206,52 @@ class TweetAPI2:
         api_url: str = f'https://mobile.twitter.com/i/api/1.1/live_video_stream/status/{media_key}'
         return requests.get(url=api_url, headers=headers, auth=self.alt_auth)
 
+    def upload_image(self, file: BytesIO):
+        # multipart/form-data
+
+        # Ensure Reading From Beginning Of File
+        file.seek(0)
+        image_contents: bytes = file.read()
+
+        params: dict = {
+            "media_category": "tweet_image"
+        }
+
+        files: dict = {
+            "media": ('rover-media.png', image_contents, 'image/png')
+        }
+
+        api_url: str = 'https://upload.twitter.com/1.1/media/upload.json'
+        return requests.post(url=api_url, params=params, files=files, auth=self.reply_auth)
+
     def send_tweet(self, status: str,
                    in_reply_to_status_id: Optional[str] = None,
                    auto_populate_reply_metadata: bool = True,
                    exclude_reply_user_ids: Optional[List[int]] = None,
-                   media: Optional[str] = None):
-        pass
+                   media: Optional[BytesIO] = None):
+
+        params: dict = {
+            "status": status,
+            "auto_populate_reply_metadata": str(auto_populate_reply_metadata)
+        }
+
+        if in_reply_to_status_id is not None:
+            params["in_reply_to_status_id"] = in_reply_to_status_id
+
+        if exclude_reply_user_ids is not None:
+            params["exclude_reply_user_ids"] = exclude_reply_user_ids
+
+        if media is not None:
+            # media_ids, attachment_url
+            media_response: Response = self.upload_image(file=media)
+
+            try:
+                media_json: dict = json.loads(media_response.text)
+
+                if "media_id_string" in media_json:
+                    params["media_ids"] = media_json["media_id_string"]
+            except:
+                pass
+
+        api_url: str = 'https://api.twitter.com/1.1/statuses/update.json'
+        return requests.post(url=api_url, params=params, auth=self.reply_auth)

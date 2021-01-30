@@ -14,7 +14,6 @@ IMAGE_NAME_OFFSET_MULTIPLIER: float = 25.384615384615385
 IMAGE_NAME: str = "Digital Rover"
 
 # Temporary Files Vars
-TEMPORARY_IMAGE_PATH: str = os.path.join(WORKING_DIRECTORY, "tmp.png")
 TEMPORARY_IMAGE_FORMAT: str = "PNG"
 
 # Dolt Repo Vars

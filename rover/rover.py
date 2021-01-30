@@ -60,8 +60,7 @@ class Rover(threading.Thread):
 
             # TODO: Add Means To Obtain Tokens Without Manually Going Through The API - https://requests-oauthlib.readthedocs.io/en/latest/oauth1_workflow.html
             # Authentication Method For Accounts
-            # self.api: TweetAPI2 = TweetAPI2(auth=self.__oauth)
-            self.api: TweetAPI2 = TweetAPI2(auth=BearerAuth(token=self.__credentials["BEARER_TOKEN"]))
+            self.api: TweetAPI2 = TweetAPI2(auth=BearerAuth(token=self.__credentials["BEARER_TOKEN"]), reply_auth=self.__oauth)
 
     def run(self):
         self.logger.log(self.INFO_QUIET, "Starting " + self.name)

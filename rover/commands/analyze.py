@@ -5,6 +5,7 @@ from typing import Optional, List
 
 from doltpy.core import Dolt
 from doltpy.core.system_helpers import logger
+from requests import Response
 
 from archiver.tweet_api_two import TweetAPI2
 from database import database
@@ -81,10 +82,13 @@ def analyze_tweet(api: TweetAPI2, status: dict, regex: bool = False,
     analyzed_tweet: dict = analyzed_tweets[0]
     new_status = "Analysis For Tweet Sent By @{screen_name}. Polarity: {polarity}, Subjectivity: {subjectivity}. Analyzed Text: \"{search_phrase}\". The latest example is at {status_link}".format_map(
         SafeDict(
-            status_link=url, screen_name=author, polarity=analyzed_tweet["polarity"], subjectivity=analyzed_tweet["subjectivity"]
+            status_link=url, screen_name=author, polarity=round(analyzed_tweet["polarity"], ndigits=2), subjectivity=round(analyzed_tweet["subjectivity"], ndigits=2)
         ))
 
     possibly_truncated_status: str = truncate_if_needed(original_phrase=analyzed_tweet["processed_text"], new_status=new_status)
 
+    logger.error(f"Truncated Reply: {possibly_truncated_status}")
+
     if config.REPLY:
-        api.send_tweet(in_reply_to_status_id=status["id"], status=possibly_truncated_status)
+        response: Response = api.send_tweet(in_reply_to_status_id=status["id"], status=possibly_truncated_status)
+        logger.error(f"Sent Reply: {response.text}")

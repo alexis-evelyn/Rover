@@ -1,4 +1,5 @@
 #!/usr/bin/python
+import decimal
 import distutils.util
 import json
 import os
@@ -44,17 +45,19 @@ def send_headers(self, content_length: int = 0):
     self.send_header("Content-Length", content_length)
 
     if config.SEND_TIMING_HEADERS:
-        self.send_header("Server-Timing", parse_timings(timings=self.timings))
+        self.send_header("Server-Timing", format_timings(timings=self.timings))
 
     self.end_headers()
 
 
-def parse_timings(timings: dict) -> str:
+def format_timings(timings: dict) -> str:
     header: str = ""
+    total_time: decimal = 0
     for key in timings:
+        total_time += timings[key]
         header += f"{key};dur={timings[key]};"
 
-    header = header[:-1]
+    header += f"total;dur={total_time}"
     return header
 
 

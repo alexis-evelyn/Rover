@@ -135,7 +135,11 @@ def search_text(api: TweetAPI2, status: dict, regex: bool = False,
     logger.debug("Status Length: {length}".format(length=len(possibly_truncated_status)))
 
 
+# TODO: Fix Truncation Code
+# TODO: https://www.huffpost.com/entry/twitter-character-count_n_2252956
 def truncate_if_needed(original_phrase: str, new_status: str) -> str:
+    hotfix_truncate_length: int = 29
+
     truncate_amount = abs(
         (len('\u2026') + len("{search_phrase}") + config.TWITTER_CHARACTER_LIMIT - len(new_status)) - len(
             original_phrase))
@@ -143,6 +147,6 @@ def truncate_if_needed(original_phrase: str, new_status: str) -> str:
     # Don't Put Ellipses If Search Is Not Truncated
     if (len(original_phrase) + len(new_status) + len('\u2026') - len(
             "{search_phrase}")) >= config.TWITTER_CHARACTER_LIMIT:
-        return new_status.format(search_phrase=(original_phrase[:truncate_amount] + '\u2026'))
+        return new_status.format(search_phrase=(original_phrase[:(truncate_amount - hotfix_truncate_length)] + '\u2026'))
 
     return new_status.format(search_phrase=original_phrase)

@@ -1,4 +1,5 @@
 #!/usr/bin/python
+
 import decimal
 import distutils.util
 import json
@@ -8,10 +9,8 @@ from typing import Optional, List, Union
 
 import sqlalchemy
 from doltpy.core import Dolt
-from mysql.connector import conversion
-from sqlalchemy import select
 
-from archiver import config as archive_config, archiver
+from archiver import config as archive_config
 from rover import config, search_tweets
 from database import database
 
@@ -51,13 +50,28 @@ def send_headers(self, content_length: int = 0):
 
 
 def format_timings(timings: dict) -> str:
-    header: str = ""
+    header: str = "backend_total;dur={total_time};desc=Total,"
     total_time: decimal = 0
-    for key in timings:
-        total_time += timings[key]
-        header += f"{key};dur={timings[key]};"
 
-    header += f"total;dur={total_time}"
+    exclude_from_total: List[str] = [
+        "run_function", "retrieve_tweet_analyze", "analyze_tweet_only"
+    ]
+
+    sorted_timings: dict = {key: value for key, value in sorted(timings.items(), key=lambda item: item[1])}
+
+    for key in reversed(sorted_timings):
+        # https://docs.python.org/3/library/time.html#time.time
+        current_time: decimal = sorted_timings[key][0] * 1000
+
+        # To Exclude For Total
+        if key not in exclude_from_total:
+            total_time += current_time
+
+        desc: str = f"{sorted_timings[key][1]}-{sorted_timings[key][2]}"
+        header += f"{key};dur={current_time};desc={desc},"
+
+    header = header.format(total_time=total_time)
+    header = header[:-1]
     return header
 
 
@@ -82,6 +96,7 @@ def send_reply(self, repo: Dolt, table: str):
 
 def run_function(self, repo: Dolt, table: str, url: urlparse, queries: dict) -> dict:
     timing_start: time = time.time()
+    
     endpoints = {
         '/api': send_help,
         '/api/analytics': web_analytics,
@@ -94,8 +109,10 @@ def run_function(self, repo: Dolt, table: str, url: urlparse, queries: dict) -> 
     }
 
     func = endpoints.get(url.path.rstrip('/'), invalid_endpoint)
-    self.timings["run_function"] = time.time() - timing_start
-    return func(self=self, repo=repo, table=table, queries=queries)
+    results: dict = func(self=self, repo=repo, table=table, queries=queries)
+
+    self.timings["run_function"] = (time.time() - timing_start, len(self.timings), "FunctionChooser")
+    return results
 
 
 def load_latest_tweets(self, repo: Dolt, table: str, queries: dict) -> dict:
@@ -126,12 +143,13 @@ def load_latest_tweets(self, repo: Dolt, table: str, queries: dict) -> dict:
     else:
         response: dict = helper_functions.load_cache_file(self=self, max_tweets=max_responses)
 
-    self.timings["load_latest_tweets"] = time.time() - timing_start
+    self.timings["load_latest_tweets"] = (time.time() - timing_start, len(self.timings), "LatestTweets")
     return response
 
 
 def lookup_account(self, repo: Dolt, table: str, queries: dict) -> dict:
     timing_start: time = time.time()
+    
     if "account" not in queries:
         # TODO: Create A Proper Error Handler To Ensure Error Messages and IDs Are Standardized
         return {
@@ -179,18 +197,19 @@ def lookup_account(self, repo: Dolt, table: str, queries: dict) -> dict:
         })
 
     if not found_a_result:
-        self.timings["lookup_account_fail"] = time.time() - timing_start
+        self.timings["lookup_account_fail"] = (time.time() - timing_start, len(self.timings), "FailedLookupAccount")
         return {
             "error": "No Results Found!!!",
             "code": 3
         }
 
-    self.timings["lookup_account"] = time.time() - timing_start
+    self.timings["lookup_account"] = (time.time() - timing_start, len(self.timings), "LookupAccount")
     return results
 
 
 def perform_search(self, repo: Dolt, table: str, queries: dict) -> dict:
     timing_start: time = time.time()
+    
     original_search_text: str = queries["text"][0] if "text" in queries else ""
     regex: bool = bool(distutils.util.strtobool(queries["regex"][0])) if "regex" in queries else False
 
@@ -201,7 +220,7 @@ def perform_search(self, repo: Dolt, table: str, queries: dict) -> dict:
         results=database.search_tweets(search_phrase=search_phrase, repo=repo, table=table, regex=regex))
     tweet_count: int = database.count_tweets(search_phrase=search_phrase, repo=repo, table=table, regex=regex)
 
-    self.timings["perform_search"] = time.time() - timing_start
+    self.timings["perform_search"] = (time.time() - timing_start, len(self.timings), "SearchTweets")
     return {
         "search_text": original_search_text,
         "regex": regex,
@@ -240,6 +259,7 @@ def invalid_endpoint(self, repo: Dolt, table: str, queries: dict) -> dict:
 
 def handle_webhook(self, repo: Dolt, table: str, queries: dict) -> dict:
     timing_start: time = time.time()
+    
     try:
         content_length = int(self.headers['Content-Length'])
         post_data = self.rfile.read(content_length)
@@ -260,10 +280,10 @@ def handle_webhook(self, repo: Dolt, table: str, queries: dict) -> dict:
         # For Ping To Verify Webhook Existence - {"message":"ping","repository":{"name":"presidential-tweets","owner":"alexis-evelyn"}}
         # Only Event As Of Time of Writing - {"ref":"refs/heads/master","head":"1pmuiljube6m238144qo69gvfra853uc","prev":"ro99bhicq8renuh3cectpfuaih8fp64p","repository":{"name":"corona-virus","owner":"dolthub"}}
 
-        self.timings["handle_webhook"] = time.time() - timing_start
+        self.timings["handle_webhook"] = (time.time() - timing_start, len(self.timings), "HandleWebhook")
         return response
     except:
-        self.timings["handle_webhook_fail"] = time.time() - timing_start
+        self.timings["handle_webhook_fail"] = (time.time() - timing_start, len(self.timings), "FailedHandleWebhook")
         return {
             "error": "Invalid Post Data",
             "code": 4
@@ -298,7 +318,7 @@ def retrieve_tweet(self, repo: Dolt, table: str, queries: dict) -> dict:
             "tweet_id": tweet[0]['id']
         }
 
-    self.timings["retrieve_tweet"] = time.time() - timing_start
+    self.timings["retrieve_tweet"] = (time.time() - timing_start, len(self.timings), "RetrieveTweet")
     return response
 
 
@@ -316,7 +336,7 @@ def web_analytics(self, repo: Dolt, table: str, queries: dict) -> dict:
         "results": results
     }
 
-    self.timings["web_analytics"] = time.time() - timing_start
+    self.timings["web_analytics"] = (time.time() - timing_start, len(self.timings), "WebAnalytics")
     return response
 
 
@@ -335,7 +355,7 @@ def analyze_tweet(self, repo: Dolt, table: str, queries: dict) -> dict:
     tweet: List[dict] = database.retrieveTweet(repo=repo, table=table, tweet_id=str(tweet_id),
                                                hide_deleted_tweets=False,
                                                only_deleted_tweets=False)
-    self.timings["retrieve_tweet_analyze"] = time.time() - retrieve_tweet_start
+    self.timings["retrieve_tweet_analyze"] = (time.time() - retrieve_tweet_start, len(self.timings), "RetrieveTweet")
 
     if len(tweet) < 1:
         return {
@@ -346,14 +366,14 @@ def analyze_tweet(self, repo: Dolt, table: str, queries: dict) -> dict:
     # Analyze Tweet
     analyze_tweet_start: time = time.time()
     results: List[dict] = helper_functions.analyze_tweets(logger=self.logger, VERBOSE=self.VERBOSE, tweets=tweet)
-    self.timings["analyze_tweet_only"] = time.time() - analyze_tweet_start
+    self.timings["analyze_tweet_only"] = (time.time() - analyze_tweet_start, len(self.timings), "AnalyzeTweet")
 
     response: dict = {
         "note": "Not Fully Implemented Yet",
         "results": results
     }
 
-    self.timings["analyze_tweet"] = time.time() - timing_start
+    self.timings["analyze_tweet"] = (time.time() - timing_start, len(self.timings), "TweetAnalysis")
     return response
 
 

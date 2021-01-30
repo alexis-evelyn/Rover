@@ -155,7 +155,7 @@ class Rover(threading.Thread):
 
         # If the mention shows up more than once, return true. Twitter adds one implicit reply when replying to a user,
         # but if more than one mention exists, then it's a guaranteed explicit mention.
-        if mention_text.startswith(own_username + " ") and mention_text.count(own_username) == 1:
+        if mention_text.count(own_username) == 1:
             # If Not A Reply, Accept (Since It Cannot Be An Implicit Mention Added By Twitter)
             is_reply: bool = False
             if "referenced_tweets" in mention and len(mention["referenced_tweets"]) > 0:

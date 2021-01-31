@@ -43,6 +43,7 @@ class HostilityAnalysis:
 
         # Setup Variables
         self.stop_words: List[str] = stopwords.words('english')
+        # self.stop_words_set: frozenset = frozenset(stopwords)
         self.tweets: pd.DataFrame = pd.DataFrame()
 
     def add_tweet_to_process(self, tweet: json):
@@ -70,19 +71,72 @@ class HostilityAnalysis:
         self.logger.log(self.VERBOSE, self.tweets)
         self.logger.log(self.VERBOSE, text)
 
+    def remove_stop_words(self, text):
+        try:
+            " ".join(text for x in text.split() if x not in self.stop_words)
+        except AttributeError as e:
+            print(f"{text} - {e}")
+
     def preprocess_tweets(self):
+        # Debug DataFrame
+        # self.tweets["text"].apply(lambda x: print(f"X: {x}"))
+
         # Convert To Lowercase
-        self.tweets["text"] = self.tweets["text"].apply(
-            lambda x: " ".join(x.lower() for x in x.split()))  # Convert To Lowercase To Avoid Duplicate Words
+        # self.tweets["text"] = self.tweets["text"].apply(lambda x: " ".join(x.lower() for x in x.split()))  # Convert To Lowercase To Avoid Duplicate Words
+        self.logger.info("Lower-Casing Whole DataFrame")
+        self.tweets["text"] = self.tweets["text"].str.lower()
         self.tweets["text"].head()
 
-        # Remove Punctuation - TODO: This doesn't seem to work
-        self.tweets["text"] = self.tweets["text"].replace(r'[^\w\s]', '')  # Remove Punctuation
+        # Remove Retweet Markers
+        self.logger.info("Removing Retweet Markers")
+        self.tweets["text"] = self.tweets["text"].replace(r'RT @\w{0,20}: ', '', regex=True)  # Remove Retweet Markers
+
+        # Remove Mentions
+        self.logger.info("Removing Mentions")
+        self.tweets["text"] = self.tweets["text"].replace(r'@\w{0,20}', '', regex=True)  # Remove Retweet Markers
+
+        # Remove Links
+        self.logger.info("Removing Links")
+        self.tweets["text"] = self.tweets["text"].replace(r'http[s]*://[^ ]+', ' ', regex=True)  # Remove Links
+
+        # Remove Commas
+        self.logger.info("Removing Commas")
+        self.tweets["text"] = self.tweets["text"].replace(r'[,]', ' ', regex=True)  # Remove Commas
+
+        # Remove Other Punctuation
+        self.logger.info("Removing Other Punctuation")
+        self.tweets["text"] = self.tweets["text"].replace(r'[^\w\s]', '', regex=True)  # Remove Other Punctuation
         self.tweets["text"].head()
+
+        # Debug DataFrame
+        # self.logger.error("Debugging NoneType in Text")
+        # self.tweets: pd.DataFrame = self.tweets[~self.tweets["word_count"].notnull()]
+        # print(self.tweets)
+        # exit(0)
+
+        self.logger.info("Removing Invalid Rows")
+        self.tweets: pd.DataFrame = self.tweets[self.tweets["word_count"].notnull()]
+
+        self.logger.info("Casting Row Types To Proper DataTypes")
+        self.tweets["character_count"] = pd.to_numeric(self.tweets["character_count"], downcast='integer')
+        self.tweets["hashtag_count"] = pd.to_numeric(self.tweets["hashtag_count"], downcast='integer')
+        self.tweets["lowercase_word_count"] = pd.to_numeric(self.tweets["lowercase_word_count"], downcast='integer')
+        self.tweets["numeric_count"] = pd.to_numeric(self.tweets["numeric_count"], downcast='integer')
+        self.tweets["stop_words_count"] = pd.to_numeric(self.tweets["stop_words_count"], downcast='integer')
+        self.tweets["uppercase_word_count"] = pd.to_numeric(self.tweets["uppercase_word_count"], downcast='integer')
+        self.tweets["word_count"] = pd.to_numeric(self.tweets["word_count"], downcast='integer')
+
+        # print(
+        #     self.tweets["text"].apply(
+        #         lambda x:
+        #             self.remove_stop_words(text=x)
+        #     )
+        # )
 
         # Remove Stop Words
-        self.tweets["text"] = self.tweets["text"].apply(
-            lambda x: " ".join(x for x in x.split() if x not in self.stop_words))  # Remove Stop Words
+        self.logger.info("Removing Stop Words")
+        self.tweets["text"] = self.tweets["text"].apply(lambda x: " ".join(x for x in x.split() if x not in self.stop_words))  # Remove Stop Words
+        # self.tweets["text"] = self.tweets["text"]  # Remove Stop Words - https://codereview.stackexchange.com/a/232550/121665
         self.tweets["text"].head()
 
         # Filter Out Most Common Words - TODO: No Idea Why I Need This, Plus It Causes All Words To Be Removed Anyway (When Text Is Short Enough)
@@ -100,8 +154,8 @@ class HostilityAnalysis:
         # print(self.tweets["text"]); exit(0)
 
         # Correct Common Spelling Mistakes
-        self.tweets["text"] = self.tweets["text"].apply(
-            lambda x: str(TextBlob(x).correct()))  # Correct Spelling For Mistyped Words
+        # self.logger.info("Fixing Common Spelling Mistakes")
+        # self.tweets["text"] = self.tweets["text"].apply(lambda x: print(str(TextBlob(x).correct())))  # Correct Spelling For Mistyped Words - drama favorite looks
 
         # Tokenize Words
         # print(TextBlob(self.tweets["text"].to_string()).words)
@@ -110,13 +164,20 @@ class HostilityAnalysis:
         # self.tweets["text"][:5].apply(lambda x: " ".join([nltk.PorterStemmer().stem(word_s) for word_s in x.split()]))
 
         # Lemmatize Words
-        self.tweets["text"] = self.tweets["text"].apply(
-            lambda x: " ".join([Word(word_l).lemmatize() for word_l in x.split()]))
+        self.logger.info("Lemmatizing Words")
+        self.tweets["text"] = self.tweets["text"].apply(lambda x: " ".join([Word(word_l).lemmatize() for word_l in x.split()]))
         self.tweets["text"].head()
 
+        self.logger.info("Resetting Index")
+        self.tweets.reset_index(drop=True, inplace=True)
+
         # Test Output of Preprocessing
-        for word in self.tweets["text"]:
-            logging.log(self.VERBOSE, word)
+        self.logger.info("Test Pre-Processed Words")
+        self.logger.info(self.tweets["text"])
+        # for word in self.tweets["text"]:
+        #     logging.log(self.VERBOSE, word)
+
+        return self.tweets
 
     def process_tweets(self):
         # Perform Bigram Analysis On Every Tweet Added
@@ -134,8 +195,8 @@ class HostilityAnalysis:
             result: dict = {
                 "polarity": polarity,
                 "subjectivity": subjectivity,
-                "tweet_id": tweet_id,
-                "processed_text": processed_text
+                "id": tweet_id,
+                "text": processed_text
             }
             results.append(result)
 

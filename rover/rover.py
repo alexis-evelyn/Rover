@@ -153,8 +153,7 @@ class Rover(threading.Thread):
         mention_text: str = str(mention["text"]).lower()
         own_username: str = f"@{self.user_name}".lower()
 
-        # If the mention shows up more than once, return true. Twitter adds one implicit reply when replying to a user,
-        # but if more than one mention exists, then it's a guaranteed explicit mention.
+        # If only one mention, then check if it's a reply to someone.
         if mention_text.count(own_username) == 1:
             # If Not A Reply, Accept (Since It Cannot Be An Implicit Mention Added By Twitter)
             is_reply: bool = False
@@ -167,10 +166,6 @@ class Rover(threading.Thread):
             if not is_reply:
                 return True
 
-            # 1334465300243345408 should pass, 1335110267932438528 should fail
-            # Pass means that the method returns true
-            # AFAICT, there's no way to filter between these two test cases atm
-
             self.logger.log(self.VERBOSE,
                             "Own Name: {own_name}, Own ID: {own_id}".format(own_name=self.user_name,
                                                                             own_id=self.user_id))
@@ -178,7 +173,7 @@ class Rover(threading.Thread):
                 "Tweet with ID {id} Failed to Pass Filter: {json}".format(id=mention["id"], json=json.dumps(mention)))
             return False
 
-        # More than one of the username showed up, so definitely a mention
+        # At least one of the username showed up, so definitely a mention
         if mention_text.count(own_username) > 0:
             return True
 

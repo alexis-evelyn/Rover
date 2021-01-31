@@ -282,6 +282,7 @@ class RequestHandler(BaseHTTPRequestHandler):
             analytics_df: pd.DataFrame = pd.DataFrame(utm_parameters, index=[0])
 
             # If Client Doesn't Want To Be Tracked, Do Not Log, Otherwise Log Anonymized Data
+            # TODO: Add Proper Parsing Of Boolean Values (Cast From String)
             if not ("DNT" in self.headers and self.headers["DNT"] == "1"):
                 analytics_df.to_sql('web', con=self.analytics_engine, if_exists='append', index=False)
         except Exception as e:

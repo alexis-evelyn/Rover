@@ -12,7 +12,7 @@
     <div class="mdc-card tweet-card">
         <div class="mdc-card__primary-action mdc-theme--text-primary-on-dark mdc-theme--primary-bg card__content" tabindex="0">
             <div>
-                <h2 class="card__title mdc-typography mdc-typography--headline6">Privacy Notice - Last Updated January 27, 2021</h2>
+                <h2 class="card__title mdc-typography mdc-typography--headline6">Privacy Notice - Last Updated February 1, 2021</h2>
             </div>
             <div class="card__text mdc-typography mdc-typography--body2">
                 I personally collect a range of non-personally identifiable information (non-PII) through the use of server side software.
@@ -28,7 +28,8 @@
                 To avoid being tracked in the future by my own tools, just set your browser's Do Not Track setting to true. On Chrome (at the time of writing), it's called "Send a "Do Not Track" request with your browsing traffic".
                 For those with non-standard browsers, I specifically check if the "DNT" header is set to "1".
                 I then choose not to record any information at all when I receive that header.
-                I do not know how Google Analytics responds to Do Not Track requests, so you'll need to read their Privacy Policy.
+                I also have the code set to remove the Google Analytics code from the page when the Do Not Track header is on.
+                You may have to clear your cache for the change to take effect.
                 <br><br>
                 As far as I can tell, I'm correctly stripping out any personally identifiable information.
                 If I'm wrong, just have someone who knows the privacy laws (e.g. a lawyer) send me an {analytics_contact_info_type} at {analytics_contact_info}, and I'll fix the issue and reset all the data from scratch (for everyone).

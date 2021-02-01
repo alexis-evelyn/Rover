@@ -158,6 +158,11 @@ def main():
     logger.info("Saving Results To Database")
     merged.to_sql('analysis', con=analytics_engine, if_exists='append', index=False)
 
+    logger.info("Removing All But Final Backup File")
+    os.remove("working/attributes-analysis.csv")
+    os.remove("working/results-analysis.csv")
+    os.remove("working/preprocess-analysis.csv")
+
     logger.info("Done")
 
 

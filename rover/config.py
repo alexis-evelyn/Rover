@@ -64,6 +64,10 @@ PROXY_DATABASE: str = os.path.join(WORKING_DIRECTORY, "IP2PROXY-LITE-PX10.BIN/IP
 # Sitemap Variables
 SITEMAP_PREFIX: str = "https://alexisevelyn.me/tweet/"
 
+# Analytics Messages
+COOKIE_POPUP_TRACKING: str = 'This site uses cookies to perform analytics as well as determine what bots visit the site. View the <a href="/privacy" style="color:inherit;">Privacy Policy</a> to learn more. By using this site, you agree to this Privacy Policy. You can opt out of future collection by turning the Do Not Track Header on.'
+COOKIE_POPUP_NO_TRACKING: str = 'You are already not being tracked because you have the Do Not Tracker header turned on. If you would like to view the privacy policy anyway, go to <a href="/privacy" style="color:inherit;">Privacy Policy</a> to learn more.'
+
 # Other
 REPLY: bool = True
 AUTHOR_TWITTER_ID: int = 1008066479114383360

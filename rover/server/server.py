@@ -190,6 +190,10 @@ class RequestHandler(BaseHTTPRequestHandler):
             self.logger.debug("{ip_address} Requested {page_url}: {error_message}".format(ip_address=self.address_string(), page_url=self.path, error_message=e))
 
     def log_web_request(self, queries: dict[str, list[str]]):
+        # If Client Doesn't Want To Be Tracked, Do Not Log, Otherwise Log Anonymized Data
+        if not helper_functions.should_track(headers=self.headers):
+            return
+
         try:
             filtered_queries = filter(lambda elem: str(elem[0]).startswith("utm_"), queries.items())
             tracking_parameters: dict[str, list[str]] = dict(filtered_queries)
@@ -280,11 +284,7 @@ class RequestHandler(BaseHTTPRequestHandler):
 
             # Insert Into DataFrame
             analytics_df: pd.DataFrame = pd.DataFrame(utm_parameters, index=[0])
-
-            # If Client Doesn't Want To Be Tracked, Do Not Log, Otherwise Log Anonymized Data
-            # TODO: Add Proper Parsing Of Boolean Values (Cast From String)
-            if not ("DNT" in self.headers and self.headers["DNT"] == "1"):
-                analytics_df.to_sql('web', con=self.analytics_engine, if_exists='append', index=False)
+            analytics_df.to_sql('web', con=self.analytics_engine, if_exists='append', index=False)
         except Exception as e:
             self.logger.error(f"UTM Parsing Error: {e}")
 

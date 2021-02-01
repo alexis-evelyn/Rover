@@ -1,4 +1,5 @@
-<html>
+<!DOCTYPE html>
+<html lang="en">
     <head>
         <!-- You Can Find The Repo At {github_repo} -->
         <!-- Useful For Determining If Browser Is Refusing To Delete Cached Page For Debugging -->
@@ -32,16 +33,7 @@
         <meta name="twitter:title" content="{twitter_title}" />
         <meta name="twitter:description" content="{twitter_description}" />
         <meta name="twitter:image" content="{website_root}/images/rover-twitter-card.png" />
-
-        <!-- Global site tag (gtag.js) - Google Analytics -->
-        <script async src="https://www.googletagmanager.com/gtag/js?id={google_analytics_code}"></script>
-        <script>
-            window.dataLayer = window.dataLayer || [];
-            function gtag(){dataLayer.push(arguments);}
-            gtag('js', new Date());
-
-            gtag('config', '{google_analytics_code}');
-        </script>
+        {analytics_template}
     </head>
     <body class="mdc-theme--on-background mdc-theme--background">
     <!-- Install Banner - https://developers.google.com/web/ilt/pwa/lab-offline-quickstart#52_activating_the_install_prompt -->
@@ -49,7 +41,7 @@
         <div class="mdc-snackbar" id="cookies-alert">
             <div class="mdc-snackbar__surface" role="status" aria-relevant="additions">
                 <div class="mdc-snackbar__label" aria-atomic="false">
-                    This site uses cookies to perform analytics as well as determine what bots visit the site. View the <a href="/privacy" style="color:inherit;">Privacy Policy</a> to learn more. By using this site, you agree to this Privacy Policy. You can opt out of future collection by turning the Do Not Track Header on.
+                    {cookie_policy}
                 </div>
                 <div class="mdc-snackbar__actions" aria-atomic="true">
                     <button type="button" class="mdc-button mdc-snackbar__action">

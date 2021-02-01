@@ -127,6 +127,16 @@ def write_header(self, site_title: str, twitter_title: str, twitter_description:
     current_time: str = f"{datetime.now().astimezone(tz=pytz.UTC):%A, %B, %d %Y at %H:%M:%S.%f %z}"
     google_analytics_code: str = self.config["google_analytics_code"]
 
+    if helper_functions.should_track(headers=self.headers):
+        # Send Tracking Code
+        analytics_template: str = load_text_file("rover/server/web/templates/analytics.html").replace(
+            "{google_analytics_code}", google_analytics_code)
+        cookie_policy: str = config.COOKIE_POPUP_TRACKING
+    else:
+        # Don't Send Tracking Code
+        analytics_template: str = ""
+        cookie_policy: str = config.COOKIE_POPUP_NO_TRACKING
+
     # Files To Generate SRI Hashes For
     stylesheet_css: bytes = load_binary_file(path="rover/server/web/css/stylesheet.css")
     main_js: bytes = load_binary_file(path="rover/server/web/scripts/main.js")
@@ -144,9 +154,10 @@ def write_header(self, site_title: str, twitter_title: str, twitter_description:
                            .replace("{twitter_handle}", config.AUTHOR_TWITTER_HANDLE)
                            .replace("{twitter_description}", twitter_description)
                            .replace("{current_time}", current_time)
-                           .replace("{google_analytics_code}", google_analytics_code)
                            .replace("{github_repo}", config.GITHUB_REPO)
                            .replace("{website_root}", config.WEBSITE_ROOT)
+                           .replace("{analytics_template}", analytics_template)
+                           .replace("{cookie_policy}", cookie_policy)
 
                            # SRI Hash Integrity
                            .replace("{stylesheet_css_integrity}", stylesheet_css_hash)

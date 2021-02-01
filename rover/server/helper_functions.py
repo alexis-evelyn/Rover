@@ -3,8 +3,11 @@ import datetime
 import json
 import random
 import uuid
+
+from http.server import BaseHTTPRequestHandler
 from logging import Logger
 from typing import List, Optional, Tuple
+from distutils.util import strtobool
 
 from archiver import config as archiver_config
 from database import database
@@ -160,3 +163,9 @@ def analyze_tweets(logger: Logger, VERBOSE: int, tweets: List[dict]):
 
     analyzer.preprocess_tweets()
     return analyzer.process_tweets()
+
+
+def should_track(headers: BaseHTTPRequestHandler.MessageClass):
+    if "DNT" in headers and bool(strtobool(headers["DNT"])):
+        return False
+    return True

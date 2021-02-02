@@ -22,4 +22,4 @@ CREDENTIALS_FILE_PATH: str = "credentials.json"
 CACHE_FILE_PATH: str = "archiver_tweet_cache.json"
 
 # Failed Tweets File
-FAILED_TWEETS_FILE_PATH: str = os.path.join(ARCHIVE_TWEETS_REPO_PATH, "failed_to_add_tweets.json")
+FAILED_TWEETS_FILE_PATH: str = os.path.join(ARCHIVE_TWEETS_REPO_PATH, "failed_to_add_tweets.jsonl")

@@ -108,7 +108,7 @@ def count_tweets(search_phrase: str, repo: Dolt, table: str, account_id: Optiona
 
     # Retrieve Count of Tweets From Search
     for header in count_result[0]:
-        return count_result[0][header]
+        return int(count_result[0][header])
 
     return -1
 

@@ -1,6 +1,7 @@
 #!/usr/bin/python
 
 import csv
+import datetime
 import json
 import logging
 import math
@@ -245,12 +246,24 @@ class Archiver(threading.Thread):
             resp = self.twitter_api.get_tweet(tweet_id=tweet_id)
 
         headers = resp.headers
-        rateLimitResetTime = headers['x-rate-limit-reset']
+
+        if 'x-rate-limit-reset' in headers:
+            rateLimitResetTime = headers['x-rate-limit-reset']
+        else:
+            self.logger.warning("Missing Rate Limit Reset Time Header!!! Assuming 15 Minutes!!!")
+            rateLimitResetTime = (datetime.datetime.now() + datetime.timedelta(minutes=15)).timestamp()
 
         # Unable To Parse JSON. Chances Are Rate Limit's Been Hit
         try:
-            return json.loads(resp.text)
-        except JSONDecodeError:
+            tweet_json: dict = json.loads(resp.text)
+
+            if 'status' in tweet_json and tweet_json['status'] == 500:
+                self.logger.error("Twitter Is Broken!!! Try Again Later!!!")
+                self.logger.log(self.VERBOSE, f"Response For Broken Twitter: {resp.text}")
+                raise BrokenTwitter(f"Twitter Is Broken!!! See Response: {resp.text}")
+
+            return tweet_json
+        except (JSONDecodeError, BrokenTwitter):
             now = time.time()
             timeLeft = (float(rateLimitResetTime) - now)
 
@@ -369,6 +382,8 @@ class Archiver(threading.Thread):
         if self.is_inaccessible_tweet(data=data):
             self.handle_error_tweet(data=data)
             return
+
+        # self.logger.warning(f"JSON: {data}")
 
         # Tweet Data
         tweet = self.extractTweet(data)
@@ -616,3 +631,7 @@ class Archiver(threading.Thread):
 
     def pushData(self, branch: str):
         self.repo.push('origin', branch)
+
+
+class BrokenTwitter(Exception):
+    pass

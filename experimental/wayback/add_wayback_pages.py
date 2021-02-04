@@ -111,8 +111,11 @@ def add_to_database(references: pd.DataFrame):
 
     reference_size: int = len(references)
     for row in references.itertuples():
-        print(f"{row.Index}/{reference_size} - Updating ID: {row.id}")
-        engine.execute(row.query)
+        try:
+            print(f"{row.Index}/{reference_size} - Updating ID: {row.id}")
+            engine.execute(row.query)
+        except Exception:
+            print("")
 
 
 if __name__ == '__main__':

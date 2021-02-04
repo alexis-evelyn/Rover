@@ -30,7 +30,7 @@ class TweetAPI2:
         self.auth: BearerAuth = auth
         self.alt_auth: Optional[BearerAuth] = alt_auth
         self.reply_auth: Optional[OAuth1] = reply_auth
-        self.user_agent = "Chrome/90"
+        self.user_agent: str = "Chrome/90"
 
     def get_tweet(self, tweet_id: str) -> Response:
         # To deal with some tweets breaking with entities.mentions.username

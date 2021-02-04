@@ -1,12 +1,15 @@
 #!/usr/bin/python
 
 import json
+import logging
 import re
 from io import BytesIO
+from json import JSONDecodeError
 from re import Match
 from typing import Optional, List
 
 import requests
+from doltpy.core.system_helpers import get_logger
 
 from requests import Response
 from requests_oauthlib import OAuth1
@@ -23,15 +26,19 @@ class BearerAuth(requests.auth.AuthBase):
 
 class TweetAPI2:
     def __init__(self, auth: BearerAuth, alt_auth: Optional[BearerAuth] = None, reply_auth: Optional[OAuth1] = None):
+        self.logger: logging.Logger = get_logger(__name__)
         self.auth: BearerAuth = auth
         self.alt_auth: Optional[BearerAuth] = alt_auth
         self.reply_auth: Optional[OAuth1] = reply_auth
         self.user_agent = "Chrome/90"
 
     def get_tweet(self, tweet_id: str) -> Response:
+        # To deal with some tweets breaking with entities.mentions.username
+        expansions: str = "author_id,referenced_tweets.id,in_reply_to_user_id,attachments.media_keys,attachments.poll_ids,geo.place_id,referenced_tweets.id.author_id"
+
         params: dict = {
             "tweet.fields": "id,text,attachments,author_id,conversation_id,created_at,entities,geo,in_reply_to_user_id,lang,possibly_sensitive,public_metrics,referenced_tweets,source,withheld",
-            "expansions": "author_id,referenced_tweets.id,in_reply_to_user_id,attachments.media_keys,attachments.poll_ids,geo.place_id,entities.mentions.username,referenced_tweets.id.author_id",
+            "expansions": f"{expansions},entities.mentions.username",
             "media.fields": "media_key,type,duration_ms,height,preview_image_url,public_metrics,width",
             "place.fields": "full_name,id,contained_within,country,country_code,geo,name,place_type",
             "poll.fields": "id,options,duration_minutes,end_datetime,voting_status",
@@ -40,7 +47,19 @@ class TweetAPI2:
 
         # 1183124665688055809 = id
         api_url: str = 'https://api.twitter.com/2/tweets/{}'.format(tweet_id)
-        return requests.get(url=api_url, params=params, auth=self.auth)
+        tweet_response: Response = requests.get(url=api_url, params=params, auth=self.auth)
+
+        try:
+            tweet_json: dict = json.loads(tweet_response.text)
+        except JSONDecodeError:
+            self.logger.error("Failed To Decode JSON From Tweet Response!!!")
+            return tweet_response
+
+        if 'status' in tweet_json and tweet_json['status'] == 500:
+            params["expansions"] = expansions
+            return requests.get(url=api_url, params=params, auth=self.auth)
+
+        return tweet_response
 
     def get_tweet_v1(self, tweet_id: str) -> Response:
         params: dict = {

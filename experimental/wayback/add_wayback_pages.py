@@ -115,7 +115,7 @@ def add_to_database(references: pd.DataFrame):
             print(f"{row.Index}/{reference_size} - Updating ID: {row.id}")
             engine.execute(row.query)
         except Exception:
-            print("")
+            print(f"Failed To Update ID: {row.id}")
 
 
 if __name__ == '__main__':

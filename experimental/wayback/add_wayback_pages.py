@@ -92,10 +92,7 @@ def match_tweets_to_pages(pages: pd.DataFrame):
 
 
 def add_to_database(references: pd.DataFrame):
-    update_rows: str = '''
-        UPDATE tweets SET reference='{reference}' WHERE id='{tweet_id}';
-    '''
-
+    # UPDATE tweets SET reference='{reference}' WHERE id='{tweet_id}';
     update_rows_begin: str = "UPDATE tweets SET reference='"
     update_rows_middle: str = "' WHERE id='"
     update_rows_end: str = "';"
@@ -118,6 +115,20 @@ def add_to_database(references: pd.DataFrame):
             print(f"Failed To Update ID: {row.id}")
 
 
+def remove_not_added_tweets(references: pd.DataFrame) -> pd.DataFrame:
+    get_existing_ids: str = '''
+        select id from tweets where reference is null;
+    '''
+
+    existing_tweets: pd.DataFrame = pd.read_sql(sql=get_existing_ids, con=engine)
+    references = references[references['id'].isin(existing_tweets["id"].to_list())]
+    references.reset_index(drop=True, inplace=True)
+
+    # print(references.loc[references["id"] == 142973571537448960])
+    # print(references)
+    return references
+
+
 if __name__ == '__main__':
     if not os.path.exists(matched_pages_file):
         print("Starting Process On Creating Wayback CSV!!!")
@@ -126,6 +137,7 @@ if __name__ == '__main__':
     else:
         matches: pd.DataFrame = pd.read_csv(filepath_or_buffer=matched_pages_file)
 
+    matches = remove_not_added_tweets(references=matches)
     add_to_database(references=matches)
 
     print("Done")

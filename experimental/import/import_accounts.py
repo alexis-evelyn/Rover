@@ -168,4 +168,5 @@ def add_account_creation_dates():
     print(merged)
 
 
-add_account_creation_dates()
+if __name__ == '__main__':
+    add_account_creation_dates()

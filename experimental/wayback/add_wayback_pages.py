@@ -88,11 +88,41 @@ def match_tweets_to_pages(pages: pd.DataFrame):
     print("Saving To CSV")
     tweets.to_csv(matched_pages_file)
 
+    return tweets
+
+
+def add_to_database(references: pd.DataFrame):
+    update_rows: str = '''
+        UPDATE tweets SET reference='{reference}' WHERE id='{tweet_id}';
+    '''
+
+    update_rows_begin: str = "UPDATE tweets SET reference='"
+    update_rows_middle: str = "' WHERE id='"
+    update_rows_end: str = "';"
+
+    references["query"] = update_rows_begin + references["reference"] + update_rows_middle + references["id"].astype(str) + update_rows_end
+
+    references = references[references["reference"].notnull()]
+    references.reset_index(drop=True, inplace=True)
+
+    # print(references)
+    # print(f"0: {references['query'][0]}")
+    # print(f"100: {references['query'][100]}")
+
+    reference_size: int = len(references)
+    for row in references.itertuples():
+        print(f"{row.Index}/{reference_size} - Updating ID: {row.id}")
+        engine.execute(row.query)
+
 
 if __name__ == '__main__':
     if not os.path.exists(matched_pages_file):
         print("Starting Process On Creating Wayback CSV!!!")
         wayback_pages: pd.DataFrame = load_url_list()
-        match_tweets_to_pages(pages=wayback_pages)
+        matches: pd.DataFrame = match_tweets_to_pages(pages=wayback_pages)
+    else:
+        matches: pd.DataFrame = pd.read_csv(filepath_or_buffer=matched_pages_file)
+
+    add_to_database(references=matches)
 
     print("Done")

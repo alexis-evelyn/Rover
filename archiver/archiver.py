@@ -266,17 +266,17 @@ class Archiver(threading.Thread):
         try:
             tweet_json: dict = json.loads(resp.text)
 
+            if 'x-rate-limit-remaining' in headers and 'x-rate-limit-limit' in headers:
+                remaining: str = headers['x-rate-limit-remaining']
+                limit: str = headers['x-rate-limit-limit']
+                self.logger.debug(f"Tweets Left In Rate Limit: {remaining}/{limit}")
+            else:
+                self.logger.warning(f"Unable To Determine Rate Limit!!!")
+
             if 'status' in tweet_json and tweet_json['status'] == 500:
                 self.logger.error("Twitter Is Broken!!! Try Again Later!!!")
                 self.logger.log(self.VERBOSE, f"Response For Broken Twitter: {resp.text}")
                 raise BrokenTwitter(f"Twitter Is Broken!!! See Response: {resp.text}")
-
-            if 'x-rate-limit-remaining' in headers and 'x-rate-limit-limit' in headers:
-                remaining: str = headers['x-rate-limit-remaining']
-                limit: str = headers['x-rate-limit-limit']
-                self.logger.log(self.INFO_QUIET, f"Tweets Left In Rate Limit: {remaining}/{limit}")
-            else:
-                self.logger.warning(f"Unable To Determine Rate Limit!!!")
 
             return tweet_json
         except (JSONDecodeError, BrokenTwitter):
@@ -405,6 +405,13 @@ class Archiver(threading.Thread):
             return
 
         # self.logger.warning(f"JSON: {data}")
+
+        if 'data' not in data or 'includes' not in data:
+            self.logger.error(f"Missing Either Data Or Includes From Tweet JSON!!! Logging!!! JSON: {json.dumps(data)}")
+            tweets_file: TextIO = open(config.FAILED_TWEETS_FILE_PATH, "a+")
+            tweets_file.writelines(json.dumps(data) + os.linesep)
+            tweets_file.close()
+            return
 
         # Tweet Data
         tweet = self.extractTweet(data)

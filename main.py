@@ -48,6 +48,12 @@ parser.add_argument("-archive", "--archive", help="Archives Tweets (Useful For D
                     type=bool,
                     action=argparse.BooleanOptionalAction)
 
+parser.add_argument("-archive-from-file", "--archive-from-file", help="Only Archive Tweets From File (Useful For Batch Import) (Defaults To False)",
+                    dest='archive_from_file',
+                    default=False,
+                    type=bool,
+                    action=argparse.BooleanOptionalAction)
+
 parser.add_argument("-server", "--server", help="Run Webserver (Defaults To True)",
                     dest='server',
                     default=True,
@@ -70,7 +76,7 @@ def main(arguments: argparse.Namespace):
     logger.setLevel(arguments.logLevel)  # This Script's Log Level
 
     rover: Rover = Rover(threadID=1, name="Rover", requested_wait_time=arguments.wait * 60, reply=arguments.reply, threadLock=threadLock)
-    archiver: Archiver = Archiver(threadID=2, name="Archiver", requested_wait_time=arguments.wait * 60, commit=arguments.commit, threadLock=threadLock)
+    archiver: Archiver = Archiver(threadID=2, name="Archiver", requested_wait_time=arguments.wait * 60, commit=arguments.commit, from_file=arguments.archive_from_file, threadLock=threadLock)
     server: WebServer = WebServer(threadID=3, name="Analysis Server")  # https://www.tutorialspoint.com/python3/python_multithreading.htm
 
     # Start Archiver

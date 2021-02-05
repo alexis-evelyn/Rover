@@ -26,7 +26,7 @@ from rover.server import helper_functions
 
 class Archiver(threading.Thread):
     def __init__(self, threadID: int, name: str, threadLock: threading.Lock, requested_wait_time: int = 60,
-                 commit: bool = True):
+                 commit: bool = True, from_file: bool = False):
         threading.Thread.__init__(self)
         self.threadID = threadID
         self.name = name
@@ -64,6 +64,9 @@ class Archiver(threading.Thread):
 
         # Should Commit Data (For Debugging)
         self.commit: bool = commit
+
+        # Import From File Only
+        self.from_file: bool = from_file
 
         # Media Threads
         self.media_threads: List[int] = []
@@ -105,9 +108,9 @@ class Archiver(threading.Thread):
         database.addMediaFiles(repo=self.repo, table=config.MEDIA_TWEETS_TABLE, tweet_id=str(tweet_id), data=[file])
 
     def download_broadcasts(self):
-        missing_broadcasts: dict = database.retrieveMissingBroadcastFiles(repo=self.repo,
-                                                                          tweets_table=config.ARCHIVE_TWEETS_TABLE,
-                                                                          media_table=config.MEDIA_TWEETS_TABLE)
+        missing_broadcasts: List[dict] = database.retrieveMissingBroadcastFiles(repo=self.repo,
+                                                                                tweets_table=config.ARCHIVE_TWEETS_TABLE,
+                                                                                media_table=config.MEDIA_TWEETS_TABLE)
 
         for broadcast in missing_broadcasts:
             # print(f"{broadcast['id']}, {broadcast['stream_json']}")
@@ -128,9 +131,9 @@ class Archiver(threading.Thread):
     def get_broadcast_urls(self, guest_token: str):
         # TODO: Add Proper Error Checking
 
-        broadcasts: dict = database.retrieveMissingBroadcastInfo(repo=self.repo,
-                                                                 tweets_table=config.ARCHIVE_TWEETS_TABLE,
-                                                                 media_table=config.MEDIA_TWEETS_TABLE)
+        broadcasts: List[dict] = database.retrieveMissingBroadcastInfo(repo=self.repo,
+                                                                       tweets_table=config.ARCHIVE_TWEETS_TABLE,
+                                                                       media_table=config.MEDIA_TWEETS_TABLE)
 
         for broadcast in broadcasts:
             try:
@@ -174,10 +177,16 @@ class Archiver(threading.Thread):
         # Create Table If Not Exists
         # database.createTableIfNotExists(repo=self.repo, table=config.ARCHIVE_TWEETS_TABLE)
 
-        # self.downloadTweetsFromFile(path=os.path.join(config.ARCHIVE_TWEETS_REPO_PATH, 'download-ids.csv'), update_tweets=False, media_api=False)
-        # self.updateTweetsIfDeleted(path=os.path.join(config.ARCHIVE_TWEETS_REPO_PATH, 'download-ids.csv'))
+        if self.from_file:
+            self.logger.log(self.INFO_QUIET, "Importing From File!!!")
+            self.downloadTweetsFromFile(path=os.path.join(config.ARCHIVE_TWEETS_REPO_PATH, 'download-ids.csv'),
+                                        update_tweets=False, media_api=False)
+            self.logger.log(self.INFO_QUIET, "Done Importing From File!!!")
+            exit(0)
+            return
+
+            # self.updateTweetsIfDeleted(path=os.path.join(config.ARCHIVE_TWEETS_REPO_PATH, 'download-ids.csv'))
         # os.system(f'cd {config.ARCHIVE_TWEETS_REPO_PATH} && dolt sql -q "select id from tweets, media where tweets.json like \\"%media_key%\\" and media.v1_json is null order by id desc;" -r csv > download-ids.csv')
-        # return
 
         for twitter_account in active_accounts:
             self.logger.log(self.INFO_QUIET, "Checking For Tweets From {twitter_account} - @{twitter_handle}".format(
@@ -262,6 +271,13 @@ class Archiver(threading.Thread):
                 self.logger.log(self.VERBOSE, f"Response For Broken Twitter: {resp.text}")
                 raise BrokenTwitter(f"Twitter Is Broken!!! See Response: {resp.text}")
 
+            if 'x-rate-limit-remaining' in headers and 'x-rate-limit-limit' in headers:
+                remaining: str = headers['x-rate-limit-remaining']
+                limit: str = headers['x-rate-limit-limit']
+                self.logger.log(self.INFO_QUIET, f"Tweets Left In Rate Limit: {remaining}/{limit}")
+            else:
+                self.logger.warning(f"Unable To Determine Rate Limit!!!")
+
             return tweet_json
         except (JSONDecodeError, BrokenTwitter):
             now = time.time()
@@ -279,19 +295,23 @@ class Archiver(threading.Thread):
     def downloadTweetsFromFile(self, path: str, update_tweets: bool = False, media_api: bool = False):
         with open(path, "r") as file:
             csv_reader = csv.reader(file, delimiter=',')
-            line_count = -1
+            row_count: int = sum(1 for _ in csv_reader) - 1
+            file.seek(0)
+
+            current_line: int = -1
             for row in csv_reader:
-                if line_count == -1:
+                if current_line == -1:
                     self.logger.log(self.VERBOSE, f'Column names are {", ".join(row)}')
-                    line_count += 1
+                    current_line += 1
                 else:
                     self.logger.log(self.VERBOSE, f'\t{row[0]}')
-                    line_count += 1
+                    current_line += 1
 
                     # Check If Should Be Updating Existing Tweets (Meant To Save Rate Limit For Batch Operations)
                     if database.isAlreadyArchived(repo=self.repo, table=config.ARCHIVE_TWEETS_TABLE,
                                                   tweet_id=row[0]) and not update_tweets:
-                        self.logger.log(self.INFO_QUIET, f"Skipping Existing Tweet: {row[0]}")
+                        self.logger.log(self.INFO_QUIET,
+                                        f"{current_line}/{row_count} Skipping Existing Tweet: {row[0]}")
                         continue
 
                     tweet: Optional[dict] = self.downloadTweet(tweet_id=row[0], media_api=media_api)
@@ -301,9 +321,10 @@ class Archiver(threading.Thread):
                         return
 
                     if update_tweets:
-                        self.logger.log(self.INFO_QUIET, f"Updating Existing Tweet: {row[0]}")
+                        self.logger.log(self.INFO_QUIET,
+                                        f"{current_line}/{row_count} Updating Existing Tweet: {row[0]}")
                     else:
-                        self.logger.log(self.INFO_QUIET, f"Adding New Tweet: {row[0]}")
+                        self.logger.log(self.INFO_QUIET, f"{current_line}/{row_count} Adding New Tweet: {row[0]}")
 
                     author_id: Optional[str] = tweet["data"]["author_id"] if "data" in tweet else None
 
@@ -319,7 +340,7 @@ class Archiver(threading.Thread):
                         tweets_file.writelines(json.dumps(tweet) + os.linesep)
                         tweets_file.close()
 
-            self.logger.log(self.VERBOSE, f'Processed {line_count} lines.')
+            self.logger.log(self.VERBOSE, f'Processed {current_line} lines.')
 
     def updateTweetsIfDeleted(self, path: str):
         with open(path, "r") as file:

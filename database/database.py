@@ -18,6 +18,7 @@ def latest_tweets(repo: Dolt, table: str, max_responses: int = 10, account_id: O
     query: QueryBuilder = Query.from_(tweets) \
         .select(Star()) \
         .orderby(tweets.date, order=Order.desc) \
+        .orderby(tweets.id, order=Order.desc) \
         .limit(max_responses)
 
     if account_id is not None:

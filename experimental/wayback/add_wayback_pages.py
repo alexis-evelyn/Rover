@@ -12,6 +12,9 @@ from typing import Optional, List
 from doltpy.core import ServerConfig, Dolt
 from sqlalchemy import create_engine
 
+# repo_dir: str = "/Users/alexis/Desktop/presidential-tweets"
+repo_dir: str = "working/presidential-tweets"
+
 matched_pages_file: str = "working/wayback-matches.csv"
 file_list_cache: str = "working/wayback-files.csv"
 tweet_list_cache: str = "working/tweet-list.csv"
@@ -21,7 +24,7 @@ files_regex: str = fr"{directory}/(\w+)/(\d+){filter_name}.html"
 
 # Setup SQL Server
 server_config: ServerConfig = ServerConfig(port=9999)
-repo: Optional[Dolt] = Dolt(repo_dir="/Users/alexis/Desktop/presidential-tweets",
+repo: Optional[Dolt] = Dolt(repo_dir=repo_dir,
                             server_config=server_config)
 
 # Start SQL Server

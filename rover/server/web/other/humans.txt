@@ -1,0 +1,15 @@
+/* TEAM */
+  Title: Alexis Evelyn
+  Site: alexis.a.evelyn+humans@gmail.com
+  Twitter: AlexisEvelyn42
+  Location: Georgia, United States
+
+/* SITE */
+  Last Update: 2021/02/05
+  Standard: HTML, CSS, Python
+  Components: JQuery, Material Design
+  Software: Python3, DoltPy
+
+/* THANKS */
+  Name: https://dolthub.com/
+  Name: https://twitter.com/

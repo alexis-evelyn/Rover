@@ -184,6 +184,8 @@ class RequestHandler(BaseHTTPRequestHandler):
                 handler.load_404_page(self=self, error_code=200)
             elif url == "/offline":
                 handler.load_offline_page(self=self)
+            elif url == "/humans.txt":
+                handler.load_file(self=self, path="rover/server/web/other/humans.txt", mime_type="text/plain")
             else:
                 handler.load_404_page(self=self)
         except BrokenPipeError as e:

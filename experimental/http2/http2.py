@@ -17,11 +17,19 @@ async def homepage(request: Request):
     })
 
 
+async def api(request: Request):
+    return JSONResponse({
+        'api': "true",
+        'path': str(request.url.path),
+        'query': str(request.url.query)
+    })
+
 if __name__ == '__main__':
-    # TODO: Figure Out How To Get Truly Dynamic URLs
+    # ORDER MATTERS
     # https://www.starlette.io/routing/
     routes = [
-        Route("/{path:path}", endpoint=homepage, methods=["GET", "POST"])
+        Route("/api/{path:path}", endpoint=api, methods=["GET", "POST"]),
+        Route("/{path:path}", endpoint=homepage, methods=["GET"])
     ]
 
     config: Config = Config()

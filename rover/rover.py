@@ -4,7 +4,7 @@ import json
 import logging
 import threading
 import time
-from typing import Optional, Any, Reversible, List
+from typing import Optional, Any, Reversible, List, Tuple
 from json.decoder import JSONDecodeError
 from os import path
 
@@ -57,7 +57,13 @@ class Rover(threading.Thread):
             self.api: TweetAPI2 = TweetAPI2(auth=BearerAuth(token=self.__credentials["BEARER_TOKEN"]), reply_auth=self.__oauth)
 
         # Get Own Account ID and Handle
-        config.TWITTER_USER_ID, config.TWITTER_USER_HANDLE = self.api.get_account_info()
+        id_handle: Optional[Tuple[str, str]] = self.api.get_account_info()
+
+        if id_handle is None:
+            self.logger.log(self.INFO_QUIET, f"Failed Logging In On Rover Application!!! Returning!!!")
+
+        # If Successful, Then Set Variables
+        config.TWITTER_USER_ID, config.TWITTER_USER_HANDLE = id_handle
 
         self.user_id: int = int(config.TWITTER_USER_ID)
         self.user_name: str = config.TWITTER_USER_HANDLE

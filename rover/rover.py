@@ -74,7 +74,7 @@ class Rover(threading.Thread):
 
     def run(self):
         # Enforce Exiting Rover If ID Handle Lookup Failed
-        if self.user_id is None or self.user_name is None:
+        if not hasattr(self, 'user_id') or not hasattr(self, 'user_name'):
             return
 
         self.logger.log(self.INFO_QUIET, "Starting " + self.name)

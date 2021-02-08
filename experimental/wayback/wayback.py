@@ -16,6 +16,12 @@
 # Old Style Checksum
 # Length
 
+# Example Command
+# curl "https://web.archive.org/cdx/search/cdx?url=twitter.com/realDonaldTrump" > realDonaldTrump.url
+
+# Generate Commands
+# dolt sql -q "select concat('curl \"https://web.archive.org/cdx/search/cdx?url=twitter.com/', twitter_handle, '\" > ', twitter_handle, '.url') as commands from total_tweets;" -r csv > urls.csv
+
 # 20090420095939
 # For Unmodified Pages - https://web.archive.org/web/20090420095939id_/http://twitter.com:80/realDonaldTrump
 # May Want Modified Pages For Media
@@ -29,7 +35,7 @@ from typing import Optional
 import pandas as pd
 import requests
 
-list_folder: str = "archive-me"
+list_folder: str = "working/archive-me"
 temp_files: list = os.listdir(list_folder)
 files: list = []
 

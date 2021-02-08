@@ -161,7 +161,7 @@ def retrieveTweet(repo: Dolt, table: str, tweet_id: str,
 
 def isAlreadyArchived(repo: Dolt, table: str, tweet_id: str,
                       hide_deleted_tweets: bool = False, only_deleted_tweets: bool = False) -> bool:
-    result: Optional[dict] = retrieveTweet(repo=repo, table=table, tweet_id=tweet_id,
+    result: Optional[dict] = retrieveTweet(table=table, tweet_id=tweet_id,
                                            hide_deleted_tweets=hide_deleted_tweets,
                                            only_deleted_tweets=only_deleted_tweets)
 

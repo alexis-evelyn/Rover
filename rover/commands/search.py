@@ -78,7 +78,7 @@ def search_text(api: TweetAPI2, status: dict, regex: bool = False,
 
     if author is None:
         # If Failed (e.g. suspended account), Then Retrieve Stored Handle From Database
-        author = database.retrieveAccountInfo(repo=repo, account_id=search_post_response["twitter_user_id"])[0][
+        author = database.retrieveAccountInfo(account_id=search_post_response["twitter_user_id"])[0][
             "twitter_handle"]
         failed_account_lookup: bool = True
 

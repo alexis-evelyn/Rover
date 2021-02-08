@@ -5,10 +5,12 @@ import logging
 import threading
 
 # Custom Log Levels
-from doltpy.core import system_helpers
+import sqlalchemy
+from doltpy.core import system_helpers, Dolt, ServerConfig
 from doltpy.core.system_helpers import get_logger
+from sqlalchemy import create_engine
 
-from config import config as main_config
+from config import config
 from rover import Rover
 from archiver import Archiver
 
@@ -75,9 +77,20 @@ def main(arguments: argparse.Namespace):
     logging.Logger.setLevel(system_helpers.logger, arguments.logLevel)  # DoltPy's Log Level
     logger.setLevel(arguments.logLevel)  # This Script's Log Level
 
-    rover: Rover = Rover(threadID=1, name="Rover", requested_wait_time=arguments.wait * 60, reply=arguments.reply, threadLock=threadLock)
-    archiver: Archiver = Archiver(threadID=2, name="Archiver", requested_wait_time=arguments.wait * 60, commit=arguments.commit, from_file=arguments.archive_from_file, threadLock=threadLock)
-    server: WebServer = WebServer(threadID=3, name="Analysis Server")  # https://www.tutorialspoint.com/python3/python_multithreading.htm
+    server_config: ServerConfig = ServerConfig(port=config.ARCHIVE_PORT)
+    repo: Dolt = initRepo(path=config.ARCHIVE_TWEETS_REPO_PATH,
+                          create=False,
+                          url=config.ARCHIVE_TWEETS_REPO_URL,
+                          server_config=server_config)
+
+    repo.sql_server()
+    engine: sqlalchemy.engine = create_engine(
+        f"mysql://{config.ARCHIVE_USERNAME}@{config.ARCHIVE_HOST}:{config.ARCHIVE_PORT}/{config.ARCHIVE_DATABASE}",
+        echo=False)
+
+    rover: Rover = Rover(threadID=1, name="Rover", requested_wait_time=arguments.wait * 60, reply=arguments.reply, threadLock=threadLock, archive_engine=engine)
+    archiver: Archiver = Archiver(threadID=2, name="Archiver", requested_wait_time=arguments.wait * 60, commit=arguments.commit, from_file=arguments.archive_from_file, threadLock=threadLock, archive_engine=engine)
+    server: WebServer = WebServer(threadID=3, name="Analysis Server", archive_engine=engine)  # https://www.tutorialspoint.com/python3/python_multithreading.htm
 
     # Start Archiver
     if arguments.archive:
@@ -90,6 +103,16 @@ def main(arguments: argparse.Namespace):
     # Start Webserver
     if arguments.server:
         server.start()
+
+
+def initRepo(path: str, create: bool, url: str = None, server_config: ServerConfig = ServerConfig()) -> Dolt:
+    # Prepare Repo For Data
+    if create:
+        repo: Dolt = Dolt.init(path, server_config=server_config)
+        repo.remote(add=True, name='origin', url=url)
+        return repo
+
+    return Dolt(path, server_config=server_config)
 
 
 if __name__ == '__main__':

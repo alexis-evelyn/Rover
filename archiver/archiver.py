@@ -10,6 +10,9 @@ import threading
 import time
 from json.decoder import JSONDecodeError
 from typing import Optional, TextIO, List
+
+import sqlalchemy
+
 from archiver.video_download import VideoDownloader
 
 import pandas as pd
@@ -25,7 +28,7 @@ from rover.server import helper_functions
 
 
 class Archiver(threading.Thread):
-    def __init__(self, threadID: int, name: str, threadLock: threading.Lock, requested_wait_time: int = 60,
+    def __init__(self, threadID: int, name: str, threadLock: threading.Lock, archive_engine: sqlalchemy.engine, requested_wait_time: int = 60,
                  commit: bool = True, from_file: bool = False):
         threading.Thread.__init__(self)
         self.threadID = threadID
@@ -34,15 +37,9 @@ class Archiver(threading.Thread):
         self.logger: logging.Logger = get_logger(__name__)
         self.INFO_QUIET: int = main_config.INFO_QUIET
         self.VERBOSE: int = main_config.VERBOSE
-        self.repo: Optional[Dolt] = None
 
         # Thread Lock To Share With Rover
         self.threadLock = threadLock
-
-        # Setup Repo
-        self.initRepo(path=config.ARCHIVE_TWEETS_REPO_PATH,
-                      create=False,
-                      url=config.ARCHIVE_TWEETS_REPO_URL)
 
         # Setup For Twitter API
         with open(config.CREDENTIALS_FILE_PATH, "r") as file:
@@ -632,15 +629,6 @@ class Archiver(threading.Thread):
     def getDataFrame(self, tweet: dict) -> pd.DataFrame:
         # Import JSON Into Panda DataFrame
         return pd.DataFrame([tweet])
-
-    def initRepo(self, path: str, create: bool, url: str = None):
-        # Prepare Repo For Data
-        if create:
-            repo = Dolt.init(path)
-            repo.remote(add=True, name='origin', url=url)
-            self.repo: Dolt = repo
-
-        self.repo: Dolt = Dolt(path)
 
     def writeData(self, dataFrame: pd.DataFrame, requiredKeys: list):
         # Prepare Data Writer

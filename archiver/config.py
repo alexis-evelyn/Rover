@@ -1,16 +1,8 @@
 #!/usr/bin/python
 
+from config import config
+
 import os
-
-# Working Directory
-WORKING_DIRECTORY: str = "working"
-
-# Dolt Repo Vars
-ARCHIVE_TWEETS_REPO_URL: str = "alexis-evelyn/presidential-tweets"
-ARCHIVE_TWEETS_REPO_PATH: str = os.path.join(WORKING_DIRECTORY, "presidential-tweets")
-ARCHIVE_TWEETS_TABLE: str = "tweets"
-ARCHIVE_TWEETS_COMMIT_MESSAGE: str = "Automated Tweet Update"
-ARCHIVE_TWEETS_REPO_BRANCH: str = "master"
 
 # Media Vars - TODO: Setup Config Files For Media Vars
 MEDIA_TWEETS_TABLE: str = "media"
@@ -22,4 +14,4 @@ CREDENTIALS_FILE_PATH: str = "credentials.json"
 CACHE_FILE_PATH: str = "archiver_tweet_cache.json"
 
 # Failed Tweets File
-FAILED_TWEETS_FILE_PATH: str = os.path.join(ARCHIVE_TWEETS_REPO_PATH, "failed_to_add_tweets.jsonl")
+FAILED_TWEETS_FILE_PATH: str = os.path.join(config.ARCHIVE_TWEETS_REPO_PATH, "failed_to_add_tweets.jsonl")

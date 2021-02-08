@@ -8,6 +8,7 @@ from typing import Optional, Any, Reversible, List, Tuple
 from json.decoder import JSONDecodeError
 from os import path
 
+import sqlalchemy
 from doltpy.core import DoltException
 from doltpy.core.system_helpers import get_logger
 from requests import Response
@@ -19,7 +20,7 @@ from config import config as main_config
 
 
 class Rover(threading.Thread):
-    def __init__(self, threadID: int, name: str, threadLock: threading.Lock, requested_wait_time: int = 60,
+    def __init__(self, threadID: int, name: str, threadLock: threading.Lock, archive_engine: sqlalchemy.engine, requested_wait_time: int = 60,
                  reply: bool = True):
         threading.Thread.__init__(self)
         self.threadID = threadID

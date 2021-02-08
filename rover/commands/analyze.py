@@ -31,7 +31,7 @@ def analyze_tweet(api: TweetAPI2, status: dict, regex: bool = False,
     repo: Dolt = Dolt(config.ARCHIVE_TWEETS_REPO_PATH)
     phrase = convert_search_to_query(phrase=original_phrase, regex=regex)
 
-    search_results = database.search_tweets(search_phrase=phrase, repo=repo, table=config.ARCHIVE_TWEETS_TABLE, regex=regex)
+    search_results = database.search_tweets(search_phrase=phrase, table=config.ARCHIVE_TWEETS_TABLE, regex=regex)
 
     # Check To Make Sure Results Found
     if len(search_results) < 1:
@@ -56,7 +56,7 @@ def analyze_tweet(api: TweetAPI2, status: dict, regex: bool = False,
 
     if author is None:
         # If Failed (e.g. suspended account), Then Retrieve Stored Handle From Database
-        author = database.retrieveAccountInfo(repo=repo, account_id=search_post_response["twitter_user_id"])[0][
+        author = database.retrieveAccountInfo(account_id=search_post_response["twitter_user_id"])[0][
             "twitter_handle"]
         failed_account_lookup: bool = True
 

@@ -34,12 +34,8 @@ from rover.server import helper_functions
 
 
 def handle_api(self):
-    # Repo
-    repo: Dolt = Dolt(config.ARCHIVE_TWEETS_REPO_PATH)
-    table: str = config.ARCHIVE_TWEETS_TABLE
-
     # Determine Reply and Send It
-    send_reply(self=self, repo=repo, table=table)
+    send_reply(self=self)
 
 
 def send_headers(self, content_length: int = 0):
@@ -82,11 +78,11 @@ def format_timings(timings: dict) -> str:
     return header
 
 
-def send_reply(self, repo: Dolt, table: str):
+def send_reply(self):
     url: urlparse = urlparse(self.path)
     queries: dict = parse_qs(url.query)
 
-    response_dict: dict = run_function(self=self, repo=repo, table=table, url=url, queries=queries)
+    response_dict: dict = run_function(self=self, url=url, queries=queries)
 
     # Stolen From: https://stackoverflow.com/a/36142844/6828099
     response: str = json.dumps(response_dict, sort_keys=True, default=str)
@@ -101,7 +97,7 @@ def send_reply(self, repo: Dolt, table: str):
     # self.close_connection = True
 
 
-def run_function(self, repo: Dolt, table: str, url: urlparse, queries: dict) -> dict:
+def run_function(self, url: urlparse, queries: dict) -> dict:
     timing_start: time = time.time()
     
     endpoints = {
@@ -116,24 +112,23 @@ def run_function(self, repo: Dolt, table: str, url: urlparse, queries: dict) -> 
     }
 
     func = endpoints.get(url.path.rstrip('/'), invalid_endpoint)
-    results: dict = func(self=self, repo=repo, table=table, queries=queries)
+    results: dict = func(self=self, queries=queries)
 
     self.timings["run_function"] = (time.time() - timing_start, len(self.timings), "FunctionChooser")
     return results
 
 
-def load_latest_tweets(self, repo: Dolt, table: str, queries: dict) -> dict:
+def load_latest_tweets(self, queries: dict) -> dict:
     """
         Load Latest Tweets. Can Be From Account And/Or Paged.
         :param self:
-        :param repo: Dolt Repo Path
         :param table: Table To Query
         :param queries: GET Queries Dictionary
         :return: JSON Response
     """
     timing_start: time = time.time()
     max_responses: int = int(queries['max'][0]) if "max" in queries and validateRangedNumber(value=queries['max'][0],
-                                                                                             min=0, max=20) else 20
+                                                                                             minimum=0, maximum=20) else 20
 
     # TODO: Deprecate This And Reserve For Another Function
     # last_tweet_id: Optional[int] = int(queries['tweet'][0]) if "tweet" in queries and validateNumber(
@@ -154,7 +149,7 @@ def load_latest_tweets(self, repo: Dolt, table: str, queries: dict) -> dict:
     return response
 
 
-def lookup_account(self, repo: Dolt, table: str, queries: dict) -> dict:
+def lookup_account(self, queries: dict) -> dict:
     timing_start: time = time.time()
     
     if "account" not in queries:
@@ -187,7 +182,7 @@ def lookup_account(self, repo: Dolt, table: str, queries: dict) -> dict:
         if account_id is None:
             continue
 
-        accounts: dict = database.retrieveAccountInfo(repo=repo, account_id=account_id)
+        accounts: dict = database.retrieveAccountInfo(account_id=account_id)
 
         # No Results, So Skip
         if len(accounts) < 1:
@@ -214,7 +209,7 @@ def lookup_account(self, repo: Dolt, table: str, queries: dict) -> dict:
     return results
 
 
-def perform_search(self, repo: Dolt, table: str, queries: dict) -> dict:
+def perform_search(self, queries: dict) -> dict:
     timing_start: time = time.time()
     
     original_search_text: str = queries["text"][0] if "text" in queries else ""
@@ -224,8 +219,8 @@ def perform_search(self, repo: Dolt, table: str, queries: dict) -> dict:
                                                                regex=regex)  # r"^RT @[\w]:*"
 
     search_results: dict = convertIDsToString(
-        results=database.search_tweets(search_phrase=search_phrase, repo=repo, table=table, regex=regex))
-    tweet_count: int = database.count_tweets(search_phrase=search_phrase, repo=repo, table=table, regex=regex)
+        results=database.search_tweets(search_phrase=search_phrase, table=self.tweets_table, regex=regex))
+    tweet_count: int = database.count_tweets(search_phrase=search_phrase, table=self.tweets_table, regex=regex)
 
     self.timings["perform_search"] = (time.time() - timing_start, len(self.timings), "SearchTweets")
     return {
@@ -236,7 +231,7 @@ def perform_search(self, repo: Dolt, table: str, queries: dict) -> dict:
     }
 
 
-def send_help(self, repo: Dolt, table: str, queries: dict) -> dict:
+def send_help(self, queries: dict) -> dict:
     """
         Used To Indicate Existing API Endpoints
         :return: JSON Response With URLs
@@ -253,7 +248,7 @@ def send_help(self, repo: Dolt, table: str, queries: dict) -> dict:
     }
 
 
-def invalid_endpoint(self, repo: Dolt, table: str, queries: dict) -> dict:
+def invalid_endpoint(self, queries: dict) -> dict:
     """
         Used To Indicate Reaching an API Url That Doesn't Exist
         :return: JSON Error Message With Code For Machines To Process
@@ -264,7 +259,7 @@ def invalid_endpoint(self, repo: Dolt, table: str, queries: dict) -> dict:
     }
 
 
-def handle_webhook(self, repo: Dolt, table: str, queries: dict) -> dict:
+def handle_webhook(self, queries: dict) -> dict:
     timing_start: time = time.time()
 
     response: dict = {
@@ -403,7 +398,7 @@ def handle_dolt_webhook(self, timing_start: time) -> dict:
         }
 
 
-def retrieve_tweet(self, repo: Dolt, table: str, queries: dict) -> dict:
+def retrieve_tweet(self, queries: dict) -> dict:
     timing_start: time = time.time()
     tweet_id: Optional[int] = int(queries['id'][0]) if "id" in queries and validateNumber(queries['id'][0]) else None
 
@@ -416,7 +411,7 @@ def retrieve_tweet(self, repo: Dolt, table: str, queries: dict) -> dict:
         return response
 
     tweet: dict = convertIDsToString(
-        results=database.retrieveTweet(repo=repo, table=table, tweet_id=str(tweet_id),
+        results=database.retrieveTweet(table=self.tweets_table, tweet_id=str(tweet_id),
                                        hide_deleted_tweets=False,
                                        only_deleted_tweets=False))
 
@@ -435,7 +430,8 @@ def retrieve_tweet(self, repo: Dolt, table: str, queries: dict) -> dict:
     return response
 
 
-def web_analytics(self, repo: Dolt, table: str, queries: dict) -> dict:
+# TODO: MOVE TO DATABASE SCRIPT
+def web_analytics(self, queries: dict) -> dict:
     timing_start: time = time.time()
     analytics_engine: sqlalchemy.engine = self.analytics_engine
     # stmt = select(User.id).where(User.id.in_([1, 2, 3]))
@@ -453,7 +449,7 @@ def web_analytics(self, repo: Dolt, table: str, queries: dict) -> dict:
     return response
 
 
-def analyze_tweet(self, repo: Dolt, table: str, queries: dict) -> dict:
+def analyze_tweet(self, queries: dict) -> dict:
     timing_start: time = time.time()
     tweet_id: Optional[int] = int(queries['id'][0]) if "id" in queries and validateNumber(queries['id'][0]) else None
 
@@ -465,7 +461,7 @@ def analyze_tweet(self, repo: Dolt, table: str, queries: dict) -> dict:
 
     # Retrieve Tweet
     retrieve_tweet_start: time = time.time()
-    tweet: List[dict] = database.retrieveTweet(repo=repo, table=table, tweet_id=str(tweet_id),
+    tweet: List[dict] = database.retrieveTweet(table=self.tweets_table, tweet_id=str(tweet_id),
                                                hide_deleted_tweets=False,
                                                only_deleted_tweets=False)
     self.timings["retrieve_tweet_analyze"] = (time.time() - retrieve_tweet_start, len(self.timings), "RetrieveTweet")
@@ -513,13 +509,13 @@ def validateNumber(value: str) -> bool:
     return True
 
 
-def validateRangedNumber(value: str, min: int = 0, max: int = 100) -> bool:
+def validateRangedNumber(value: str, minimum: int = 0, maximum: int = 100) -> bool:
     if not value.isnumeric():
         return False
 
     number: int = int(value)
 
-    if number > max or number < min:
+    if number > maximum or number < minimum:
         return False
 
     return True

@@ -37,7 +37,7 @@ threadLock: threading.Lock = threading.Lock()
 
 
 class WebServer(threading.Thread):
-    def __init__(self, threadID: int, name: str):
+    def __init__(self, threadID: int, name: str, archive_engine: sqlalchemy.engine):
         threading.Thread.__init__(self)
         self.threadID = threadID
         self.name = name
@@ -49,12 +49,8 @@ class WebServer(threading.Thread):
         self.host_name = "0.0.0.0"
         self.port = 8930
 
-        # TODO: Implement Global Handle On Repo
-        # Initiate Repo For Server
-        self.repo: Optional[Dolt] = None
-        self.initRepo(path=archiver_config.ARCHIVE_TWEETS_REPO_PATH,
-                      create=False,
-                      url=archiver_config.ARCHIVE_TWEETS_REPO_URL)
+        # Archiver SQL Engine
+        self.archiver_engine: sqlalchemy.engine = archive_engine
 
         # Setup Analytics SQL Server
         self.analytics_server_config: ServerConfig = ServerConfig(port=rover_config.ANALYTICS_PORT)
@@ -74,22 +70,13 @@ class WebServer(threading.Thread):
 
         self.logger.log(self.VERBOSE, "Starting Web Server!!!")
 
-    def initRepo(self, path: str, create: bool, url: str = None):
-        # Prepare Repo For Data
-        if create:
-            repo = Dolt.init(path)
-            repo.remote(add=True, name='origin', url=url)
-            self.repo: Dolt = repo
-
-        self.repo: Dolt = Dolt(repo_dir=path)
-
     def run(self):
         self.logger.log(self.INFO_QUIET, "Starting " + self.name)
 
         # Get lock to synchronize threads
         threadLock.acquire()
 
-        requestHandler: partial = partial(RequestHandler, self.analytics_engine, self.repo, self.config, self.ip_lookup, self.proxy_lookup)
+        requestHandler: partial = partial(RequestHandler, self.analytics_engine, self.archiver_engine, self.config, self.ip_lookup, self.proxy_lookup)
         webServer = HTTPServer((self.host_name, self.port), requestHandler)
         self.logger.log(self.INFO_QUIET, "Server Started %s:%s" % (self.host_name, self.port))
 
@@ -106,14 +93,16 @@ class WebServer(threading.Thread):
 
 
 class RequestHandler(BaseHTTPRequestHandler):
-    def __init__(self, analytics_engine: sqlalchemy.engine, repo: Dolt, config: dict, ip_lookup: IP2Location, proxy_lookup: IP2Proxy, request: bytes, client_address: Tuple[str, int], server: socketserver.BaseServer):
+    def __init__(self, analytics_engine: sqlalchemy.engine, archiver_engine: sqlalchemy.engine, config: dict, ip_lookup: IP2Location, proxy_lookup: IP2Proxy, request: bytes, client_address: Tuple[str, int], server: socketserver.BaseServer):
         self.logger: logging.Logger = get_logger(__name__)
         self.INFO_QUIET: int = main_config.INFO_QUIET
         self.VERBOSE: int = main_config.VERBOSE
 
         self.config: dict = config
-        self.repo: Dolt = repo
         self.analytics_engine: sqlalchemy.engine = analytics_engine
+        self.archiver_engine: sqlalchemy.engine = archiver_engine
+        self.tweets_table: str = rover_config.ARCHIVE_TWEETS_TABLE
+
         self.ip_lookup: IP2Location = ip_lookup
         self.proxy_lookup: IP2Proxy = proxy_lookup
 

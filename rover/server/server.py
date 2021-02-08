@@ -192,8 +192,18 @@ class RequestHandler(BaseHTTPRequestHandler):
             self.logger.debug("{ip_address} Requested {page_url}: {error_message}".format(ip_address=self.address_string(), page_url=self.path, error_message=e))
 
     def log_web_request(self, queries: dict[str, list[str]]):
-        # If Client Doesn't Want To Be Tracked, Do Not Log, Otherwise Log Anonymized Data
+        # If Client Doesn't Want To Be Tracked, Do Not Track (Only Temporary Log In Case Of Attack), Otherwise Track Anonymized Data
         if not helper_functions.should_track(headers=self.headers):
+            self.logger.debug("Not Tracking This Request Due To DNT!!!")
+            self.logger.debug(f"DNT URL: {self.path}")
+            self.logger.log(self.VERBOSE, f"DNT Headers: {self.headers}")
+            return
+
+        # Do Not Track Webhook Information (Only Temporary Log For Debugging And If Being Attacked)
+        if self.path.startswith("/api/webhooks"):
+            self.logger.debug("Webhook Called!!!")
+            self.logger.debug(f"Webhook URL: {self.path}")
+            self.logger.log(self.VERBOSE, f"Webhook Headers: {self.headers}")
             return
 
         try:

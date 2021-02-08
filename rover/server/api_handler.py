@@ -1,10 +1,13 @@
 #!/usr/bin/python
-
+import base64
 import decimal
 import distutils.util
+import hashlib
+import hmac
 import json
 import os
 import time
+from json import JSONDecodeError
 from typing import Optional, List, Union
 
 import sqlalchemy
@@ -23,6 +26,10 @@ from urllib.parse import urlparse, parse_qs
 # 4 - Invalid Post Data
 # 5 - Need A Valid Tweet ID
 # 6 - No Tweet Found
+# 7 - No Webhook Config Setup
+# 8 - Need to Set A Webhook Parameter
+# 9 - Credentials Not Setup
+
 from rover.server import helper_functions
 
 
@@ -259,7 +266,104 @@ def invalid_endpoint(self, repo: Dolt, table: str, queries: dict) -> dict:
 
 def handle_webhook(self, repo: Dolt, table: str, queries: dict) -> dict:
     timing_start: time = time.time()
-    
+
+    response: dict = {
+        "error": "No Webhook Config Setup",
+        "code": 7
+    }
+
+    if not os.path.exists(config.CONFIG_FILE_PATH):
+        self.logger.error("No Webhook Config Setup!!!")
+        return response
+
+    with open(file=config.CONFIG_FILE_PATH, mode="r") as f:
+        config_contents: str = "\n".join(f.readlines())
+        try:
+            config_dict: dict = json.loads(s=config_contents)
+        except JSONDecodeError:
+            self.logger.error("Failed To JSON Decode Webhook Config!!!")
+            return response
+        finally:
+            if "webhooks" not in config_dict:
+                return response
+
+            config_ids: dict = config_dict["webhooks"]
+            del config_contents
+            del config_dict
+
+    current_id: str = queries["id"][0] if "id" in queries else ""
+
+    if current_id == "":
+        return {
+            "error": "Need to Set A Webhook Parameter",
+            "code": 8
+        }
+
+    if current_id not in config_ids.values():
+        return {
+            "error": "Need to Set A Webhook Parameter",
+            "code": 8
+        }
+
+    # Stolen From: https://www.geeksforgeeks.org/python-get-key-from-value-in-dictionary/
+    key: str = list(config_ids.keys())[list(config_ids.values()).index(current_id)]
+
+    if key == "dolt":
+        return handle_dolt_webhook(self=self, timing_start=timing_start)
+    elif key == "twitter":
+        return handle_twitter_webhook(self=self, timing_start=timing_start, queries=queries)
+
+
+def handle_twitter_webhook(self, timing_start: time, queries: dict) -> dict:
+    crc_token: bytes = bytes(queries["crc_token"][0], "utf-8") if "crc_token" in queries else ""
+
+    if crc_token == "":
+        return {
+            "debug": "No CRC Token Specified"
+        }
+
+    response: dict = {
+        "error": "Credentials Not Setup",
+        "code": 9
+    }
+
+    if not os.path.exists(config.CREDENTIALS_FILE_PATH):
+        return response
+
+    with open(config.CREDENTIALS_FILE_PATH, mode="r") as f:
+        credentials_contents: str = "\n".join(f.readlines())
+        try:
+            credentials_dict: dict = json.loads(s=credentials_contents)
+        except JSONDecodeError:
+            self.logger.error("Failed To JSON Decode Webhook Credentials!!!")
+            return response
+        finally:
+            if "consumer" not in credentials_dict:
+                return response
+
+            if "secret" not in credentials_dict["consumer"]:
+                return response
+
+            consumer_secret: bytes = bytes(credentials_dict["consumer"]["secret"], "utf-8")
+            del credentials_contents
+            del credentials_dict
+
+    # creates HMAC SHA-256 hash from incoming token and your consumer secret
+    sha256_hash_digest = hmac.new(consumer_secret,
+                                  msg=crc_token,
+                                  digestmod=hashlib.sha256).digest()
+    del consumer_secret
+
+    # construct response data with base64 encoded hash
+    response = {
+        "response_token": f"sha256={base64.b64encode(sha256_hash_digest)}"
+    }
+
+    # returns properly formatted json response
+    return response
+
+
+def handle_dolt_webhook(self, timing_start: time) -> dict:
     try:
         content_length = int(self.headers['Content-Length'])
         post_data = self.rfile.read(content_length)

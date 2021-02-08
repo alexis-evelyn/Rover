@@ -274,6 +274,7 @@ def handle_webhook(self, repo: Dolt, table: str, queries: dict) -> dict:
 
     if not os.path.exists(config.CONFIG_FILE_PATH):
         self.logger.error("No Webhook Config Setup!!!")
+        self.timings["handle_webhook_fail"] = (time.time() - timing_start, len(self.timings), "FailedHandleWebhook")
         return response
 
     with open(file=config.CONFIG_FILE_PATH, mode="r") as f:
@@ -282,6 +283,7 @@ def handle_webhook(self, repo: Dolt, table: str, queries: dict) -> dict:
             config_dict: dict = json.loads(s=config_contents)
         except JSONDecodeError:
             self.logger.error("Failed To JSON Decode Webhook Config!!!")
+            self.timings["handle_webhook_fail"] = (time.time() - timing_start, len(self.timings), "FailedHandleWebhook")
             return response
         finally:
             if "webhooks" not in config_dict:
@@ -294,12 +296,14 @@ def handle_webhook(self, repo: Dolt, table: str, queries: dict) -> dict:
     current_id: str = queries["id"][0] if "id" in queries else ""
 
     if current_id == "":
+        self.timings["handle_webhook_fail"] = (time.time() - timing_start, len(self.timings), "FailedHandleWebhook")
         return {
             "error": "Need to Set A Webhook Parameter",
             "code": 8
         }
 
     if current_id not in config_ids.values():
+        self.timings["handle_webhook_fail"] = (time.time() - timing_start, len(self.timings), "FailedHandleWebhook")
         return {
             "error": "Need to Set A Webhook Parameter",
             "code": 8
@@ -318,6 +322,7 @@ def handle_twitter_webhook(self, timing_start: time, queries: dict) -> dict:
     crc_token: bytes = bytes(queries["crc_token"][0], "utf-8") if "crc_token" in queries else ""
 
     if crc_token == "":
+        self.timings["handle_webhook_fail"] = (time.time() - timing_start, len(self.timings), "FailedHandleWebhook")
         return {
             "debug": "No CRC Token Specified"
         }
@@ -328,6 +333,7 @@ def handle_twitter_webhook(self, timing_start: time, queries: dict) -> dict:
     }
 
     if not os.path.exists(config.CREDENTIALS_FILE_PATH):
+        self.timings["handle_webhook_fail"] = (time.time() - timing_start, len(self.timings), "FailedHandleWebhook")
         return response
 
     with open(config.CREDENTIALS_FILE_PATH, mode="r") as f:
@@ -336,12 +342,15 @@ def handle_twitter_webhook(self, timing_start: time, queries: dict) -> dict:
             credentials_dict: dict = json.loads(s=credentials_contents)
         except JSONDecodeError:
             self.logger.error("Failed To JSON Decode Webhook Credentials!!!")
+            self.timings["handle_webhook_fail"] = (time.time() - timing_start, len(self.timings), "FailedHandleWebhook")
             return response
         finally:
             if "consumer" not in credentials_dict:
+                self.timings["handle_webhook_fail"] = (time.time() - timing_start, len(self.timings), "FailedHandleWebhook")
                 return response
 
             if "secret" not in credentials_dict["consumer"]:
+                self.timings["handle_webhook_fail"] = (time.time() - timing_start, len(self.timings), "FailedHandleWebhook")
                 return response
 
             consumer_secret: bytes = bytes(credentials_dict["consumer"]["secret"], "utf-8")
@@ -359,7 +368,7 @@ def handle_twitter_webhook(self, timing_start: time, queries: dict) -> dict:
         "response_token": f"sha256={base64.b64encode(sha256_hash_digest)}"
     }
 
-    # returns properly formatted json response
+    self.timings["handle_webhook"] = (time.time() - timing_start, len(self.timings), "HandleWebhook")
     return response
 
 

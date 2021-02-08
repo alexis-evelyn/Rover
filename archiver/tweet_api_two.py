@@ -1,12 +1,18 @@
 #!/usr/bin/python
 
+# Direct Messages
+# https://stackoverflow.com/q/31116213/6828099
+
+# API Status
+# https://api.twitterstat.us/#
+
 import json
 import logging
 import re
 from io import BytesIO
 from json import JSONDecodeError
 from re import Match
-from typing import Optional, List
+from typing import Optional, List, Tuple
 
 import requests
 from doltpy.core.system_helpers import get_logger
@@ -102,6 +108,18 @@ class TweetAPI2:
         }
 
         api_url: str = f'https://api.twitter.com/2/users/{user_id}'
+        return requests.get(url=api_url, params=params, auth=self.auth)
+
+    def lookup_user_via_username(self, username: str) -> Response:
+        # https://api.twitter.com/2/users/by/username/:username
+
+        params: dict = {
+            "user.fields": "created_at,description,entities,id,location,name,pinned_tweet_id,profile_image_url,protected,public_metrics,url,username,verified,withheld",
+            "expansions": "pinned_tweet_id",
+            "tweet.fields": "attachments,author_id,context_annotations,conversation_id,created_at,entities,geo,id,in_reply_to_user_id,lang,possibly_sensitive,public_metrics,referenced_tweets,source,text,withheld"
+        }
+
+        api_url: str = f'https://api.twitter.com/2/users/by/username/{username}'
         return requests.get(url=api_url, params=params, auth=self.auth)
 
     def lookup_tweets_via_timeline(self, user_id: str = None, screen_name: str = None,
@@ -222,7 +240,7 @@ class TweetAPI2:
         api_url: str = f'https://mobile.twitter.com/i/api/1.1/live_video_stream/status/{media_key}'
         return requests.get(url=api_url, headers=headers, auth=self.alt_auth)
 
-    def upload_image(self, file: BytesIO):
+    def upload_image(self, file: BytesIO) -> Response:
         # multipart/form-data
 
         # Ensure Reading From Beginning Of File
@@ -244,7 +262,7 @@ class TweetAPI2:
                    in_reply_to_status_id: Optional[str] = None,
                    auto_populate_reply_metadata: bool = True,
                    exclude_reply_user_ids: Optional[List[int]] = None,
-                   media: Optional[BytesIO] = None):
+                   media: Optional[BytesIO] = None) -> Response:
 
         params: dict = {
             "status": status,
@@ -271,3 +289,44 @@ class TweetAPI2:
 
         api_url: str = 'https://api.twitter.com/1.1/statuses/update.json'
         return requests.post(url=api_url, params=params, auth=self.reply_auth)
+
+    def get_account_settings(self) -> Response:
+        api_url: str = 'https://api.twitter.com/1.1/account/settings.json'
+        return requests.post(url=api_url, auth=self.reply_auth)
+
+    def get_account_info(self) -> Optional[Tuple[str, str]]:
+        settings_response: Response = self.get_account_settings()
+        settings_body: str = settings_response.text
+
+        try:
+            settings: dict = json.loads(settings_body)
+
+            # Username
+            if "screen_name" not in settings:
+                self.logger.error("Could Not Find Username in Account Settings!!!")
+                return None
+        except JSONDecodeError:
+            self.logger.error("Could Not Decode Account Settings As JSON!!!")
+            return None
+
+        username: str = settings["screen_name"]
+        user_response: Response = self.lookup_user_via_username(username=username)
+        user_body: str = user_response.text
+
+        try:
+            user: dict = json.loads(user_body)
+
+            if "data" not in user:
+                self.logger.error("Missing Data From User Lookup!!!")
+                return None
+
+            if "id" not in user["data"]:
+                self.logger.error("Missing ID From User Lookup!!!")
+                return None
+
+            user_id = user["data"]["id"]
+        except JSONDecodeError:
+            self.logger.error("Could Not Decode User Lookup As JSON (For Getting Own Account ID)!!!")
+            return None
+
+        return user_id, username

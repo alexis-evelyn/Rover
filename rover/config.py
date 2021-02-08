@@ -3,6 +3,8 @@
 import os
 
 # Working Directory
+from typing import Optional
+
 WORKING_DIRECTORY: str = "working"
 
 # Font Vars
@@ -26,8 +28,8 @@ CREDENTIALS_FILE_PATH: str = "credentials.json"
 
 # Twitter Account Info
 # TODO: Figure Out How To Automatically Determine This
-TWITTER_USER_ID: int = 870156302298873856
-TWITTER_USER_HANDLE: str = "DigitalRoverDog"
+TWITTER_USER_ID: Optional[int] = None
+TWITTER_USER_HANDLE: Optional[str] = None
 
 # CORS
 ALLOW_CORS: bool = True

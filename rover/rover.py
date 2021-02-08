@@ -41,10 +41,6 @@ class Rover(threading.Thread):
         # For Debugging
         config.REPLY = reply
 
-        # TODO: Figure Out How To Automatically Determine This
-        self.user_id: int = config.TWITTER_USER_ID
-        self.user_name: str = config.TWITTER_USER_HANDLE
-
         # Debugging Paths
         self.logger.info("Working Directory: {working_directory}".format(working_directory=config.WORKING_DIRECTORY))
 
@@ -59,6 +55,14 @@ class Rover(threading.Thread):
             # TODO: Add Means To Obtain Tokens Without Manually Going Through The API - https://requests-oauthlib.readthedocs.io/en/latest/oauth1_workflow.html
             # Authentication Method For Accounts
             self.api: TweetAPI2 = TweetAPI2(auth=BearerAuth(token=self.__credentials["BEARER_TOKEN"]), reply_auth=self.__oauth)
+
+        # Get Own Account ID and Handle
+        config.TWITTER_USER_ID, config.TWITTER_USER_HANDLE = self.api.get_account_info()
+
+        self.user_id: int = int(config.TWITTER_USER_ID)
+        self.user_name: str = config.TWITTER_USER_HANDLE
+
+        self.logger.log(self.INFO_QUIET, f"Logged In As @{self.user_name} ({self.user_id})!!!")
 
     def run(self):
         self.logger.log(self.INFO_QUIET, "Starting " + self.name)

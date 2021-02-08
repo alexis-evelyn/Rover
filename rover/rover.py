@@ -59,8 +59,10 @@ class Rover(threading.Thread):
         # Get Own Account ID and Handle
         id_handle: Optional[Tuple[str, str]] = self.api.get_account_info()
 
+        # If Failed ID and Handle Retrieval Return
         if id_handle is None:
             self.logger.log(self.INFO_QUIET, f"Failed Logging In On Rover Application!!! Returning!!!")
+            return
 
         # If Successful, Then Set Variables
         config.TWITTER_USER_ID, config.TWITTER_USER_HANDLE = id_handle
@@ -71,6 +73,10 @@ class Rover(threading.Thread):
         self.logger.log(self.INFO_QUIET, f"Logged In As @{self.user_name} ({self.user_id})!!!")
 
     def run(self):
+        # Enforce Exiting Rover If ID Handle Lookup Failed
+        if self.user_id is None or self.user_name is None:
+            return
+
         self.logger.log(self.INFO_QUIET, "Starting " + self.name)
 
         while 1:

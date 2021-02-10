@@ -1,1 +1,16 @@
-<h1>The Current Page Was Not Cached And Cannot Be Loaded Due To Being Offline</h1>
+<div class="cards" id="offline-cards">
+    <div class="mdc-card tweet-card">
+        <div class="mdc-card__primary-action mdc-theme--text-primary-on-dark mdc-theme--primary-bg card__content" tabindex="0">
+            <div>
+                <h2 class="card__title mdc-typography mdc-typography--headline6">Currently Offline</h2>
+            </div>
+            <div class="card__text mdc-typography mdc-typography--body2">The Current Page Was Not Cached And Cannot Be Loaded Due To Being Offline</div>
+        </div>
+        <div class="mdc-card__actions mdc-theme--text-secondary-on-dark mdc-theme--secondary-bg card__actions">
+            <div class="mdc-card__action-buttons">
+                <button class="mdc-button download-button mdc-card__action mdc-card__action--button mdc-button--raised" onclick="history.back()">  <span class="mdc-button__ripple"></span> Go Back</button>
+                <button class="mdc-button download-button mdc-card__action mdc-card__action--button mdc-button--raised" onclick="window.open('/', '_self')">  <span class="mdc-button__ripple"></span> Main Page</button>
+            </div>
+        </div>
+    </div>
+</div>

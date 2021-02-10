@@ -2,14 +2,15 @@
     <div class="mdc-card tweet-card">
         <div class="mdc-card__primary-action mdc-theme--text-primary-on-dark mdc-theme--primary-bg card__content" tabindex="0">
             <div>
-                <h2 class="card__title mdc-typography mdc-typography--headline6">Page Not Found</h2>
+                <h2 class="card__title mdc-typography mdc-typography--headline6">Tweet Not Found</h2>
             </div>
-            <div class="card__text mdc-typography mdc-typography--body2">No Page Found At This Address: {path}</div>
+            <div class="card__text mdc-typography mdc-typography--body2">No Tweet With This ID Was Archived. Try Viewing The Live Tweet.</div>
         </div>
         <div class="mdc-card__actions mdc-theme--text-secondary-on-dark mdc-theme--secondary-bg card__actions">
             <div class="mdc-card__action-buttons">
                 <button class="mdc-button download-button mdc-card__action mdc-card__action--button mdc-button--raised" onclick="history.back()">  <span class="mdc-button__ripple"></span> Go Back</button>
                 <button class="mdc-button download-button mdc-card__action mdc-card__action--button mdc-button--raised" onclick="window.open('/', '_self')">  <span class="mdc-button__ripple"></span> Main Page</button>
+                <button class="mdc-button download-button mdc-card__action mdc-card__action--button mdc-button--raised" onclick="window.open('https://twitter.com/s/status/{tweet_id}', '_self')">  <span class="mdc-button__ripple"></span> Live Tweet</button>
             </div>
         </div>
     </div>

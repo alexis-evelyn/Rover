@@ -1,4 +1,5 @@
 #!/usr/bin/python
+
 import re
 import urllib.parse
 from re import Pattern, Match
@@ -80,6 +81,27 @@ def load_text_file(path: str) -> str:
 
 def load_binary_file(path: str) -> bytes:
     return Path(path).read_bytes()
+
+
+def load_404_tweet_page(self, tweet_id: str):
+    self.send_response(404)
+    self.send_header("Content-type", "text/html")
+
+    helper_functions.handle_tracking_cookie(self=self)
+    helper_functions.send_standard_headers(self=self)
+    self.end_headers()
+
+    # Header
+    write_header(self=self, site_title="404 - Tweet Not Found", twitter_title="Page Not Found",
+                 twitter_description="No Tweet Exists Here")
+
+    # 404 Page Body
+    self.wfile.write(
+        bytes(load_text_file("rover/server/web/pages/errors/404-single-tweet.html").replace("{tweet_id}", tweet_id),
+              "utf-8"))
+
+    # Footer
+    write_footer(self=self)
 
 
 def load_404_page(self, error_code: int = 404):
@@ -176,7 +198,8 @@ def write_footer(self):
 
 def load_tweet(self):
     # Validate URL First
-    tweet_id: str = str(self.path).lstrip("/").rstrip("/").replace("tweet/", "").split("/")[0]
+    path: str = urllib.parse.urlparse(self.path).path
+    tweet_id: str = path.lstrip("/").rstrip("/").replace("tweet/", "").split("/")[0]
 
     # If Invalid Tweet ID
     if not tweet_id.isnumeric():
@@ -184,27 +207,31 @@ def load_tweet(self):
 
     table: str = config.ARCHIVE_TWEETS_TABLE
     try:
-        tweet: dict = database.retrieveTweet(repo=self.repo, table=table, tweet_id=tweet_id, hide_deleted_tweets=False,
-                                             only_deleted_tweets=False)
+        tweet: Optional[List[dict]] = database.retrieveTweet(repo=self.repo, table=table, tweet_id=tweet_id,
+                                                             hide_deleted_tweets=False,
+                                                             only_deleted_tweets=False)
     except JSONDecodeError as e:
         self.logger.error(f"JSON Decode Error While Retrieving Tweet: {tweet_id} - Error: {e}")
         self.logger.error({traceback.format_exc()})
 
-        tweet: dict = {}
+        tweet: List[dict] = []
 
     # If Tweet Not In Database - Return A 404
     if len(tweet) < 1:
-        return load_404_page(self=self)
+        return load_404_tweet_page(self=self, tweet_id=tweet_id)
 
     # Tweet Data
     tweet_text: str = str(tweet[0]['text'])
     account_id: int = tweet[0]['twitter_user_id']
     account_info: dict = database.retrieveAccountInfo(repo=self.repo, account_id=account_id)[0]
+    account_handle: str = account_info["twitter_handle"]
     account_name: str = "{first_name} {last_name}".format(first_name=account_info["first_name"],
                                                           last_name=account_info["last_name"])
 
     # Site Data
-    site_title: str = "Tweet By {account_name}".format(account_name=account_name.replace('\"', '&quot;'))
+    site_title: str = "Tweet By @{twitter_handle} ({account_name})"\
+        .format(account_name=account_name.replace('\"', '&quot;'),
+                twitter_handle=account_handle)
 
     # Twitter Metadata
     twitter_title: str = site_title
@@ -225,9 +252,11 @@ def load_tweet(self):
     # write_body(self=self, page="single-tweet")
     self.wfile.write(bytes(load_text_file(f"rover/server/web/pages/single-tweet.html")
                            .replace("{tweet_json}", json.dumps(tweet[0]))
-                           .replace("{twitter_account}", account_name)
+                           .replace("{twitter_handle}", account_handle)
+                           .replace("{account_name}", account_name)
                            .replace("{tweet_text}", tweet_text)
                            .replace("{device}", tweet[0]['device'])
+                           .replace("{tweet_id}", tweet_id)
                            , "utf-8"))
 
     # Footer

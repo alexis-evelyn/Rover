@@ -207,7 +207,13 @@ class Archiver(threading.Thread):
 
         # Don't Bother Pushing If Not Commit
         if madeCommit:
+            self.logger.warning(f"Generating Cache File Rover!!!")
+
+            time_start: time = time.time()
             helper_functions.save_cache_file(self=self)
+            time_end: time = time.time()
+
+            self.logger.warning(f"Generating File Took {time_end - time_start} Seconds!!!")
             self.pushData(branch=config.ARCHIVE_TWEETS_REPO_BRANCH)
 
     def downloadNewTweets(self, twitter_user_id: str):

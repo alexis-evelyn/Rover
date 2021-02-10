@@ -1,7 +1,36 @@
+<div class="mdc-snackbar" id="no-reference-alert">
+    <div class="mdc-snackbar__surface" role="status" aria-relevant="additions">
+        <div class="mdc-snackbar__label" aria-atomic="false">
+            No references to prove this tweet's legitimacy has been added to this tweet at the moment. Please try again later.
+        </div>
+        <div class="mdc-snackbar__actions" aria-atomic="true">
+            <button type="button" class="mdc-button mdc-snackbar__action">
+                <div class="mdc-button__ripple"></div>
+                <span class="mdc-button__label">Dismiss</span>
+            </button>
+        </div>
+    </div>
+</div>
 <script>
     // To Be Able To Work With Client Side Later If Desired
     tweet = {tweet_json};
     // alert(tweet.text)
+
+    // Snackbar Notifications
+    const MDCSnackbar = mdc.snackbar.MDCSnackbar;
+
+    function handleReferenceLink() {
+        $(document).ready(function () {
+            if (!('reference' in tweet) || (tweet.reference === "")) {
+                const referencesAlert = new MDCSnackbar(document.querySelector('#no-reference-alert'));
+                referencesAlert.timeoutMs = 10000 // 10 Seconds
+
+                referencesAlert.open()
+            } else {
+                window.open(tweet.reference, '_blank')
+            }
+        });
+    }
 </script>
 <div class="cards" id="gov-tweets">
     <div class="mdc-card tweet-card">
@@ -15,6 +44,7 @@
             <div class="mdc-card__action-buttons">
                 <button class="mdc-button download-button mdc-card__action mdc-card__action--button mdc-button--raised">  <span class="mdc-button__ripple"></span> Page Under Construction</button>
                 <button class="mdc-button download-button mdc-card__action mdc-card__action--button mdc-button--raised">  <span class="mdc-button__ripple"></span> {device}</button>
+                <button class="mdc-button download-button mdc-card__action mdc-card__action--button mdc-button--raised" onclick="handleReferenceLink()">  <span class="mdc-button__ripple"></span> Open Reference</button>
             </div>
         </div>
     </div>

@@ -68,6 +68,8 @@ sudo apt-get install libfreetype6-dev libopenjp2-7 libtiff5
 pip3 install -r requirements.txt
 ```
 
+<!-- DeepNote Notebook Tutorial - https://www.dolthub.com/blog/2020-10-14-using-dolt-with-deepnote/ -->
+<!-- `apt install libmariadb-dev` For DeepNote Notebook -->
 <!-- https://web.archive.org/web/*/twitter.com/realdonaldtrump -->
 <!-- https://web.archive.org/web/*/twitter.com/potus -->
 <!-- tensorflow>=2.4.0 -->

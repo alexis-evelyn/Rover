@@ -229,7 +229,7 @@ def load_tweet(self):
                                                           last_name=account_info["last_name"])
 
     # Site Data
-    site_title: str = "Tweet By @{twitter_handle} ({account_name})"\
+    site_title: str = "Tweet By {account_name} (@{twitter_handle})"\
         .format(account_name=account_name.replace('\"', '&quot;'),
                 twitter_handle=account_handle)
 

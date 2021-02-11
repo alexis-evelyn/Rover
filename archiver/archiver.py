@@ -593,8 +593,11 @@ class Archiver(threading.Thread):
 
         # FORM DICTIONARY SECTION ----------------------------------------------------------------------
 
+        conversation_id: str = tweet['conversation_id'] if 'conversation_id' in tweet else None
+
         return {
             'id': tweet['id'],
+            'conversation_id': conversation_id,
 
             # This Tweet's Metadata
             'date': tweet['created_at'],

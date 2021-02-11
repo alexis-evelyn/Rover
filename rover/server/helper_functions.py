@@ -50,12 +50,16 @@ def handle_tracking_cookie(self) -> Optional[Tuple[str, str]]:
 
 def get_cookies(self) -> Optional[dict]:
     if "cookie" in self.headers:
-        cookies_split: List[str] = self.headers['cookie'].split('; ')
+        cookies_split: List[str] = self.headers['cookie'].split(';')
         cookies: dict = {}
 
         for cookie_split in cookies_split:
-            cookie: List[str] = cookie_split.split('=')
-            cookies[cookie[0]] = cookie[1]
+            cookie: List[str] = cookie_split.strip().split('=')
+
+            try:
+                cookies[cookie[0]] = cookie[1]
+            except IndexError as e:
+                self.logger.error(f"Cookie Parse Error (IndexError): {cookie}")
 
         return cookies
     return None

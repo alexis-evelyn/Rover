@@ -39,8 +39,45 @@ def latest_tweets(repo: Dolt, table: str, max_responses: int = 10, account_id: O
     return repo.sql(query=query.get_sql(quote_char=None), result_format="csv")
 
 
+def retrieve_conversation(repo: Dolt, table: str, tweet_id: str, max_responses: int = 10,
+                          account_id: Optional[int] = None,
+                          hide_deleted_tweets: bool = False, only_deleted_tweets: bool = False) -> Optional[List[dict]]:
+
+    tweet: Optional[List[dict]] = retrieveTweet(repo=repo, table=table, tweet_id=tweet_id,
+                                                hide_deleted_tweets=hide_deleted_tweets,
+                                                only_deleted_tweets=only_deleted_tweets)
+
+    if len(tweet) < 1 or "conversation_id" not in tweet[0]:
+        conversation_id: str = tweet_id
+    else:
+        conversation_id: str = tweet[0]["conversation_id"]
+
+    tweets: Table = Table(table)
+    query: QueryBuilder = Query.from_(tweets) \
+        .select(Star()) \
+        .orderby(tweets.date, order=Order.desc) \
+        .orderby(tweets.id, order=Order.desc) \
+        .where(tweets.conversation_id == conversation_id) \
+        .limit(max_responses)
+
+    if account_id is not None:
+        # Show Results For Specific Account
+        query: QueryBuilder = query.where(tweets.twitter_user_id, account_id)
+
+    if hide_deleted_tweets:
+        # Filter Out Deleted Tweets
+        query: QueryBuilder = query.where(tweets.isDeleted == 0)
+    elif only_deleted_tweets:
+        # Only Show Deleted Tweets
+        query: QueryBuilder = query.where(tweets.isDeleted == 1)
+
+    # Retrieve Conversation Linked Tweets
+    return repo.sql(query=query.get_sql(quote_char=None), result_format="csv")
+
+
 def search_tweets(search_phrase: str, repo: Dolt, table: str, max_responses: int = 10, account_id: Optional[int] = None,
-                  hide_deleted_tweets: bool = False, only_deleted_tweets: bool = False, regex: bool = False) -> List[dict]:
+                  hide_deleted_tweets: bool = False, only_deleted_tweets: bool = False, regex: bool = False) -> List[
+    dict]:
     tweets: Table = Table(table)
     if regex:
         query: QueryBuilder = Query.from_(tweets) \
@@ -48,16 +85,16 @@ def search_tweets(search_phrase: str, repo: Dolt, table: str, max_responses: int
             .orderby(tweets.date, order=Order.desc) \
             .limit(max_responses) \
             .where(
-                BasicCriterion(CustomMatching.regexp, tweets.text, tweets.text.wrap_constant(search_phrase))
-            )
+            BasicCriterion(CustomMatching.regexp, tweets.text, tweets.text.wrap_constant(search_phrase))
+        )
     else:
         query: QueryBuilder = Query.from_(tweets) \
             .select(Star()) \
             .orderby(tweets.date, order=Order.desc) \
             .limit(max_responses) \
             .where(Lower(tweets.text).like(
-                search_phrase.lower()
-            )  # TODO: lower(text) COLLATE utf8mb4_unicode_ci like lower('{search_phrase}')
+            search_phrase.lower()
+        )  # TODO: lower(text) COLLATE utf8mb4_unicode_ci like lower('{search_phrase}')
         )
     if account_id is not None:
         # Show Results For Specific Account
@@ -82,15 +119,15 @@ def count_tweets(search_phrase: str, repo: Dolt, table: str, account_id: Optiona
             .select(Count(tweets.id)) \
             .orderby(tweets.date, order=Order.desc) \
             .where(
-                BasicCriterion(CustomMatching.regexp, tweets.text, tweets.text.wrap_constant(search_phrase))
-            )
+            BasicCriterion(CustomMatching.regexp, tweets.text, tweets.text.wrap_constant(search_phrase))
+        )
     else:
         query: QueryBuilder = Query.from_(tweets) \
             .select(Count(tweets.id)) \
             .orderby(tweets.date, order=Order.desc) \
             .where(Lower(tweets.text).like(
-                search_phrase.lower()
-            )  # TODO: lower(text) COLLATE utf8mb4_unicode_ci like lower('{search_phrase}')
+            search_phrase.lower()
+        )  # TODO: lower(text) COLLATE utf8mb4_unicode_ci like lower('{search_phrase}')
         )
 
     if account_id is not None:
@@ -195,6 +232,7 @@ def setDeletedStatus(repo: Dolt, table: str, tweet_id: str, deleted: bool):
 
     repo.sql(query=query.get_sql(quote_char=None), result_format='csv')
 
+
 # ------------------------------------------------------------------------------------------------------------
 # TODO: Genericize These Functions Into One Function
 
@@ -249,6 +287,7 @@ def setStreamJSON(repo: Dolt, table: str, tweet_id: str, data: dict):
 
     repo.sql(query=query_update.get_sql(quote_char=None), result_format="csv")
     repo.sql(query=query_insert.get_sql(quote_char=None), result_format="csv")
+
 
 # ------------------------------------------------------------------------------------------------------------
 

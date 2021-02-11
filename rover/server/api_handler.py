@@ -29,6 +29,8 @@ from urllib.parse import urlparse, parse_qs
 # 7 - No Webhook Config Setup
 # 8 - Need to Set A Webhook Parameter
 # 9 - Credentials Not Setup
+# 10 - Need A Valid Conversation ID
+# 11 - No Conversation Found
 
 from rover.server import helper_functions
 
@@ -103,7 +105,7 @@ def send_reply(self, repo: Dolt, table: str):
 
 def run_function(self, repo: Dolt, table: str, url: urlparse, queries: dict) -> dict:
     timing_start: time = time.time()
-    
+
     endpoints = {
         '/api': send_help,
         '/api/analytics': web_analytics,
@@ -112,7 +114,8 @@ def run_function(self, repo: Dolt, table: str, url: urlparse, queries: dict) -> 
         '/api/search': perform_search,
         '/api/accounts': lookup_account,
         '/api/webhooks': handle_webhook,
-        '/api/tweet': retrieve_tweet
+        '/api/tweet': retrieve_tweet,
+        '/api/conversation': retrieve_conversation
     }
 
     func = endpoints.get(url.path.rstrip('/'), invalid_endpoint)
@@ -156,7 +159,7 @@ def load_latest_tweets(self, repo: Dolt, table: str, queries: dict) -> dict:
 
 def lookup_account(self, repo: Dolt, table: str, queries: dict) -> dict:
     timing_start: time = time.time()
-    
+
     if "account" not in queries:
         # TODO: Create A Proper Error Handler To Ensure Error Messages and IDs Are Standardized
         return {
@@ -187,7 +190,7 @@ def lookup_account(self, repo: Dolt, table: str, queries: dict) -> dict:
         if account_id is None:
             continue
 
-        accounts: dict = database.retrieveAccountInfo(repo=repo, account_id=account_id)
+        accounts: List[dict] = database.retrieveAccountInfo(repo=repo, account_id=account_id)
 
         # No Results, So Skip
         if len(accounts) < 1:
@@ -216,7 +219,7 @@ def lookup_account(self, repo: Dolt, table: str, queries: dict) -> dict:
 
 def perform_search(self, repo: Dolt, table: str, queries: dict) -> dict:
     timing_start: time = time.time()
-    
+
     original_search_text: str = queries["text"][0] if "text" in queries else ""
     regex: bool = bool(distutils.util.strtobool(queries["regex"][0])) if "regex" in queries else False
 
@@ -247,7 +250,8 @@ def send_help(self, repo: Dolt, table: str, queries: dict) -> dict:
             {"/api/latest": "Retrieve Newest Tweets"},
             {"/api/search": "Search For Tweets"},
             {"/api/accounts": "Lookup Account Info By ID"},
-            {"/api/tweet": "Lookup Tweet By ID"}
+            {"/api/tweet": "Lookup Tweet By ID"},
+            {"/api/conversation": "Lookup Conversation By ID"}
         ],
         "note": "Future Description of Query Parameters Are On My Todo List"
     }
@@ -346,11 +350,13 @@ def handle_twitter_webhook(self, timing_start: time, queries: dict) -> dict:
             return response
         finally:
             if "consumer" not in credentials_dict:
-                self.timings["handle_webhook_fail"] = (time.time() - timing_start, len(self.timings), "FailedHandleWebhook")
+                self.timings["handle_webhook_fail"] = (
+                time.time() - timing_start, len(self.timings), "FailedHandleWebhook")
                 return response
 
             if "secret" not in credentials_dict["consumer"]:
-                self.timings["handle_webhook_fail"] = (time.time() - timing_start, len(self.timings), "FailedHandleWebhook")
+                self.timings["handle_webhook_fail"] = (
+                time.time() - timing_start, len(self.timings), "FailedHandleWebhook")
                 return response
 
             consumer_secret: bytes = bytes(credentials_dict["consumer"]["secret"], "utf-8")
@@ -432,6 +438,38 @@ def retrieve_tweet(self, repo: Dolt, table: str, queries: dict) -> dict:
         }
 
     self.timings["retrieve_tweet"] = (time.time() - timing_start, len(self.timings), "RetrieveTweet")
+    return response
+
+
+def retrieve_conversation(self, repo: Dolt, table: str, queries: dict) -> dict:
+    timing_start: time = time.time()
+    tweet_id: Optional[int] = int(queries['id'][0]) if "id" in queries and validateNumber(queries['id'][0]) else None
+
+    response: dict = {
+        "error": "Need A Valid Conversation ID",
+        "code": 10
+    }
+
+    if tweet_id is None:
+        return response
+
+    tweet: dict = convertIDsToString(
+        results=database.retrieve_conversation(repo=repo, table=table, tweet_id=str(tweet_id),
+                                               hide_deleted_tweets=False,
+                                               only_deleted_tweets=False))
+
+    if len(tweet) < 1:
+        response: dict = {
+            "error": "No Conversation Found",
+            "code": 11
+        }
+    else:
+        response: dict = {
+            "results": tweet,
+            "conversation_id": tweet[0]['id']
+        }
+
+    self.timings["retrieve_tweet"] = (time.time() - timing_start, len(self.timings), "RetrieveConversation")
     return response
 
 

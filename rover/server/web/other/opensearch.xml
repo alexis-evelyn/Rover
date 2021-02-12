@@ -1,5 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <OpenSearchDescription xmlns="http://a9.com/-/spec/opensearch/1.1/" xmlns:moz="http://www.mozilla.org/2006/browser/search/">
+    <!-- http://www.opensearch.org/Specifications/OpenSearch/1.1 -->
+
     <!-- Name -->
     <ShortName>Rover</ShortName>
     <LongName>Rover Tweet Search</LongName>
@@ -9,7 +11,9 @@
 
     <!-- Icons -->
     <!--<Image height="16" width="16" type="image/x-icon"></Image>-->
-    <Image height="64" width="64" type="image/png">{website_root}/images/rover.png</Image>
+    <!--<Image height="64" width="64" type="image/png">{website_root}/images/rover.png</Image>-->
+    <Image height="1024" width="1024" type="image/png">{website_root}/images/rover.png</Image>
+    <Image height="1024" width="1024" type="image/svg+xml">{website_root}/images/rover.svg</Image>
 
     <!-- Search Query Encoding -->
     <InputEncoding>UTF-8</InputEncoding>

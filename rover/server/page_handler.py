@@ -363,3 +363,19 @@ def load_privacy_page(self):
 
     # Footer
     write_footer(self=self)
+
+
+def load_search_xml(self):
+    path = "rover/server/web/other/opensearch.xml"
+    mime_type = "application/opensearchdescription+xml"
+
+    # HTTP Headers
+    self.send_response(200)
+    self.send_header("Content-type", mime_type)
+
+    helper_functions.handle_tracking_cookie(self=self)
+    helper_functions.send_standard_headers(self=self)
+    self.end_headers()
+
+    # Load File
+    self.wfile.write(load_text_file(path=path).replace("{website_root}", config.WEBSITE_ROOT))

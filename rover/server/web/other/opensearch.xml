@@ -9,20 +9,20 @@
 
     <!-- Icons -->
     <!--<Image height="16" width="16" type="image/x-icon"></Image>-->
-    <Image height="64" width="64" type="image/png">/images/rover.png</Image>
+    <Image height="64" width="64" type="image/png">{website_root}/images/rover.png</Image>
 
     <!-- Search Query Encoding -->
     <InputEncoding>UTF-8</InputEncoding>
 
     <!-- Search URLs -->
-    <Url type="text/html" method="get" template="/search?q={searchTerms}"/>
-    <Url type="application/x-suggestions+json" template="/api/search/suggestions?q={searchTerms}"/>
-    <moz:SearchForm>/search</moz:SearchForm>
+    <Url type="text/html" method="get" template="{website_root}/search?q={searchTerms}"/>
+    <Url type="application/x-suggestions+json" template="{website_root}/api/search/suggestions?q={searchTerms}"/>
+    <moz:SearchForm>{website_root}/search</moz:SearchForm>
 
-    <Url type="text/html" template="/search">
+    <Url type="text/html" template="{website_root}/search">
         <Param name="q" value="{searchTerms}"/>
     </Url>
 
     <!-- Auto-Update URL -->
-    <Url type="application/opensearchdescription+xml" rel="self" template="/opensearch.xml" />
+    <Url type="application/opensearchdescription+xml" rel="self" template="{website_root}/opensearch.xml" />
 </OpenSearchDescription>

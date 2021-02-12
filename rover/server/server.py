@@ -186,6 +186,8 @@ class RequestHandler(BaseHTTPRequestHandler):
                 handler.load_offline_page(self=self)
             elif url == "/humans.txt":
                 handler.load_file(self=self, path="rover/server/web/other/humans.txt", mime_type="text/plain")
+            elif url == "/opensearch.xml":
+                handler.load_file(self=self, path="rover/server/web/other/opensearch.xml", mime_type="application/opensearchdescription+xml")
             else:
                 handler.load_404_page(self=self)
         except BrokenPipeError as e:

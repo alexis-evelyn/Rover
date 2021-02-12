@@ -112,6 +112,7 @@ def run_function(self, repo: Dolt, table: str, url: urlparse, queries: dict) -> 
         '/api/analyze': analyze_tweet,
         '/api/latest': load_latest_tweets,
         '/api/search': perform_search,
+        '/api/search/suggestions': perform_search_suggestions,
         '/api/accounts': lookup_account,
         '/api/webhooks': handle_webhook,
         '/api/tweet': retrieve_tweet,
@@ -237,6 +238,12 @@ def perform_search(self, repo: Dolt, table: str, queries: dict) -> dict:
         "count": tweet_count,
         "results": search_results
     }
+
+
+def perform_search_suggestions(self, repo: Dolt, table: str, queries: dict) -> List:
+    return [
+        "Search Terms Here", ["Not Implemented", "Two", "Three", "Four", "Five"]
+    ]
 
 
 def send_help(self, repo: Dolt, table: str, queries: dict) -> dict:

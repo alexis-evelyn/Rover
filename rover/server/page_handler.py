@@ -377,5 +377,7 @@ def load_search_xml(self):
     helper_functions.send_standard_headers(self=self)
     self.end_headers()
 
+    search_file: str = load_text_file(path=path).replace("{website_root}", config.WEBSITE_ROOT)
+
     # Load File
-    self.wfile.write(load_text_file(path=path).replace("{website_root}", config.WEBSITE_ROOT))
+    self.wfile.write(bytes(search_file, "utf-8"))

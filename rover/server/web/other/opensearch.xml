@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<OpenSearchDescription xmlns="https://a9.com/-/spec/opensearch/1.1/" xmlns:moz="https://www.mozilla.org/2006/browser/search/">
+<OpenSearchDescription xmlns="http://a9.com/-/spec/opensearch/1.1/" xmlns:moz="http://www.mozilla.org/2006/browser/search/">
     <!-- Name -->
     <ShortName>Rover</ShortName>
     <LongName>Rover Tweet Search</LongName>

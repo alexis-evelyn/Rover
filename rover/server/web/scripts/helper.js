@@ -123,7 +123,8 @@ function generateTableFromTweets(tweets) {
             $.each(response.results, function(i, tweet) {
                 account = accounts.find(account => account.account_id === tweet.twitter_user_id)
                 dateTime = Date.parse(tweet.date)
-                date = convertDateToLocalString(dateTime)
+                // date = convertDateToLocalString(dateTime)
+                date = dateTime
 
                 cards += "<div class=\"mdc-card tweet-card\" id=\"tweet-" + tweet.id + "\">\n" +
                     "    <div class=\"mdc-card__primary-action mdc-theme--text-primary-on-dark mdc-theme--primary-bg card__content\" tabindex=\"0\">\n" +

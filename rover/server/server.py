@@ -152,7 +152,7 @@ class RequestHandler(BaseHTTPRequestHandler):
                 api.handle_api(self=self)
             # elif url.startswith("/schema"):
             #     schema.handle_schema(self=self)
-            if url.startswith("/tweet"):
+            elif url.startswith("/tweet"):
                 handler.load_tweet(self=self)
             elif url == "":
                 handler.load_page(self=self, page='latest-tweets')
@@ -189,6 +189,7 @@ class RequestHandler(BaseHTTPRequestHandler):
             elif url == "/opensearch.xml":
                 handler.load_search_xml(self=self)
             else:
+                self.logger.error(f"Why Am I Ran??? Path: {self.path}")
                 handler.load_404_page(self=self)
         except BrokenPipeError as e:
             self.logger.debug("{ip_address} Requested {page_url}: {error_message}".format(ip_address=self.address_string(), page_url=self.path, error_message=e))

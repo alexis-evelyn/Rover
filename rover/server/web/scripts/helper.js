@@ -4,13 +4,10 @@ overrideScrollReload()
 
 // TODO: Add Means To Delete All Cache and Service Worker!!!
 
-// const days = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
-// const months = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
+const days = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
+const months = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
 
 function convertDateToLocalString(dateNum) {
-    const days = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
-    const months = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
-
     // let temp = Date.parse("2021-01-26 13:20:46 +0000 UTC")
     let date = new Date(dateNum)
 
@@ -123,8 +120,7 @@ function generateTableFromTweets(tweets) {
             $.each(response.results, function(i, tweet) {
                 account = accounts.find(account => account.account_id === tweet.twitter_user_id)
                 dateTime = Date.parse(tweet.date)
-                // date = convertDateToLocalString(dateTime)
-                date = dateTime
+                date = convertDateToLocalString(dateTime)
 
                 cards += "<div class=\"mdc-card tweet-card\" id=\"tweet-" + tweet.id + "\">\n" +
                     "    <div class=\"mdc-card__primary-action mdc-theme--text-primary-on-dark mdc-theme--primary-bg card__content\" tabindex=\"0\">\n" +

@@ -4,10 +4,13 @@ overrideScrollReload()
 
 // TODO: Add Means To Delete All Cache and Service Worker!!!
 
-const days = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
-const months = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
+// const days = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
+// const months = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
 
 function convertDateToLocalString(dateNum) {
+    const days = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
+    const months = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
+
     // let temp = Date.parse("2021-01-26 13:20:46 +0000 UTC")
     let date = new Date(dateNum)
 

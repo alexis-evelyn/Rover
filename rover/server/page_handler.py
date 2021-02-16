@@ -153,11 +153,9 @@ def write_header(self, site_title: str, twitter_title: str, twitter_description:
         # Send Tracking Code
         analytics_template: str = load_text_file("rover/server/web/templates/analytics.html").replace(
             "{google_analytics_code}", google_analytics_code)
-        cookie_policy: str = config.COOKIE_POPUP_TRACKING
     else:
         # Don't Send Tracking Code
         analytics_template: str = ""
-        cookie_policy: str = config.COOKIE_POPUP_NO_TRACKING
 
     # Files To Generate SRI Hashes For
     stylesheet_css: bytes = load_binary_file(path="rover/server/web/css/stylesheet.css")
@@ -179,7 +177,6 @@ def write_header(self, site_title: str, twitter_title: str, twitter_description:
                            .replace("{github_repo}", config.GITHUB_REPO)
                            .replace("{website_root}", config.WEBSITE_ROOT)
                            .replace("{analytics_template}", analytics_template)
-                           .replace("{cookie_policy}", cookie_policy)
 
                            # SRI Hash Integrity
                            .replace("{stylesheet_css_integrity}", stylesheet_css_hash)
@@ -193,7 +190,16 @@ def write_body(self, page: str):
 
 
 def write_footer(self):
-    self.wfile.write(bytes(load_text_file("rover/server/web/templates/footer.html"), "utf-8"))
+    if helper_functions.should_track(headers=self.headers):
+        # Alert Being Tracked
+        cookie_policy: str = config.COOKIE_POPUP_TRACKING
+    else:
+        # Alert Not Being Tracked
+        cookie_policy: str = config.COOKIE_POPUP_NO_TRACKING
+
+    self.wfile.write(bytes(load_text_file("rover/server/web/templates/footer.html")
+                           .replace("{cookie_policy}", cookie_policy)
+                           , "utf-8"))
 
 
 def load_tweet(self):

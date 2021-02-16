@@ -152,6 +152,13 @@ function generateTableFromTweets(tweets) {
 // Setup UI Animations and Stuff
 function setupMaterialUI() {
     $(document).ready(function () {
+        // App Bar
+        const MDCTopAppBar = mdc.topAppBar.MDCTopAppBar;
+
+        // Currently Not Being Used - See https://material.io/components/app-bars-top/web#regular-top-app-bar
+        const topAppBarElement = document.querySelector('.mdc-top-app-bar');
+        const topAppBar = new MDCTopAppBar(topAppBarElement);
+
         // Snackbar Notifications
         const MDCSnackbar = mdc.snackbar.MDCSnackbar;
 
@@ -224,4 +231,109 @@ function overrideScrollReload() {
     $(document).ready(function () {
         $("body").addClass("no-scroll");
     });
+}
+
+// Stolen From: https://stackoverflow.com/a/39914235/6828099
+async function sleep(ms) {
+    return new Promise(resolve => setTimeout(resolve, ms));
+}
+
+function handleReferenceLink(tweet) {
+    $(document).ready(function () {
+        // Snackbar Notifications
+        const MDCSnackbar = mdc.snackbar.MDCSnackbar;
+
+        if (!hasExistingReference(tweet)) {
+            const referencesAlert = new MDCSnackbar(document.querySelector('#no-reference-alert'));
+            referencesAlert.timeoutMs = 10000 // 10 Seconds
+
+            checkExistingPage(tweet.id, handle).then(result_url => {
+                if (typeof(result_url) === typeof("")) {
+                    // Success, Load Page Instead
+                    console.log("Opening Previously Submitted Archive URL: " + result_url)
+                    window.open(result_url, '_blank')
+
+                    referencesAlert.close()
+                } else {
+                    // Looks Like Last Resort, Hope A Live Page Can Be Saved
+                    console.log("No Previously Submitted Archive URL Found!!!")
+                    sleep(400).then(run => {
+                        // You would think some kind of alarm clock functionality would exist, but nope, it's this trickery
+                        // I intentionally slow down the closing and opening of alerts so I can get a fancy animation going instead of the jarring instant open/close/open again
+                        // This is important as someone could have shitty internet or be blocked by their ISP/Country and therefore I want some kind of checking message to display
+                        // without waiting for the response back. I then allow the user to save the page on the Wayback Machine itself in hopes to make it available in the future
+                        // (as well as being able to visit the snapshot now if the tweet was live at the time).
+                        referencesAlert.close()
+                    })
+
+                    const failedLookupAlert = new MDCSnackbar(document.querySelector('#failed-lookup-alert'));
+                    failedLookupAlert.timeoutMs = 10000 // 10 Seconds
+
+                    sleep(500).then(run => {
+                        failedLookupAlert.open()
+                    })
+                }
+            })
+
+            referencesAlert.open()
+        } else {
+            window.open(tweet.reference, '_blank')
+        }
+    });
+}
+
+function hasExistingReference(tweet) {
+    return !(!('reference' in tweet) || (tweet.reference === ""));
+}
+
+async function checkExistingPage(tweet_id, account_handle) {
+    let api = "https://archive.org/wayback/available"
+    let tweet_url = "twitter.com/" + account_handle + "/status/" + tweet_id
+    console.debug("Checking If '" + tweet_url + "' Has Been Archived!!!")
+
+    // For Dynamic GET Requests
+    let parameters = {"url": tweet_url}
+
+    let results = $.ajax({
+        type: 'GET',
+        url: api,
+        data: parameters,
+        dataType: "text", // Forces Ajax To Process As String
+        cache: true, // Keep Browser From Caching Data
+        async: true, // Already In Async Function
+        error: function (response) {
+            console.error("Could Not Retrieve Wayback Availability API Data For " + api + "?url=" + tweet_url + "!!!")
+            // return false
+        },
+        success: function (response) {
+        },
+        complete: function (response) {
+            console.debug('Response Code: ' + response.status)
+
+            // Read JSON Here?
+            // return (response.status === 200)
+        }
+    });
+
+    return results.then(text => {
+        try {
+            let json = $.parseJSON(text);
+            return "https://web.archive.org/web/" + json.archived_snapshots.closest.timestamp + "/" + tweet_url
+        } catch (err) {
+            console.warn("No Results Found From Wayback Availability API For " + api + "?url=" + tweet_url + "!!!")
+            return null
+        }
+    })
+}
+
+async function submitNewPage(handle, tweet_id) {
+    let tweet_url = "https://twitter.com/" + handle + "/status/" + tweet_id
+    let api = "https://web.archive.org/save/" + tweet_url
+
+    window.open(api, '_blank')
+}
+
+function viewLiveTweet(handle, tweet_id) {
+    let tweet_url = "https://twitter.com/" + handle + "/status/" + tweet_id
+    window.open(tweet_url, '_blank')
 }

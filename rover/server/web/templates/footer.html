@@ -1,9 +1,49 @@
+        </main>
         <!-- https://material-components.github.io/material-components-web-catalog/#/component/drawer -->
         <div class="footer-buttons-div">
             <button class="mdc-button mdc-card__action mdc-card__action--button mdc-button--raised" onclick="window.open('https://twitter.com/DigitalRoverDog','_blank')">  <span class="mdc-button__ripple"></span> Visit Rover's Twitter</button>
             <button class="mdc-button mdc-card__action mdc-card__action--button mdc-button--raised" onclick="window.open('/privacy','_self')">  <span class="mdc-button__ripple"></span> Privacy Policy</button>
         </div>
 
+        <script>
+            function showNotImplementedAlert() {
+                // Snackbar Notifications
+                const MDCSnackbar = mdc.snackbar.MDCSnackbar;
+
+                $(document).ready(function () {
+                    const notImplementedAlert = new MDCSnackbar(document.querySelector('#not-implemented'));
+
+                    // notImplementedAlert.timeoutMs = 3
+                    notImplementedAlert.open()
+                })
+            }
+        </script>
+        <div class="mdc-snackbar" id="not-implemented">
+            <div class="mdc-snackbar__surface" role="status" aria-relevant="additions">
+                <div class="mdc-snackbar__label" aria-atomic="false">
+                    This feature is not implemented yet. Please try again later.
+                </div>
+                <div class="mdc-snackbar__actions" aria-atomic="true">
+                    <button type="button" class="mdc-button mdc-snackbar__action">
+                        <div class="mdc-button__ripple"></div>
+                        <span class="mdc-button__label">Dismiss</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+        <div class="mdc-snackbar" id="cookies-alert">
+            <div class="mdc-snackbar__surface" role="status" aria-relevant="additions">
+                <div class="mdc-snackbar__label" aria-atomic="false">
+                    {cookie_policy}
+                </div>
+                <div class="mdc-snackbar__actions" aria-atomic="true">
+                    <button type="button" class="mdc-button mdc-snackbar__action">
+                        <div class="mdc-button__ripple"></div>
+                        <span class="mdc-button__label">Dismiss</span>
+                    </button>
+                </div>
+            </div>
+        </div>
         <footer></footer>
     </body>
 </html>

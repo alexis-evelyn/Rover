@@ -132,6 +132,11 @@
 
         window.open(api, '_blank')
     }
+
+    function viewLiveTweet() {
+        let tweet_url = "https://twitter.com/" + handle + "/status/" + tweet.id
+        window.open(tweet_url, '_blank')
+    }
 </script>
 <div class="cards" id="gov-tweets">
     <div class="mdc-card tweet-card">
@@ -145,7 +150,7 @@
             <div class="mdc-card__action-buttons">
                 <button class="mdc-button download-button mdc-card__action mdc-card__action--button mdc-button--raised">  <span class="mdc-button__ripple"></span> {device}</button>
                 <button class="mdc-button download-button mdc-card__action mdc-card__action--button mdc-button--raised" onclick="handleReferenceLink()">  <span class="mdc-button__ripple"></span> Open Reference</button>
-                <button class="mdc-button download-button mdc-card__action mdc-card__action--button mdc-button--raised" onclick="window.open('https://twitter.com/s/status/{tweet_id}', '_blank')">  <span class="mdc-button__ripple"></span> Live Tweet</button>
+                <button class="mdc-button download-button mdc-card__action mdc-card__action--button mdc-button--raised" onclick="viewLiveTweet()">  <span class="mdc-button__ripple"></span> Live Tweet</button>
             </div>
         </div>
     </div>

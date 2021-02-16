@@ -142,17 +142,41 @@ async function downloadNewTweets() {
 }
 
 async function checkAndRegisterBackgroundSync() {
-    const status = await navigator.permissions.query({
-        name: 'periodic-background-sync',
-    });
+    let failed = false
+    try {
+        const status = await navigator.permissions.query({
+            name: 'periodic-background-sync',
+        });
+    } catch(err) {
+        console.debug("Failed periodic-background-sync. Most definitely not on Chrome!!!")
+        failed = true
+    }
 
-    if (status.state === 'granted') {
-        // Periodic background sync can be used.
-        console.debug("Background Sync Access Granted!!!")
-        await registerBackgroundSync()
-    } else {
-        // Periodic background sync cannot be used.
-        console.warn("Background Sync Access Denied!!!")
+    if (failed) {
+        try {
+            // Note: Firefox Currently Does Not Support This At All
+            // https://wicg.github.io/background-sync/
+            // https://wicg.github.io/background-fetch/
+            // https://developer.mozilla.org/en-US/docs/Web/API/Permissions
+            const status = await navigator.permissions.query({
+                name: 'background-sync'
+            });
+        } catch (err) {
+            console.debug("Failed background-sync")
+        }
+    }
+
+    try {
+        if (status.state === 'granted') {
+            // Periodic background sync can be used.
+            console.debug("Background Sync Access Granted!!!")
+            await registerBackgroundSync()
+        } else {
+            // Periodic background sync cannot be used.
+            console.warn("Background Sync Access Denied!!!")
+        }
+    } catch (err) {
+        console.error("All Background Sync Registration Failed Horribly!!!")
     }
 }
 
@@ -193,7 +217,7 @@ async function verifyBackgroundSyncRegistration() {
     } else {
         // If periodic background sync isn't supported, always update.
         console.warn("Background Sync Not Supported!!!")
-        updateTweets()
+        // updateTweets()  // TODO: Add Back When Properly Implemented Background Sync
     }
 }
 

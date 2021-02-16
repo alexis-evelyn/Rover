@@ -3,12 +3,10 @@ setupMaterialUI()
 overrideScrollReload()
 
 // TODO: Add Means To Delete All Cache and Service Worker!!!
-
 const days = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
 const months = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
 
 function convertDateToLocalString(dateNum) {
-    // let temp = Date.parse("2021-01-26 13:20:46 +0000 UTC")
     let date = new Date(dateNum)
 
     let weekday = days[date.getDay()]
@@ -120,8 +118,14 @@ function generateTableFromTweets(tweets) {
             $.each(response.results, function(i, tweet) {
                 account = accounts.find(account => account.account_id === tweet.twitter_user_id)
                 dateTime = Date.parse(tweet.date)
-                // date = convertDateToLocalString(dateTime)
-                date = "Date Currently Disabled For The Day Until Firefox Fix Implemented!!!"
+
+                if (isNaN(dateTime)) {
+                    // Firefox Fix
+                    // console.debug("Firefox Fix: `" + tweet.date.replaceAll("-", " ") + "`")
+                    dateTime = Date.parse(tweet.date.replaceAll("-", " "))  // `2021-02-09 02:49:00 +0000 UTC` -> `2021 02 09 02:49:00 +0000 UTC`
+                }
+
+                date = convertDateToLocalString(dateTime)
 
                 cards += "<div class=\"mdc-card tweet-card\" id=\"tweet-" + tweet.id + "\">\n" +
                     "    <div class=\"mdc-card__primary-action mdc-theme--text-primary-on-dark mdc-theme--primary-bg card__content\" tabindex=\"0\">\n" +
@@ -147,10 +151,10 @@ function generateTableFromTweets(tweets) {
 
 // Setup UI Animations and Stuff
 function setupMaterialUI() {
-    // Snackbar Notifications
-    const MDCSnackbar = mdc.snackbar.MDCSnackbar;
-
     $(document).ready(function () {
+        // Snackbar Notifications
+        const MDCSnackbar = mdc.snackbar.MDCSnackbar;
+
         // Ripple Effect On Buttons
         let ripple_buttons = document.querySelectorAll('.ripple-button');
 

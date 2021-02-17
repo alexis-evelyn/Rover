@@ -288,7 +288,7 @@ function hasExistingReference(tweet) {
 
 async function checkExistingPage(tweet_id, account_handle) {
     let api = "https://archive.org/wayback/available"
-    let tweet_url = "twitter.com/" + account_handle + "/status/" + tweet_id
+    let tweet_url = "twitter.com/" + account_handle + "/status/" + tweet_id + "?failedScript=polyfills"
     console.debug("Checking If '" + tweet_url + "' Has Been Archived!!!")
 
     // For Dynamic GET Requests
@@ -327,7 +327,7 @@ async function checkExistingPage(tweet_id, account_handle) {
 }
 
 async function submitNewPage(handle, tweet_id) {
-    let tweet_url = "https://twitter.com/" + handle + "/status/" + tweet_id
+    let tweet_url = "https://twitter.com/" + handle + "/status/" + tweet_id + "?failedScript=polyfills"
     let api = "https://web.archive.org/save/" + tweet_url
 
     window.open(api, '_blank')

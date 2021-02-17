@@ -59,12 +59,25 @@
                 <h2 class="card__title mdc-typography mdc-typography--headline6">Tweet By {account_name} (@{twitter_handle})</h2>
             </div>
             <div class="card__text mdc-typography mdc-typography--body2">{tweet_text}</div>
+            <div class="tweet-stats-container">
+                <div class="mdc-card__actions tweet-stats">
+                    <button class="material-icons mdc-icon-button mdc-card__action mdc-card__action--icon" title="Likes">favorite_border</button> <span id="favorite">{likes}</span>
+                    <button class="material-icons mdc-icon-button mdc-card__action mdc-card__action--icon" title="Retweets">loop</button> <span id="retweet">{retweets}</span>
+                    <button class="material-icons mdc-icon-button mdc-card__action mdc-card__action--icon" title="Replies">comment</button> <span id="reply">{replies}</span>
+                    <button class="material-icons mdc-icon-button mdc-card__action mdc-card__action--icon" title="Device">laptop</button> <span id="device">{device}</span>
+                </div>
+            </div>
         </div>
         <div class="mdc-card__actions mdc-theme--text-secondary-on-dark mdc-theme--secondary-bg card__actions">
             <div class="mdc-card__action-buttons">
-                <button class="mdc-button download-button mdc-card__action mdc-card__action--button mdc-button--raised">  <span class="mdc-button__ripple"></span> {device}</button>
                 <button class="mdc-button download-button mdc-card__action mdc-card__action--button mdc-button--raised" onclick="handleReferenceLinkI()">  <span class="mdc-button__ripple"></span> Open Reference</button>
                 <button class="mdc-button download-button mdc-card__action mdc-card__action--button mdc-button--raised" onclick="viewLiveTweetI()">  <span class="mdc-button__ripple"></span> Live Tweet</button>
+            </div>
+            <div class="mdc-card__action-icons">
+<!--                <button class="material-icons mdc-icon-button mdc-card__action mdc-card__action&#45;&#45;icon" title="Likes">favorite_border</button> <span id="favorite">123</span>-->
+<!--                <button class="material-icons mdc-icon-button mdc-card__action mdc-card__action&#45;&#45;icon" title="Retweets">loop</button> <span id="retweet">456</span>-->
+<!--                <button class="material-icons mdc-icon-button mdc-card__action mdc-card__action&#45;&#45;icon" title="Replies">comment</button> <span id="reply">789</span>-->
+<!--                <button class="material-icons mdc-icon-button mdc-card__action mdc-card__action&#45;&#45;icon" title="Device">laptop</button> <span id="device">{device}</span>-->
             </div>
         </div>
     </div>

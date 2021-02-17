@@ -16,6 +16,16 @@ div#gov-tweets {
     overflow-x: auto;
 }
 
+.tweet-stats-container {
+    margin-top: auto;
+    display: flex;
+    flex-direction: column;
+}
+
+.tweet-stats {
+    justify-content: center;
+}
+
 .footer-buttons-div {
     display: flex;
     flex-direction: row;

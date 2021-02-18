@@ -16,6 +16,15 @@ div#gov-tweets {
     overflow-x: auto;
 }
 
+.mdc-drawer {
+    background-color: #383838 !important;
+    /*color: white;*/
+}
+
+.mdc-list-item__graphic, .mdc-list-item__text {
+    color: white !important;
+}
+
 .tweet-stats-container {
     margin-top: auto;
     display: flex;

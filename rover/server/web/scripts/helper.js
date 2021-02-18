@@ -155,9 +155,14 @@ function setupMaterialUI() {
         // App Bar
         const MDCTopAppBar = mdc.topAppBar.MDCTopAppBar;
 
-        // Currently Not Being Used - See https://material.io/components/app-bars-top/web#regular-top-app-bar
+        // Handle App Bar Event Listeners - See https://material.io/components/app-bars-top/web#regular-top-app-bar
         const topAppBarElement = document.querySelector('.mdc-top-app-bar');
         const topAppBar = new MDCTopAppBar(topAppBarElement);
+
+        topAppBar.setScrollTarget(document.getElementById('handle-drawer'));
+        topAppBar.listen('MDCTopAppBar:nav', () => {
+            drawer.open = !drawer.open;
+        });
 
         // Snackbar Notifications
         const MDCSnackbar = mdc.snackbar.MDCSnackbar;
@@ -167,6 +172,26 @@ function setupMaterialUI() {
 
         ripple_buttons.forEach(function(ripple_button) {
             mdc.ripple.MDCRipple.attachTo(ripple_button);
+        });
+
+        // Navigation Drawer - See https://material.io/components/navigation-drawer/web#api
+        const MDCDrawer = mdc.drawer.MDCDrawer;
+
+        // Attach To Drawer Class
+        const drawer = MDCDrawer.attachTo(document.querySelector('.mdc-drawer'));
+        const drawerListener = document.querySelector('.mdc-drawer .mdc-list') // Cause For Some Reason, MDCDrawer.attachTo cannot work with lists?
+
+        // Attach To Main Content
+        const content = document.querySelector('.cards');
+
+        // Close Drawer on Item Click
+        drawerListener.addEventListener('click', (event) => {
+            drawer.open = false;
+        });
+
+        // Focus On First Button In Main Content
+        document.body.addEventListener('MDCDrawer:closed', () => {
+            content.querySelector('input, button').focus();
         });
 
         // Cookie Notifications

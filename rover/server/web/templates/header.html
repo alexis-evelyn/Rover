@@ -44,7 +44,7 @@
     <header class="mdc-top-app-bar">
         <div class="mdc-top-app-bar__row">
             <section class="mdc-top-app-bar__section mdc-top-app-bar__section--align-start">
-                <button class="material-icons mdc-top-app-bar__navigation-icon mdc-icon-button" aria-label="Open Sidebar" onclick="showNotImplementedAlert()">menu</button>
+                <button class="material-icons mdc-top-app-bar__navigation-icon mdc-icon-button" aria-label="Open Sidebar" id="handle-drawer">menu</button>
                 <button class="material-icons mdc-top-app-bar__navigation-icon mdc-icon-button" aria-label="Main Page" onclick="window.open('/', '_self')">home</button>
                 <span class="mdc-top-app-bar__title">Rover</span>
             </section>
@@ -54,4 +54,39 @@
             </section>
         </div>
     </header>
+    <aside class="mdc-drawer mdc-drawer--modal">
+        <div class="mdc-drawer__content">
+            <nav class="mdc-list">
+                <a class="mdc-list-item mdc-list-item--activated" aria-current="page" tabindex="0" onclick="window.open('/', '_self')">
+                    <span class="mdc-list-item__ripple"></span>
+                    <i class="material-icons mdc-list-item__graphic" aria-hidden="true">feed</i>
+                    <span class="mdc-list-item__text">Latest Tweets</span>
+                </a>
+                <a class="mdc-list-item" onclick="showNotImplementedAlert()">
+                    <span class="mdc-list-item__ripple"></span>
+                    <i class="material-icons mdc-list-item__graphic" aria-hidden="true">analytics</i>
+                    <span class="mdc-list-item__text">Analyze Tweets</span>
+                </a>
+                <hr class="mdc-list-divider">
+                <a class="mdc-list-item" onclick="window.open('https://www.dolthub.com/repositories/alexis-evelyn/presidential-tweets', '_blank')">
+                    <span class="mdc-list-item__ripple"></span>
+                    <i class="material-icons mdc-list-item__graphic" aria-hidden="true">leaderboard</i>
+                    <span class="mdc-list-item__text">Full Database</span>
+                </a>
+                <a class="mdc-list-item" onclick="window.open('https://github.com/alexis-evelyn/Rover', '_blank')">
+                    <span class="mdc-list-item__ripple"></span>
+                    <i class="material-icons mdc-list-item__graphic" aria-hidden="true">code</i>
+                    <span class="mdc-list-item__text">Source Code</span>
+                </a>
+                <hr class="mdc-list-divider">
+                <a class="mdc-list-item" onclick="window.open('https://twitter.com/DigitalRoverDog', '_blank')">
+                    <span class="mdc-list-item__ripple"></span>
+                    <i class="material-icons mdc-list-item__graphic" aria-hidden="true">smart_toy</i>
+                    <span class="mdc-list-item__text">Rover's Twitter Profile</span>
+                </a>
+            </nav>
+        </div>
+    </aside>
+
+    <div class="mdc-drawer-scrim"></div>
     <main class="mdc-top-app-bar--prominent-fixed-adjust">

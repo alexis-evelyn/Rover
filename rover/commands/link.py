@@ -24,8 +24,6 @@ def send_link(api: TweetAPI2, status: dict):
             if re.match(pattern=twitter_url_regex, string=url):
                 tweet_id: str = url.split(sep="/")[-1]
 
-                logger.error(f"Process Link!!! Status: {tweet_id}")
-
                 utm_source: str = "twitter"
                 utm_medium: str = "rover"
                 utm_campaign: str = "link"

@@ -109,7 +109,8 @@ class Rover(threading.Thread):
         replied_to_status = self.process_tweet(latest_status=last_replied_status)
 
         if replied_to_status is not None:
-            self.save_status_to_file(replied_to_status)
+            pass
+            # self.save_status_to_file(replied_to_status)
 
     def process_tweet(self, latest_status: int = None) -> Optional[int]:
         mentions_response: Response = self.api.get_mentions(screen_name=config.TWITTER_USER_HANDLE, since_id=latest_status)
@@ -124,7 +125,13 @@ class Rover(threading.Thread):
             self.logger.log(self.VERBOSE, "Data Key Missing From Mentions Response!!!")
             return
 
+        if "includes" not in mentions_dict:
+            self.logger.log(self.VERBOSE, "Includes Key Missing From Mentions Response!!!")
+            return
+
         mentions: List[dict] = mentions_dict["data"]
+        meta: dict = mentions_dict["includes"]
+        tweet_includes: Optional[List[dict]] = meta["tweets"] if "tweets" in meta else None
 
         latest_status = None
         for mention in reversed(mentions):
@@ -133,7 +140,13 @@ class Rover(threading.Thread):
                 continue
 
             # To Prevent Implicit Replying (So the bot only replies to explicit requests)
-            if not self.is_explicitly_mentioned(mention=mention):
+            if tweet_includes is not None:
+                included_tweet: Optional[dict] = next((item for item in tweet_includes if "id" in item and item["id"] == mention["id"]), None)
+            else:
+                included_tweet = None
+
+            if not self.is_explicitly_mentioned(mention=mention, included_tweet=included_tweet):
+                self.logger.log(self.VERBOSE, f"Not Explicitly Mentioned Data: {mention}")
                 continue
 
             if "includes" in mentions_dict and "users" in mentions_dict["includes"]:
@@ -165,7 +178,7 @@ class Rover(threading.Thread):
 
         return latest_status
 
-    def is_explicitly_mentioned(self, mention: dict) -> bool:
+    def is_explicitly_mentioned(self, mention: dict, included_tweet: Optional[dict]) -> bool:
         mention_text: str = str(mention["text"]).lower()
         own_username: str = f"@{self.user_name}".lower()
 
@@ -181,6 +194,17 @@ class Rover(threading.Thread):
             # If Not Reply, Then Guaranteed Mention
             if not is_reply:
                 return True
+
+            # If No Included Tweet, Why Are We Here?
+            if included_tweet is None:
+                # TODO: Check How Many Includes Twitter Allows
+                # self.logger.error(f"Somehow This Code Ran (Null Included Tweet In Non-Reply Tweet Check)!!! Tweet ID Is: {mention['id']}")
+                return False
+
+            # So, previous person mentioned the bot. Maybe not explicit, but enough to mostly accurately guess that this is not an explicit mention
+            # The one exception is a chain of mention replies
+            if str(included_tweet["text"]).lower().count(own_username) > 0:
+                return False
 
             self.logger.log(self.VERBOSE,
                             "Own Name: {own_name}, Own ID: {own_id}".format(own_name=self.user_name,

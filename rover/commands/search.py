@@ -91,7 +91,7 @@ def search_text(api: TweetAPI2, status: dict, regex: bool = False,
         else:
             campaign: str = "search"
 
-        url = "{website_root}/tweet/{status_id}/?utm_source={utm_source}&utm_medium={utm_medium}&utm_campaign={utm_campaign}&utm_content={utm_content}" \
+        url = "{website_root}/tweet/{status_id}?utm_source={utm_source}&utm_medium={utm_medium}&utm_campaign={utm_campaign}&utm_content={utm_content}" \
             .format(website_root=config.WEBSITE_ROOT,
                     status_id=search_post_response["id"],
                     utm_source="twitter",

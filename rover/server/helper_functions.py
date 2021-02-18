@@ -98,7 +98,7 @@ def send_standard_headers(self):
     self.send_header("X-YOUR-IP", ip_address)
     self.send_header("X-YOUR-IP-SOURCE", ip_source)
 
-    # TODO: Add CONTENT-SECURITY-POLICY and CONTENT-SECURITY-POLICY-REPORT-ONLY From https://www.immuniweb.com/websec/?id=FjR5kcVe
+    # TODO: Add CONTENT-SECURITY-POLICY and CONTENT-SECURITY-POLICY-REPORT-ONLY From https://www.immuniweb.com/websec?id=FjR5kcVe
     # TODO: Add Cookie Notice On Site Too. Use JS Cookie To Mark Notice Read
     # self.send_header("CONTENT-SECURITY-POLICY", "...")
     # self.send_header("CONTENT-SECURITY-POLICY-REPORT-ONLY", "...")

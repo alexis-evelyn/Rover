@@ -79,11 +79,14 @@ class TweetAPI2:
 
     def get_mentions(self, screen_name: str, since_id: Optional[int] = None) -> Response:
         # https://api.twitter.com/2/tweets/search/recent?query=@DigitalRoverDog%20-from:DigitalRoverDog%20-is:retweet%20%20-is:quote%20to:DigitalRoverDog&max_results=100
-        # @DigitalRoverDog -from:DigitalRoverDog -is:retweet -is:quote to:DigitalRoverDog
+        # @DigitalRoverDog -from:DigitalRoverDog -is:retweet to:DigitalRoverDog
+        # Make This Verbose?
+        self.logger.debug(f"Query: `@{screen_name} -from:{screen_name} to:{screen_name} -is:retweet`")
+        self.logger.debug(f"Since ID: {since_id}")
 
         params: dict = {
             "max_results": 100,
-            "query": f"@{screen_name} -from:{screen_name} to:{screen_name} -is:retweet -is:quote",
+            "query": f"@{screen_name} -from:{screen_name} to:{screen_name} -is:retweet",
             "tweet.fields": "attachments,author_id,context_annotations,conversation_id,created_at,entities,geo,id,in_reply_to_user_id,lang,possibly_sensitive,public_metrics,referenced_tweets,source,text,withheld",
             "expansions": "attachments.poll_ids,attachments.media_keys,author_id,geo.place_id,in_reply_to_user_id,referenced_tweets.id,entities.mentions.username,referenced_tweets.id.author_id",
             "media.fields": "duration_ms,height,media_key,preview_image_url,public_metrics,type,url,width",

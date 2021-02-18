@@ -5,7 +5,7 @@ from rover import config
 
 
 def give_help(api: TweetAPI2, status: dict):
-    url = "{website_root}/?utm_source={utm_source}&utm_medium={utm_medium}&utm_campaign={utm_campaign}&utm_content={utm_content}" \
+    url = "{website_root}?utm_source={utm_source}&utm_medium={utm_medium}&utm_campaign={utm_campaign}&utm_content={utm_content}" \
         .format(website_root=config.WEBSITE_ROOT,
                 status_id=status["id"],
                 utm_source="twitter",

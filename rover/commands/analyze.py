@@ -64,7 +64,7 @@ def analyze_tweet(api: TweetAPI2, status: dict, regex: bool = False,
         url = "https://twitter.com/{screen_name}/status/{status_id}".format(status_id=search_post_response["id"],
                                                                             screen_name=author)
     else:
-        url = "{website_root}/tweet/{status_id}/?utm_source={utm_source}&utm_medium={utm_medium}&utm_campaign={utm_campaign}&utm_content={utm_content}" \
+        url = "{website_root}/tweet/{status_id}?utm_source={utm_source}&utm_medium={utm_medium}&utm_campaign={utm_campaign}&utm_content={utm_content}" \
             .format(website_root=config.WEBSITE_ROOT,
                     status_id=search_post_response["id"],
                     utm_source="twitter",

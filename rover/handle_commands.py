@@ -36,3 +36,5 @@ def process_command(api: TweetAPI2, status: dict,
         commands.analyze_tweet(api=api, status=status)
     elif "help" in status["text"]:
         commands.give_help(api=api, status=status)
+    elif "link" in status["text"]:
+        commands.send_link(api=api, status=status)

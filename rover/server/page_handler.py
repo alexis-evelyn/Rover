@@ -305,7 +305,7 @@ def load_sitemap(self):
     tracking_match: Optional[Match[str]] = re.match(validate_url, self.path)
 
     if tracking_match:
-        tracking_parameters: str = "/?utm_source={utm_source}&utm_medium={utm_medium}&utm_campaign=sitemap" \
+        tracking_parameters: str = "?utm_source={utm_source}&utm_medium={utm_medium}&utm_campaign=sitemap" \
             .format(utm_source=tracking_match.groups()[0],
                     utm_medium=tracking_match.groups()[1])  # source example (google), medium example (search)
 

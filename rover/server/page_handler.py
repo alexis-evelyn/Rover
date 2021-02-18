@@ -264,6 +264,7 @@ def load_tweet(self):
 
                            .replace("{likes}", tweet[0]['favorites'])
                            .replace("{retweets}", tweet[0]['retweets'])
+                           .replace("{quoteTweets}", tweet[0]['quoteTweets'])
                            .replace("{replies}", tweet[0]['replies'])
                            .replace("{device}", tweet[0]['device'])
                            .replace("{tweet_id}", tweet_id)

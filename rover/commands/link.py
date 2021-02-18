@@ -16,10 +16,12 @@ def send_link(api: TweetAPI2, status: dict):
 
         new_status = "No link found in the tweet!!! Tweet Metadata Bugged?"
         if len(urls) > 0:
-            twitter_url_regex: str = r'https?://twitter.com/[A-Za-z0-9]+/status/[0-9]+'
+            twitter_url_regex: str = r'https?://twitter.com/[A-Za-z0-9_]+/status/[0-9]+'
             url_parsed: ParseResult = urlparse(url=urls[0]['expanded_url'])
             url: str = url_parsed.scheme + "://" + url_parsed.hostname + url_parsed.path
             url: str = url if url[-1] != "/" else url[:-1]
+
+            # logger.error(f"Status: {url}")
 
             if re.match(pattern=twitter_url_regex, string=url):
                 tweet_id: str = url.split(sep="/")[-1]

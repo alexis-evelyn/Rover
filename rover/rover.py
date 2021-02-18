@@ -108,8 +108,8 @@ class Rover(threading.Thread):
         last_replied_status = self.read_status_from_file()
         replied_to_status = self.process_tweet(latest_status=last_replied_status)
 
-        # if replied_to_status is not None:
-        #     self.save_status_to_file(replied_to_status)
+        if replied_to_status is not None:
+            self.save_status_to_file(replied_to_status)
 
     def process_tweet(self, latest_status: int = None) -> Optional[int]:
         mentions_response: Response = self.api.get_mentions(screen_name=config.TWITTER_USER_HANDLE, since_id=latest_status)

@@ -85,7 +85,7 @@ def analyze_tweet(api: TweetAPI2, status: dict, regex: bool = False,
             status_link=url, screen_name=author, polarity=round(analyzed_tweet["polarity"], ndigits=2), subjectivity=round(analyzed_tweet["subjectivity"], ndigits=2)
         ))
 
-    possibly_truncated_status: str = truncate_if_needed(original_phrase=analyzed_tweet["processed_text"], new_status=new_status)
+    possibly_truncated_status: str = truncate_if_needed(original_phrase=analyzed_tweet["text"], new_status=new_status)
 
     # logger.error(f"Truncated Reply: {possibly_truncated_status}")
 

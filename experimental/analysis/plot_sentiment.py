@@ -1,5 +1,6 @@
 #!/usr/bin/python
 import os
+from datetime import datetime, timedelta
 
 import sqlalchemy
 import time
@@ -29,10 +30,34 @@ def start_server() -> sqlalchemy.engine:
     return engine
 
 
-def read_tweets(engine: sqlalchemy.engine) -> pd.DataFrame:
-    read_tweets_sql: str = '''
-        select id, twitter_user_id, date, (select twitter_handle from government where government.twitter_user_id=tweets.twitter_user_id) as twitter_handle from tweets;
-    '''
+def read_tweets(engine: sqlalchemy.engine, start_date: Optional[datetime] = None,
+                end_date: Optional[datetime] = None) -> pd.DataFrame:
+
+    if start_date is not None and end_date is not None:
+        # 2009-05-01 15:55:17 +0000 UTC
+        # YYYY-MM-DD hh:mm:ss
+
+        start_date_str: str = "{year}-{month}-{day} {hour}:{minute}:{second}".format(
+            year=str(start_date.year).zfill(4), month=str(start_date.month).zfill(2), day=str(start_date.day).zfill(2),
+            hour=str(start_date.hour).zfill(2), minute=str(start_date.minute).zfill(2), second=str(start_date.second).zfill(2))
+
+        end_date_str: str = "{year}-{month}-{day} {hour}:{minute}:{second}".format(
+            year=str(end_date.year).zfill(4), month=str(end_date.month).zfill(2), day=str(end_date.day).zfill(2),
+            hour=str(end_date.hour).zfill(2), minute=str(end_date.minute).zfill(2), second=str(end_date.second).zfill(2))
+
+        print("Tweets From Range...")
+        print(f"Start Date: {start_date_str}")
+        print(f"End Date: {end_date_str}")
+
+        read_tweets_sql: str = '''
+            select id, twitter_user_id, date, (select twitter_handle from government where government.twitter_user_id=tweets.twitter_user_id) as twitter_handle from tweets where date > "{start_date}" and date < "{end_date}";
+        '''.format(start_date=start_date_str, end_date=end_date_str)
+
+        print(f"SQL: `{read_tweets_sql}`")
+    else:
+        read_tweets_sql: str = '''
+            select id, twitter_user_id, date, (select twitter_handle from government where government.twitter_user_id=tweets.twitter_user_id) as twitter_handle from tweets;
+        '''
 
     tweets = pd.read_sql(sql=read_tweets_sql, con=engine, index_col="id")
     dt_index = pd.DatetimeIndex(tweets["date"])
@@ -62,9 +87,10 @@ def read_analysis(engine: sqlalchemy.engine) -> pd.DataFrame:
     return analysis
 
 
-def get_dataframe(engine: sqlalchemy.engine) -> pd.DataFrame:
+def get_dataframe(engine: sqlalchemy.engine, start_date: Optional[datetime] = None,
+                  end_date: Optional[datetime] = None) -> pd.DataFrame:
     print("Reading In Tweets")
-    tweets = read_tweets(engine=engine)
+    tweets = read_tweets(engine=engine, start_date=start_date, end_date=end_date)
 
     print("Reading In Analysis")
     analysis = read_analysis(engine=engine)
@@ -125,21 +151,21 @@ def draw_plot(data: pd.DataFrame):
     # TODO: Draw Average Polarity With Solid Line (Different Color Per President)
     # TODO: Draw Average Subjectivity With Shaded Line (Different Color Per President)
 
-    trump = data.loc[(data["handle"] == "realDonaldTrump")]
+    # trump = data.loc[(data["handle"] == "realDonaldTrump")]
     biden = data.loc[(data["handle"] == "JoeBiden")]
-    obama = data.loc[(data["handle"] == "POTUS44")]
+    # obama = data.loc[(data["handle"] == "POTUS44")]
 
     fig, ax = plt.subplots()
 
     print("Plotting Graph")
-    trump.plot.line(x="date", y="polarity", ax=ax, label="Trump's Polarity", ls="dotted", c="darkred")
-    trump.plot.line(x="date", y="subjectivity", ls="--", ax=ax, label="Trump's Subjectivity", c="red")
+    # trump.plot.line(x="date", y="polarity", ax=ax, label="Trump's Polarity", ls="dotted", c="darkred")
+    # trump.plot.line(x="date", y="subjectivity", ls="--", ax=ax, label="Trump's Subjectivity", c="red")
 
     biden.plot.line(x="date", y="polarity", ax=ax, label="Biden's Polarity", ls="dotted", c="blue")
     biden.plot.line(x="date", y="subjectivity", ls="--", ax=ax, label="Biden's Subjectivity", c="darkblue")
 
-    obama.plot.line(x="date", y="polarity", ax=ax, label="Obama's Polarity", ls="dotted", c="green")
-    obama.plot.line(x="date", y="subjectivity", ls="--", ax=ax, label="Obama's Subjectivity", c="darkgreen")
+    # obama.plot.line(x="date", y="polarity", ax=ax, label="Obama's Polarity", ls="dotted", c="green")
+    # obama.plot.line(x="date", y="subjectivity", ls="--", ax=ax, label="Obama's Subjectivity", c="darkgreen")
 
     # Formatting
     plt.title("Avg Polarity/Avg Subjectivity Of Tweets Per Date Per President")
@@ -191,13 +217,30 @@ def draw_plot(data: pd.DataFrame):
 
 
 if __name__ == "__main__":
-    if not os.path.exists(points_csv):
+    new: bool = True
+    clean: bool = False
+
+    # TODO: Convert start_date and end_date to UTC
+    # TODO: Fix Data From Scratch (And Saving)
+    # TODO: Remove Hardcoding For Plotting Specific Candidate (e.g. trump, biden, obama)
+    # TODO: Calculate Analysis For Not Already Analyzed Tweets (In Range)
+    # TODO: Fix Starting Analysis Server In Analysis File (Potentially Just Use This Server If Calculating From Here)
+
+    start_date: datetime = datetime.now() - timedelta(days=7)
+    end_date: datetime = datetime.now()
+
+    if new or not os.path.exists(points_csv):
         print("Generating Data From Scratch!!!")
         connection = start_server()
         time.sleep(1)
-        merged = get_dataframe(engine=connection)
+        merged = get_dataframe(engine=connection, start_date=start_date, end_date=end_date)
 
-        cleaned = drop_unwanted_candidates(data=merged)
+        if clean:
+            print("Removing Unwanted Candidates!!!")
+            cleaned = drop_unwanted_candidates(data=merged)
+        else:
+            cleaned = merged
+
         averaged = average_points(data=cleaned)
     else:
         print("Reading Data From CSV!!!")

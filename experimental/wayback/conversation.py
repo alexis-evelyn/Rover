@@ -80,7 +80,7 @@ with open(os.path.join(directory, "archive-me.txt"), mode="w+") as f:
 
     f.close()
 
-with open(os.path.join(directory, "checked-archived.txt"), mode="w+") as f:
+with open(os.path.join(directory, "check-archived.txt"), mode="w+") as f:
     for entry in check_urls:
         f.write(entry + "\n")
 

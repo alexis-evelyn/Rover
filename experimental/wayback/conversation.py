@@ -33,6 +33,7 @@ files: List[str] = [
 
 usernames: dict = {}
 urls: List[str] = []
+check_urls: List[str] = []
 
 
 def lookup_username(author_id: str) -> str:
@@ -65,13 +66,22 @@ for file in files:
             # https://twitter.com/FLOTUS/status/1359601608607346695?failedScript=polyfills
             url: str = f"https://twitter.com/{usernames[author_id]}/status/{tweet_id}"
             archive_url: str = f"https://web.archive.org/save/{url}?failedScript=polyfills"
+            check_url: str = f"https://archive.org/wayback/available?url={url}?failedScript=polyfills"
+
             urls.append(archive_url)
+            check_urls.append(check_url)
 
             print(f"URL: {url} - Archive: {archive_url}")
 
 
 with open(os.path.join(directory, "archive-me.txt"), mode="w+") as f:
     for entry in urls:
+        f.write(entry + "\n")
+
+    f.close()
+
+with open(os.path.join(directory, "checked-archived.txt"), mode="w+") as f:
+    for entry in check_urls:
         f.write(entry + "\n")
 
     f.close()

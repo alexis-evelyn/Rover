@@ -34,6 +34,7 @@ files: List[str] = [
 usernames: dict = {}
 urls: List[str] = []
 check_urls: List[str] = []
+tweet_ids: List[str] = []
 
 
 def lookup_username(author_id: str) -> str:
@@ -70,6 +71,7 @@ for file in files:
 
             urls.append(archive_url)
             check_urls.append(check_url)
+            tweet_ids.append(str(tweet_id))
 
             print(f"URL: {url} - Archive: {archive_url}")
 
@@ -85,3 +87,5 @@ with open(os.path.join(directory, "check-archived.txt"), mode="w+") as f:
         f.write(entry + "\n")
 
     f.close()
+
+print("Tweet IDs: {tweet_ids}".format(tweet_ids=",".join(tweet_ids)))

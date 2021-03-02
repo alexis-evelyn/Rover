@@ -2,6 +2,7 @@
 
 * Python 3.9+ Is Required
 
+### For MacPorts
 ```bash
 sudo port install python39 py39-pip py39-setuptools py39-setuptools py39-psycopg2 openssl freetype
 # sudo port install py39-numpy # (OR) brew install openblas
@@ -16,6 +17,17 @@ sudo port select --set pip3 pip39
 export PATH=/opt/local/lib/postgresql13/bin/:$PATH
 export LDFLAGS="-L/opt/local/lib"
 export CPPFLAGS="-I/opt/local/include"
+
+# You may need to specify --no-cache-dir after install
+pip3 install -r requirements.txt
+```
+
+### For HomeBrew
+```bash
+# These instructions assume using a venv
+brew install mysql postgresql python3
+
+export PATH=/usr/local/Cellar/postgresql/13.2_1/bin:$PATH
 
 # You may need to specify --no-cache-dir after install
 pip3 install -r requirements.txt

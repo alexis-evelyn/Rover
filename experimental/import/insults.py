@@ -6,7 +6,7 @@ import pandas as pd
 
 
 WORKING_DIRECTORY: str = "working/insults"
-INSULTS_CSV: str = os.path.join(WORKING_DIRECTORY, "tweets-full.csv")
+INSULTS_CSV: str = os.path.join(WORKING_DIRECTORY, "insults.csv")
 ALL_TWEETS_CSV: str = os.path.join(WORKING_DIRECTORY, "tweets.csv")
 OUTPUT_CSV: str = os.path.join(WORKING_DIRECTORY, "tweets-missing.csv")
 

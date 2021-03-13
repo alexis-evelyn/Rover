@@ -176,6 +176,8 @@ class RequestHandler(BaseHTTPRequestHandler):
                 handler.load_file(self=self, path="rover/server/web/scripts/main.js", mime_type="application/javascript")
             elif url == "/scripts/helper.js":
                 handler.load_file(self=self, path="rover/server/web/scripts/helper.js", mime_type="application/javascript")
+            elif url == "/scripts/ethers.js":
+                handler.load_file(self=self, path="rover/server/web/scripts/ethers.js", mime_type="application/javascript")
             elif url == "/service-worker.js":
                 handler.load_file(self=self, path="rover/server/web/scripts/service-worker.js", mime_type="application/javascript")
             elif url.startswith("/sitemap") and url.endswith(".xml"):

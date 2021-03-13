@@ -161,12 +161,14 @@ def write_header(self, site_title: str, twitter_title: str, twitter_description:
     stylesheet_css: bytes = load_binary_file(path="rover/server/web/css/stylesheet.css")
     main_js: bytes = load_binary_file(path="rover/server/web/scripts/main.js")
     helper_js: bytes = load_binary_file(path="rover/server/web/scripts/helper.js")
+    ethers_js: bytes = load_binary_file(path="rover/server/web/scripts/ethers.js")
 
     # SRI Hashes
     algorithms: Tuple[str] = ("sha512",)
     stylesheet_css_hash = integrity.render(data=stylesheet_css, algorithms=algorithms)
     main_js_hash = integrity.render(data=main_js, algorithms=algorithms)
     helper_js_hash = integrity.render(data=helper_js, algorithms=algorithms)
+    ethers_js_hash = integrity.render(data=ethers_js, algorithms=algorithms)
 
     self.wfile.write(bytes(load_text_file("rover/server/web/templates/header.html")
                            .replace("{site_title}", site_title)
@@ -182,6 +184,7 @@ def write_header(self, site_title: str, twitter_title: str, twitter_description:
                            .replace("{stylesheet_css_integrity}", stylesheet_css_hash)
                            .replace("{main_js_integrity}", main_js_hash)
                            .replace("{helper_js_integrity}", helper_js_hash)
+                           .replace("{ethers_js_integrity}", ethers_js_hash)
                            , "utf-8"))
 
 

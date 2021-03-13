@@ -6,6 +6,7 @@ const filesToCache = [
     '/manifest.webmanifest',
     '/scripts/main.js',
     '/scripts/helper.js',
+    '/scripts/ethers.js',
     '/css/stylesheet.css',
     '/images/rover.png',
     '/images/rover.svg',

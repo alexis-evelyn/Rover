@@ -362,3 +362,56 @@ function viewLiveTweet(handle, tweet_id) {
     let tweet_url = "https://twitter.com/" + handle + "/status/" + tweet_id
     window.open(tweet_url, '_blank')
 }
+
+function testEthereum() {
+    // This could be useful as some sort of authentication system for creating accounts/etc...
+    // We can then encrypt the data stored on the server using the signer's keys so we don't have access to it server side
+    // No idea where the encrypt function or RPC is though
+
+    // Check If Ethereum Wallet Plugin Exists
+    if (!window.hasOwnProperty("ethereum")) {
+        // Notify User About Wallet Software Not Found
+        const MDCSnackbar = mdc.snackbar.MDCSnackbar;
+        const walletSoftwareNotFoundAlert = new MDCSnackbar(document.querySelector('#wallet-software-not-found'));
+        walletSoftwareNotFoundAlert.timeoutMs = 10000 // 10 Seconds
+        walletSoftwareNotFoundAlert.open()
+
+        return
+    }
+
+    // Useful Links
+    // https://docs.ethers.io/v5/single-page/
+    // https://docs.metamask.io/guide/rpc-api.html
+
+    // This is to connect to external wallets (not part of a browser plugin)
+    // If you don't specify a //url//, Ethers connects to the default (i.e. ``http:/\/localhost:8545``)
+    // const provider = new ethers.providers.JsonRpcProvider();
+
+    // Get Wallet API (For Example, MetaMask)
+    const provider = new ethers.providers.Web3Provider(window.ethereum)
+
+    // Request Access To Wallet
+    provider.send("eth_requestAccounts").then(results => {
+        // Get Signer
+        const signer = provider.getSigner()
+
+        // Test Sign Message
+        signer.signMessage("Hello World!").then(signed => {
+            console.log(signed)
+        }).catch(error => {
+            if (error.code === 4001) {
+                // EIP-1193 userRejectedRequest error
+                console.log('User rejected permission to sign the message');
+            } else {
+                console.error('Unknown wallet signing exception: ', error);
+            }
+        })
+    }).catch(error => {
+        if (error.code === 4001) {
+            // EIP-1193 userRejectedRequest error
+            console.log('User rejected permission to connect to wallet');
+        } else {
+            console.error('Unknown wallet connection exception: ', error);
+        }
+    })
+}

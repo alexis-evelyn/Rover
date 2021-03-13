@@ -597,6 +597,7 @@ class Archiver(threading.Thread):
 
         return {
             'id': tweet['id'],
+            'revision': 0,  # Currently One Cannot Edit Tweets, but I suspect that feature is coming soon
             'conversation_id': conversation_id,
 
             # This Tweet's Metadata

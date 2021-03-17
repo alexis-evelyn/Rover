@@ -13,8 +13,9 @@ from doltpy.core.system_helpers import get_logger
 from requests import Response
 from requests_oauthlib import OAuth1
 
-from archiver.tweet_api_two import TweetAPI2, BearerAuth
-from rover import handle_commands, config
+from archiver import TweetAPI2, BearerAuth
+from rover import config
+from rover import handle_commands
 from config import config as main_config
 
 
